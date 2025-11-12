@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Pose AI Wireframe</title>
+    
+    <!-- Load Google Font 'Inter' -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- 
+      REMOVED the broken <script type="module" src="..."> from here. 
+      The script will now be loaded *only* by the import statement
+      in the main script block at the bottom of the file.
+    -->
+
+    <style>
+        /* --- 1. Color and Font Variables --- */
+        :root {
+            --color-black: #000000;
+            --color-white: #FFFFFF;
+            --color-red: #FF0000;
+            
+            --font-main: 'Inter', sans-serif;
+        }
+
+        /* --- 2. Base & Layout Styling --- */
+        body {
+            background-color: var(--color-black);
+            color: var(--color-white);
+            font-family: var(--font-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: var(--color-white);
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+        }
+
+        /* --- 3. Display Container --- */
+        .container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            width: 100%;
+            max-width: 1400px;
+            /* Allow wrapping on smaller screens */
+            flex-wrap: wrap;
+        }
+
+        .display-box {
+            border: 4px solid var(--color-red);
+            overflow: hidden;
+            background-color: #111; /* Dark bg for loading */
+            flex-basis: 640px; /* Default size */
+            flex-grow: 1;
+            max-width: 720px;
+            aspect-ratio: 16 / 9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #webcam, #wireframeCanvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #webcam {
+            /* Flip the webcam feed horizontally for a "mirror" effect */
+            transform: scaleX(-1);
+        }
+
+        /* --- 4. Explanation Box --- */
+        .explanation {
+            border: 2px solid var(--color-white);
+            padding: 1.5rem 2rem;
+            margin-top: 2rem;
+            width: 100%;
+            max-width: 1400px;
+            box-sizing: border-box; /* Include padding/border in width */
+        }
+
+        .explanation h2 {
+            color: var(--color-red);
+            margin-top: 0;
+            border-bottom: 1px solid #555;
+            padding-bottom: 0.5rem;
+        }
+
+        .explanation ul {
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+
+        .explanation li {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+        }
+
+        /* --- 5. Loading Message & Controls --- */
+        #startButton {
+            background-color: var(--color-black);
+            color: var(--color-white);
+            border: 2px solid var(--color-red);
+            padding: 0.75rem 1.5rem;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 1rem;
+            transition: all 0.2s;
+        }
+        
+        #startButton:hover {
+            background-color: var(--color-red);
+            color: var(--color-black);
+        }
+
+        #startButton:disabled {
+            background-color: #333;
+            border-color: #555;
+            color: #888;
+            cursor: not-allowed;
+        }
+
+        #loadingMessage {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            background-color: rgba(0, 0, 0, 0.9);
+            padding: 1.5rem 2rem;
+            border: 1px solid var(--color-red);
+            display: none; /* Hidden by default */
+            z-index: 100;
+            text-align: center;
+        }
+        
+        /* --- 6. Live Console --- */
+        #liveConsole {
+            border: 2px solid var(--color-white);
+            background-color: #111;
+            width: 100%;
+            max-width: 1400px;
+            box-sizing: border-box;
+            height: 150px;
+            margin-top: 2rem;
+            overflow-y: scroll;
+            padding: 1rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        
+        #liveConsole p {
+            margin: 0 0 0.5rem 0;
+            color: #ccc;
+        }
+        
+        #liveConsole p:last-child {
+            margin-bottom: 0;
+        }
+        
+        #liveConsole .log-error {
+            color: var(--color-red);
+            font-weight: 700;
+        }
+        
+        #liveConsole .log-success {
+            color: #00ff00; /* Green for success */
+        }
+        
+    </style>
+</head>
+<body>
+
+    <h1>Real-time Hand Pose AI Wireframe :3</h1>
+    
+    <!-- Controls -->
+    <button id="startButton">Start Webcam</button>
+
+    <!-- Loading message, hidden by default -->
+    <div id="loadingMessage">Loading AI Model & Accessing Webcam...</div>
+
+    <!-- Main container for video and canvas outputs -->
+    <div class="container">
+        <div class="display-box">
+            <video id="webcam" autoplay playsinline></video>
+        </div>
+        <div class="display-box">
+            <canvas id="wireframeCanvas"></canvas>
+        </div>
+    </div>
+
+    <!-- Live Console Feed -->
+    <div id="liveConsole">
+        <p>Waiting for user to start webcam...</p>
+    </div>
+
+    <!-- Explanation section below the displays -->
+    <div classs="explanation">
+        <h2>How It Works</h2>
+        <ul>
+            <li><strong>Webcam Access:</strong> This page requests access to your webcam using your browser's built-in MediaDevices API.</li>
+            <li><strong>AI Model:</strong> It loads Google's MediaPipe HandLandmarker, a pre-trained machine learning model that runs directly in your browser.</li>
+            <li><strong>Real-time Detection:</strong> The model analyzes the video stream frame-by-frame to identify 21 unique 3D landmarks (key points) on each detected hand.</li>
+            <li><strong>Wireframe Drawing:</strong> The coordinates of those 21 points are then drawn onto the black canvas (right) to create the wireframe. The dots are drawn in red, and the connecting lines are drawn in white.</li>
+            <li><strong>Local only!</strong>This file is fully local. Feel free to download it and run it off of your own system.</li>
+        </ul>
+    </div>
+
+
+    <script type="module">
+        // --- 1. Import necessary MediaPipe modules ---
+        // This is now the ONLY place the script is loaded.
+        // I've also updated it to "@latest" for better compatibility.
+        import {
+            HandLandmarker,
+            FilesetResolver
+        } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/vision_bundle.js";
+
+        // --- 2. Get DOM Elements ---
+        const video = document.getElementById("webcam");
+        const canvas = document.getElementById("wireframeCanvas");
+        const ctx = canvas.getContext("2d");
+        const loadingMessage = document.getElementById("loadingMessage");
+        const startButton = document.getElementById("startButton");
+        const consoleDiv = document.getElementById("liveConsole");
+
+        let handLandmarker;
+        let lastVideoTime = -1;
+        
+        // --- 3. Color Constants (from CSS) ---
+        const COLOR_LANDMARK = "#FF0000"; // Red
+        const COLOR_CONNECTOR = "#FFFFFF"; // White
+        const LANDMARK_RADIUS = 6;
+        const CONNECTOR_LINE_WIDTH = 3;
+
+        // --- 4. Live Console Logging Function ---
+        function logToConsole(message, type = 'log') {
+            console.log(message); // Also log to browser dev console
+            
+            const p = document.createElement('p');
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            
+            if (type === 'error') {
+                p.className = 'log-error';
+            } else if (type === 'success') {
+                p.className = 'log-success';
+            }
+
+            consoleDiv.appendChild(p);
+            consoleDiv.scrollTop = consoleDiv.scrollHeight; // Auto-scroll to bottom
+        }
+
+        // --- 5. Add Start Button Event Listener ---
+        startButton.addEventListener('click', initializeApp);
+
+        async function initializeApp() {
+            // Disable button and show loading message
+            startButton.disabled = true;
+            
+            // This function will now run *first*
+            // If it fails, initializeApp will stop
+            try {
+                logToConsole("Loading AI model...");
+                loadingMessage.innerText = "Loading AI model (this may take a moment)...";
+                loadingMessage.style.display = 'block';
+                
+                await setupHandLandmarker();
+                
+                logToConsole("AI model loaded successfully.", 'success');
+            } catch (error) {
+                const errorMsg = error.message || "An unknown error occurred.";
+                logToConsole(`Failed to load AI model: ${errorMsg}`, 'error');
+                logToConsole("This is likely due to a browser extension (ad-blocker) or network issue.", 'error');
+                loadingMessage.innerText = `Error: ${errorMsg}. Please check console and refresh.`;
+                startButton.disabled = false; // Re-enable button on failure
+                return; // Stop execution
+            }
+
+            // This part will only run if the model loads successfully
+            try {
+                loadingMessage.innerText = "Requesting webcam access...";
+                logToConsole("Requesting webcam access...");
+
+                await setupWebcam();
+                logToConsole("Webcam access granted. Video feed started.", 'success');
+
+                // Start detection
+                loadingMessage.style.display = 'none';
+                logToConsole("Starting real-time detection...");
+                predictWebcam();
+
+            } catch (error) {
+                // Handle errors from webcam setup
+                const errorMsg = error.message || "An unknown error occurred.";
+                logToConsole(`Initialization failed: ${errorMsg}`, 'error');
+                loadingMessage.innerText = `Error: ${errorMsg}. Please check console and refresh.`;
+                startButton.disabled = false; // Re-enable button on failure
+            }
+        }
+        
+        // --- 6. Initialize and Run Hand Landmarker ---
+        async function setupHandLandmarker() {
+            try {
+                logToConsole("Loading vision task WASM files...");
+                const vision = await FilesetResolver.forVisionTasks(
+                    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+                );
+                logToConsole("WASM files loaded.");
+
+                logToConsole("Creating HandLandmarker instance...");
+                handLandmarker = await HandLandmarker.createFromOptions(vision, {
+                    baseOptions: {
+                        modelAssetPath: `https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task`,
+                        delegate: "GPU",
+                    },
+                    runningMode: "VIDEO", // Process video stream
+                    numHands: 2, // Track up to 2 hands
+                });
+                logToConsole("HandLandmarker instance created.");
+
+            } catch (error) {
+                console.error("Error setting up HandLandmarker:", error);
+                // Propagate the error to the click handler
+                throw new Error("Failed to load AI model. Check browser console for details.");
+            }
+        }
+        
+        // --- 7. Setup Webcam ---
+        async function setupWebcam() {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error("Webcam access (getUserMedia) is not supported by your browser.");
+            }
+
+            // Return a Promise that resolves when the video is loaded
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 1280, height: 720 }
+                    });
+                    
+                    video.srcObject = stream;
+                    
+                    // Wait for the video to start playing to get its dimensions
+                    video.addEventListener("loadeddata", () => {
+                        logToConsole("Webcam 'loadeddata' event fired.");
+                        
+                        // Set canvas dimensions to match the video
+                        canvas.width = video.videoWidth;
+                        canvas.height = video.videoHeight;
+                        logToConsole(`Canvas resized to ${canvas.width}x${canvas.height}`);
+                        
+                        resolve(); // Successfully loaded
+                    });
+
+                    video.addEventListener("error", (e) => {
+                        reject(new Error("A video error occurred."));
+                    });
+
+                } catch (error) {
+                    console.error("Error accessing webcam:", error);
+                    reject(new Error("Webcam access denied. Please grant permission and refresh."));
+                }
+            });
+        }
+
+        // --- 8. Prediction Loop ---
+        async function predictWebcam() {
+            // Only run if the video has updated and handLandmarker is ready
+            if (video.currentTime !== lastVideoTime && handLandmarker) {
+                lastVideoTime = video.currentTime;
+
+                // Get the start time for performance tracking
+                const startTimeMs = performance.now();
+                
+                // Detect hands in the current video frame
+                const results = handLandmarker.detectForVideo(video, startTimeMs);
+
+                // Clear the canvas for the new drawing
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // --- Draw the results ---
+                if (results.landmarks && results.landmarks.length > 0) {
+                    
+                    // The canvas needs to be flipped horizontally to match the mirrored video
+                    ctx.save();
+                    ctx.scale(-1, 1);
+                    ctx.translate(-canvas.width, 0);
+
+                    // Loop through each detected hand
+                    for (const landmarks of results.landmarks) {
+                        drawConnectors(landmarks);
+                        drawLandmarks(landmarks);
+                    }
+                    
+                    ctx.restore();
+                }
+            }
+
+            // Call this function again on the next animation frame
+            requestAnimationFrame(predictWebcam);
+        }
+
+        // --- 9. Drawing Functions ---
+
+        function drawConnectors(landmarks) {
+            ctx.strokeStyle = COLOR_CONNECTOR;
+            ctx.lineWidth = CONNECTOR_LINE_WIDTH;
+
+            // Use the official HAND_CONNECTIONS from MediaPipe to draw lines
+            HandLandmarker.HAND_CONNECTIONS.forEach(connection => {
+                const start = landmarks[connection.start];
+                const end = landmarks[connection.end];
+
+                ctx.beginPath();
+                ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
+                ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
+                ctx.stroke();
+            });
+        }
+
+        function drawLandmarks(landmarks) {
+            ctx.fillStyle = COLOR_LANDMARK;
+
+            landmarks.forEach(point => {
+                ctx.beginPath();
+                ctx.arc(
+                    point.x * canvas.width, 
+                    point.y * canvas.height, 
+                    LANDMARK_RADIUS, 
+                    0, 
+                    2 * Math.PI
+                );
+                ctx.fill();
+            });
+        }
+        
+        // No automatic start, app waits for button click.
+        logToConsole("App initialized. Waiting for user to click 'Start Webcam'.");
+
+    </script>
+</body>
+</html>

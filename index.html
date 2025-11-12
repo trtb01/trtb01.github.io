@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homepage Template</title>
+    
+    <link rel="stylesheet" href="trtb.css">
+
+    <style>
+        /* This small addition ensures the canvas animation has a black background
+           and is properly contained within the 'figure' element's border. */
+        #node-animation {
+            display: block;
+            width: 100%;
+            height: 250px;
+            background-color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>My Website</h1>
+
+    <figure>
+        <canvas id="node-animation"></canvas>
+    </figure>
+
+    <h2>Quick Links</h2>
+    <p>Here is a list of links to other sections of the site.</p>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Section</th>
+                <th>Description</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>About</td>
+                <td>Learn more about me.</td>
+                <td><a href="trtb.html">[link]</a></td>
+            </tr>
+            <tr>
+                <td>Projects</td>
+                <td>Try some cool tech demos.</td>
+                <td><a href="hands.html">[hands.html]</a></td>
+                <td><a href="face.html">[face.html]</a></td>
+                <hr>
+                <td><a href="roulette.py">[roulette.py]</a></td>
+            </tr>
+            <tr>
+                <td>Blog</td>
+                <td>Read my thoughts.</td>
+                <td><a href="#">[link]</a></td>
+            </tr>
+            <tr>
+                <td>Contact</td>
+                <td>Get in touch.</td>
+                <td><a href="#">[link]</a></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+    <p style="text-indent: 0; text-align: center;">
+        (c) Thor Smith 2025
+    </p>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const canvas = document.getElementById('node-animation');
+            const ctx = canvas.getContext('2d');
+
+            // Set initial canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 250;
+
+            // Generate a random number of points (5 to 10)
+            const numPoints = Math.floor(Math.random() * 6) + 5;
+            let points = [];
+
+            // Helper to get random velocity
+            function randomVelocity() {
+                return (Math.random() - 0.5) * 0.5; // Slow movement
+            }
+
+            // Create each point
+            for (let i = 0; i < numPoints; i++) {
+                points.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    vx: randomVelocity(),
+                    vy: randomVelocity()
+                });
+            }
+
+            function draw() {
+                // Clear the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Draw white wireframes
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 0.5;
+                for (let i = 0; i < points.length; i++) {
+                    for (let j = i + 1; j < points.length; j++) {
+                        ctx.beginPath();
+                        ctx.moveTo(points[i].x, points[i].y);
+                        ctx.lineTo(points[j].x, points[j].y);
+                        ctx.stroke();
+                    }
+                }
+
+                // Draw red nodes
+                ctx.fillStyle = 'red';
+                for (let i = 0; i < points.length; i++) {
+                    ctx.beginPath();
+                    ctx.arc(points[i].x, points[i].y, 3, 0, Math.PI * 2); // 3px radius
+                    ctx.fill();
+                }
+            }
+
+            function update() {
+                for (let i = 0; i < points.length; i++) {
+                    let p = points[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Bounce off the walls
+                    if (p.x <= 0 || p.x >= canvas.width) p.vx *= -1;
+                    if (p.y <= 0 || p.y >= canvas.height) p.vy *= -1;
+                }
+            }
+
+            // Main animation loop
+            function animate() {
+                update();
+                draw();
+                requestAnimationFrame(animate);
+            }
+
+            // Adjust canvas on window resize
+            window.addEventListener('resize', () => {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = 250;
+                // Ensure points stay in bounds
+                for (let p of points) {
+                    if (p.x > canvas.width) p.x = canvas.width;
+                    if (p.y > canvas.height) p.y = canvas.height;
+                }
+            });
+
+            // Start the animation
+            animate();
+        });
+    </script>
+
+</body>
+</html>

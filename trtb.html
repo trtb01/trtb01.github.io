@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hi, I'm TRTB!</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* --- Base & Theme --- */
+        body {
+            background-color: #f0f8ff; /* Pastel Blue */
+            font-family: 'Nunito', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+        }
+
+        /* --- Animations --- */
+        
+        /* Spinning laptop emojis */
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Wiggling header text */
+        @keyframes wiggle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        
+        /* Flower rivers */
+        @keyframes floatDown {
+            0% { transform: translateY(-10vh); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(110vh); opacity: 0; }
+        }
+
+        /* Audio-reactive shake */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+        
+        /* Audio-reactive rainfall */
+        @keyframes fall {
+            0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* --- Layout & Content --- */
+        
+        .content {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        /* The class added by JS for the shake effect */
+        .content.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        h1 {
+            font-family: 'Pacifico', cursive;
+            color: #ff69b4; /* Pastel Pink */
+            font-size: 3.5rem;
+            text-align: center;
+            text-shadow: 2px 2px #fff;
+            margin-top: 0;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        h1:hover {
+            color: #ff1493; /* Brighter pink on hover */
+        }
+
+        /* Target the spinning laptop emojis */
+        h1 .icon {
+            display: inline-block;
+            animation: spin 5s linear infinite;
+            font-size: 3rem;
+            vertical-align: middle;
+        }
+
+        /* Target the wiggling text */
+        h1 .wiggle-text {
+            display: inline-block;
+            animation: wiggle 2s ease-in-out infinite;
+        }
+
+        p {
+            font-size: 1.15rem;
+            line-height: 1.7;
+            padding: 0 10px;
+            transition: transform 0.3s ease, color 0.3s ease;
+        }
+
+        p:hover {
+            transform: scale(1.02); /* Subtle zoom on paragraph hover */
+            color: #00008b; /* Deep blue */
+        }
+
+        .signoff {
+            font-style: italic;
+            text-align: center;
+            color: #777;
+            font-size: 1.1rem;
+            margin-top: 30px;
+        }
+
+        /* --- Animation Containers --- */
+
+        /* The "rivers" on the sides */
+        .river {
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            width: 80px;
+            background-color: #00008b; /* Deep Blue */
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        #river-left { left: 0; }
+        #river-right { right: 0; }
+
+        .flower {
+            position: absolute;
+            font-size: 1.8rem;
+            opacity: 0;
+            animation-name: floatDown;
+            animation-timing-function: linear;
+            animation-iteration-count: infinite;
+        }
+
+        /* The container for the "rainfall" */
+        #rainfall-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 99;
+            pointer-events: none; /* Allows clicking through it */
+            overflow: hidden;
+        }
+
+        .raindrop {
+            position: absolute;
+            opacity: 0;
+            animation-name: fall;
+            animation-timing-function: linear;
+        }
+        
+        /* --- Audio Button --- */
+        #audioButton {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 20px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            background-color: #ff69b4;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+        }
+        
+        #audioButton:hover {
+            background-color: #ff1493;
+            transform: scale(1.05);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="river" id="river-left"></div>
+    <div class="river" id="river-right"></div>
+    <div id="rainfall-container"></div>
+
+    <main class="content" id="main-content">
+        <h1>
+            <span class="icon">💻</span>
+            <span class="wiggle-text">Hi, I'm TRTB!</span>
+            <span class="icon">💻</span>
+        </h1>
+        
+        <p>
+            I'm ace, agender, and really good with computers! I'm a cyclist, commuting all over town all the time on my beloved and battle-worn ebike. I like cooking, playing flight and driving simulators, and writing! I'm currently a college student, studing networking and IT at CCC. I'm having a great time!
+        </p>
+        <p>
+            I'm also an activist in a few different spheres. I've been a board member of a local non-profit for eight years, where we make cycling better in our area for everyone; I've been volunteering there for 20 years total. I also donate a lot of time to the CCC GSA, where I do light outreach and gentle lobbying (as well as a great deal of graphic design and a little copy writing) to make life better for queer students and faculty on and surrounding campus. 
+        </p>
+        <p>
+            Like I say, I have a lot of fun, have lots of great friends, and do good things. 
+        </p>
+        <p class="signoff">
+            Fuck our timeline! haha! fill ur water bottles with soda from the fast food fountain!!! rahhhhh
+        </p>
+
+        <button id="audioButton">Enable Audio Reaction 🎤</button>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const riverLeft = document.getElementById('river-left');
+            const riverRight = document.getElementById('river-right');
+            const mainContent = document.getElementById('main-content');
+            const rainfallContainer = document.getElementById('rainfall-container');
+            const audioButton = document.getElementById('audioButton');
+
+            // --- 1. River Flower Animation ---
+            
+            /**
+             * Creates a single flower and adds it to a river.
+             * Randomizes horizontal position, animation duration, and delay.
+             */
+            function createRiverFlower(river) {
+                const flower = document.createElement('span');
+                flower.classList.add('flower');
+                flower.innerHTML = '🌸';
+                
+                // Random horizontal position within the 80px river
+                flower.style.left = `${Math.random() * 60 + 10}px`; 
+                
+                const duration = Math.random() * 5 + 8; // 8-13 seconds
+                const delay = Math.random() * 10; // 0-10 second start delay
+                
+                // Set animation with random values for a natural look
+                flower.style.animationDuration = `${duration}s`;
+                flower.style.animationDelay = `${delay}s`;
+                
+                river.appendChild(flower);
+            }
+
+            // Create a "pool" of 15 flowers in each river to start
+            for (let i = 0; i < 15; i++) {
+                createRiverFlower(riverLeft);
+                createRiverFlower(riverRight);
+            }
+
+            // --- 2. Audio-Reactive Feature ---
+
+            let isShaking = false;
+            let audioContext;
+
+            // This function sets up the microphone and analyser
+            async function setupAudio() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioContext = new AudioContext();
+                    const source = audioContext.createMediaStreamSource(stream);
+                    const analyser = audioContext.createAnalyser();
+                    
+                    analyser.fftSize = 256;
+                    const bufferLength = analyser.frequencyBinCount;
+                    const dataArray = new Uint8Array(bufferLength);
+                    
+                    source.connect(analyser);
+
+                    // Start the audio check loop
+                    checkAudioLevel();
+
+                    function checkAudioLevel() {
+                        analyser.getByteFrequencyData(dataArray);
+                        
+                        let sum = 0;
+                        for (const amplitude of dataArray) {
+                            sum += amplitude * amplitude;
+                        }
+                        
+                        // Calculate RMS (Root Mean Square) for a better volume reading
+                        const rms = Math.sqrt(sum / bufferLength);
+                        
+                        const LOUDNESS_THRESHOLD = 25; // Adjust this value if it's too sensitive/insensitive
+
+                        if (rms > LOUDNESS_THRESHOLD && !isShaking) {
+                            triggerShakeAndRain();
+                        }
+
+                        // Continue the loop
+                        requestAnimationFrame(checkAudioLevel);
+                    }
+                } catch (err) {
+                    console.error('Microphone access was denied.', err);
+                    alert('Microphone access is needed for the audio reaction. Please allow it if you want this feature.');
+                }
+            }
+
+            // Function to trigger the shake and rainfall
+            function triggerShakeAndRain() {
+                isShaking = true;
+                mainContent.classList.add('shake');
+                triggerRainfall();
+
+                // Remove the shake class after the animation finishes
+                setTimeout(() => {
+                    mainContent.classList.remove('shake');
+                    isShaking = false; // Allow shaking again
+                }, 500); // 500ms matches the CSS animation duration
+            }
+
+            // Function to make flowers fall from the top
+            function triggerRainfall() {
+                const flowerEmojis = ['🌸', '🌺', '🌻', '🌼', '🌷', '🌹', '💐'];
+                const numFlowers = 50; // Total flowers to drop
+
+                for (let i = 0; i < numFlowers; i++) {
+                    // Create each flower on a slight, random delay for the "raindrop" effect
+                    setTimeout(createRaindrop, Math.random() * 1000);
+                }
+
+                function createRaindrop() {
+                    const drop = document.createElement('span');
+                    drop.classList.add('raindrop');
+                    
+                    // Pick a random flower emoji
+                    drop.innerHTML = flowerEmojis[Math.floor(Math.random() * flowerEmojis.length)];
+                    
+                    // Random horizontal position, size, and animation speed
+                    drop.style.left = `${Math.random() * 100}vw`;
+                    drop.style.fontSize = `${Math.random() * 1 + 1}rem`; // 1rem to 2rem
+                    drop.style.animationDuration = `${Math.random() * 2 + 3}s`; // 3-5 seconds
+                    
+                    rainfallContainer.appendChild(drop);
+
+                    // Clean up the DOM by removing the flower after it falls
+                    drop.addEventListener('animationend', () => {
+                        drop.remove();
+                    });
+                }
+            }
+
+            // --- 3. Event Listeners ---
+            
+            // Handle the click on the audio button
+            audioButton.addEventListener('click', () => {
+                if (!audioContext) { // Only set up if not already running
+                    setupAudio();
+                }
+                // Hide the button after it's clicked
+                audioButton.style.display = 'none';
+            });
+
+            // A little easter egg: click the header to trigger the shake
+            document.querySelector('h1').addEventListener('click', () => {
+                if (!isShaking) {
+                    triggerShakeAndRain();
+                }
+            });
+
+        });
+    </script>
+
+</body>
+</html>
