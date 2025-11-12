@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soda Roulette</title>
+    <!-- Imports Tone.js for sound generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        /* * Color palette variables as requested.
+         * These three variables define the entire look of the app.
+        */
+        :root {
+            --bg-color: #000000;
+            --text-color: #FFFFFF;
+            --accent-color: #FF0000;
+        }
+
+        /* Basic setup for the page */
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: monospace, "Courier New", Courier;
+            font-size: 14px; /* Small but readable text size */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+            /* Prevents selecting text to maintain the clean look */
+            user-select: none; 
+        }
+        
+        /* The main container for the game interface */
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Header styling */
+        h1 {
+            color: var(--accent-color);
+            font-weight: normal;
+            margin: 0;
+            font-size: 1em; /* Ensures all text is the same size */
+        }
+
+        /* Container for the soda buttons */
+        #soda-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+
+        /* Base button styling */
+        .soda-btn {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            border: 2px double var(--text-color);
+            padding: 20px;
+            font-size: 1.5em; /* Emojis are larger */
+            cursor: pointer;
+            transition: background-color 0.1s;
+            line-height: 1;
+            /* Sharp corners as requested */
+            border-radius: 0; 
+        }
+
+        /* Hover effect for buttons that are not disabled */
+        .soda-btn:not(:disabled):hover {
+            background-color: #333;
+        }
+        
+        /* Style for a button that has been revealed as safe */
+        .soda-btn.safe {
+            background-color: var(--text-color);
+            cursor: not-allowed;
+            border-color: var(--bg-color);
+        }
+
+        /* Style for a clicked button during the suspense pause */
+        .soda-btn.clicked {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        /* End game message styling */
+        #end-message {
+            display: none; /* Hidden by default */
+            font-size: 1.5em;
+        }
+
+        /* Animation for the background flash */
+        @keyframes flash-white {
+            50% { background-color: var(--text-color); }
+        }
+        @keyframes flash-red {
+            50% { background-color: var(--accent-color); }
+        }
+
+        .flash-white-bg {
+            animation: flash-white 0.2s linear;
+        }
+        .flash-red-bg {
+            animation: flash-red 0.2s linear;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Main game content area -->
+    <div id="game-container">
+        <h1 id="header-text">pick a soda</h1>
+        <div id="soda-grid"></div>
+    </div>
+
+    <!-- Container for the final win/loss message -->
+    <div id="end-message"></div>
+
+    <script>
+        // --- DOM ELEMENTS ---
+        const gameContainer = document.getElementById('game-container');
+        const headerText = document.getElementById('header-text');
+        const sodaGrid = document.getElementById('soda-grid');
+        const endMessage = document.getElementById('end-message');
+        const body = document.body;
+
+        // --- GAME STATE & CONFIGURATION ---
+        const FLAVOR_EMOJIS = ['🍒', '🍊', '🍋', '🍏', '🍇', '🍍'];
+        const SODA_BOTTLE_EMOJI = '🥤';
+        const TOTAL_SODAS = 6;
+        const SUSPENSE_DURATION_MS = 3000;
+        
+        let spicySodaIndex;
+        let safePicks = 0;
+        let gameActive = true;
+
+        // --- SOUND SETUP (using Tone.js) ---
+        // A simple synth to create a "click" or "pop" sound on loss.
+        // This avoids needing external audio files.
+        const lossSound = new Tone.MembraneSynth().toDestination();
+
+        // --- GAME LOGIC ---
+
+        /**
+         * Initializes the game: shuffles sodas and creates buttons.
+         */
+        function setupGame() {
+            // Randomly select one soda to be the "spicy" one.
+            spicySodaIndex = Math.floor(Math.random() * TOTAL_SODAS);
+            
+            // Create a button for each soda.
+            for (let i = 0; i < TOTAL_SODAS; i++) {
+                const button = document.createElement('button');
+                button.classList.add('soda-btn');
+                button.dataset.index = i;
+                button.innerHTML = `${SODA_BOTTLE_EMOJI}${FLAVOR_EMOJIS[i]}`;
+                button.addEventListener('click', () => handleSodaClick(button));
+                sodaGrid.appendChild(button);
+            }
+        }
+
+        /**
+         * Handles the user clicking on a soda button.
+         * @param {HTMLElement} button - The button that was clicked.
+         */
+        function handleSodaClick(button) {
+            // Do nothing if the game is over, or the button is already safe/clicked.
+            if (!gameActive || button.classList.contains('safe')) {
+                return;
+            }
+            
+            // Immediately start the user feedback sequence.
+            gameActive = false; // Prevent other clicks during suspense.
+            button.classList.add('clicked');
+            
+            const isSpicy = parseInt(button.dataset.index) === spicySodaIndex;
+
+            // Start the 3-second suspense timer with flashing.
+            let flashCount = 0;
+            const flashInterval = setInterval(() => {
+                flashCount++;
+                // Flash the button red (on) and then back to its original color (off).
+                button.style.backgroundColor = flashCount % 2 === 1 ? 'var(--accent-color)' : 'var(--bg-color)';
+            }, 500); // Flashes every half-second for a 1-second on/off cycle.
+
+            setTimeout(() => {
+                clearInterval(flashInterval); // Stop flashing.
+                
+                if (isSpicy) {
+                    loseGame();
+                } else {
+                    handleSafePick(button);
+                }
+            }, SUSPENSE_DURATION_MS);
+        }
+
+        /**
+         * Handles the logic for picking a safe soda.
+         * @param {HTMLElement} button - The safe button.
+         */
+        function handleSafePick(button) {
+            // Flash the background white to signal a safe choice.
+            body.classList.add('flash-white-bg');
+            setTimeout(() => body.classList.remove('flash-white-bg'), 200);
+
+            // Mark the button as permanently safe.
+            button.classList.remove('clicked');
+            button.classList.add('safe');
+            
+            safePicks++;
+            
+            // Check for win condition.
+            if (safePicks === TOTAL_SODAS - 1) {
+                winGame();
+            } else {
+                gameActive = true; // Allow the next pick.
+            }
+        }
+
+        /**
+         * Triggers the win sequence.
+         */
+        function winGame() {
+            gameActive = false;
+            // Final white flash for winning.
+            body.classList.add('flash-white-bg');
+            setTimeout(() => body.classList.remove('flash-white-bg'), 200);
+
+            setTimeout(() => {
+                gameContainer.style.display = 'none';
+                body.style.backgroundColor = 'var(--text-color)';
+                endMessage.textContent = 'you win.';
+                endMessage.style.color = 'var(--bg-color)';
+                endMessage.style.display = 'block';
+            }, 250); // A slight delay to let the flash finish.
+        }
+
+        /**
+         * Triggers the lose sequence.
+         */
+        function loseGame() {
+            gameActive = false;
+            
+            // Play the losing sound effect.
+            lossSound.triggerAttackRelease("C2", "8n");
+            
+            // Flash the background red to signal a loss.
+            body.classList.add('flash-red-bg');
+            setTimeout(() => body.classList.remove('flash-red-bg'), 200);
+
+            setTimeout(() => {
+                gameContainer.style.display = 'none';
+                body.style.backgroundColor = 'var(--accent-color)';
+                endMessage.textContent = 'you lost.';
+                endMessage.style.color = 'var(--text-color)';
+                endMessage.style.display = 'block';
+            }, 250);
+        }
+
+        // --- INITIALIZATION ---
+        // Setup the game when the script loads.
+        setupGame();
+    </script>
+</body>
+</html>
