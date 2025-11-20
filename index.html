@@ -3,125 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>trtb01 // Index</title>
+    <title>index</title>
     
     <link rel="stylesheet" href="trtb.css">
 
     <style>
-        /* Animation Canvas Style */
+        /* global lowercase enforcement */
+        body {
+            text-transform: lowercase;
+        }
+
+        /* animation canvas style */
         #node-animation {
             display: block;
             width: 100%;
             height: 250px;
             background-color: black;
             margin-bottom: 2rem;
-            border-bottom: 1px solid #ccc; /* visual separator */
+            border-bottom: 1px solid #ccc;
         }
 
-        /* Table Styling improvements (Inline to avoid changing trtb.css) */
+        /* table styling */
         table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: collapse; /* ensures borders touch */
             margin-top: 1rem;
+            table-layout: fixed; /* helps with mobile spacing */
         }
-        th {
-            text-align: left;
-            border-bottom: 2px solid #333;
-            padding: 10px;
-        }
+
         td {
-            padding: 8px 10px;
+            padding: 12px 10px;
             border-bottom: 1px solid #eee;
+            vertical-align: top;
+            word-wrap: break-word;
         }
-        tr:hover {
-            background-color: #f9f9f9; /* subtle highlight on hover */
-        }
-        .category-header {
-            background-color: #f0f0f0;
+
+        /* subheader specific styling */
+        .category-header td {
+            background-color: black;     /* "background of the cell is black" */
+            color: red;                  /* "red highlight" text */
+            border: 2px solid white;     /* "border... should be white" */
             font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.85em;
-            letter-spacing: 1px;
+            text-align: center;
+            padding: 15px;
+            letter-spacing: 2px;
+        }
+
+        /* column widths for desktop */
+        .col-name { width: 30%; font-family: monospace; }
+        .col-desc { width: 70%; }
+
+        /* links styling */
+        a {
+            text-decoration: underline;
+            font-weight: bold;
+        }
+
+        /* mobile responsiveness */
+        @media (max-width: 600px) {
+            table, tbody, tr, td {
+                display: block;
+                width: 100%;
+            }
+            
+            /* hide standard table headers if they existed */
+            thead { display: none; }
+
+            .col-name {
+                width: 100%;
+                padding-bottom: 2px;
+                font-size: 1.1em;
+                border-bottom: none;
+            }
+
+            .col-desc {
+                width: 100%;
+                padding-top: 0;
+                color: #555;
+                font-size: 0.9em;
+                border-bottom: 1px solid #ccc;
+                margin-bottom: 10px;
+            }
+
+            .category-header td {
+                margin-top: 20px;
+                margin-bottom: 5px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <h1>trtb01.github.io</h1>
+    <h1>my website</h1>
 
     <figure style="margin: 0; padding: 0;">
         <canvas id="node-animation"></canvas>
     </figure>
 
-    <h2>Directory</h2>
-    <p>Index of deployed projects and pages.</p>
+    <h2>index</h2>
     
     <table>
-        <thead>
-            <tr>
-                <th>Page Name</th>
-                <th>Description</th>
-                <th>Launch</th>
-            </tr>
-        </thead>
         <tbody>
-            <tr class="category-header"><td colspan="3">Main</td></tr>
+            <tr class="category-header"><td colspan="2">main</td></tr>
             <tr>
-                <td>About (trtb1)</td>
-                <td>Introduction and primary info.</td>
-                <td><a href="trtb1.html">[Open]</a></td>
+                <td class="col-name"><a href="trtb1.html">trtb1.html</a></td>
+                <td class="col-desc">introduction and primary info.</td>
             </tr>
             <tr>
-                <td>About (trtb2)</td>
-                <td>Secondary information page.</td>
-                <td><a href="trtb2.html">[Open]</a></td>
+                <td class="col-name"><a href="trtb2.html">trtb2.html</a></td>
+                <td class="col-desc">secondary information page.</td>
             </tr>
 
-            <tr class="category-header"><td colspan="3">Tech Demos</td></tr>
+            <tr class="category-header"><td colspan="2">tech demos</td></tr>
             <tr>
-                <td>Hands</td>
-                <td>Hand tracking/detection demo.</td>
-                <td><a href="hands.html">[Open]</a></td>
+                <td class="col-name"><a href="hands.html">hands.html</a></td>
+                <td class="col-desc">hand tracking/detection demo.</td>
             </tr>
             <tr>
-                <td>Face</td>
-                <td>Facial recognition/tracking demo.</td>
-                <td><a href="face.html">[Open]</a></td>
+                <td class="col-name"><a href="face.html">face.html</a></td>
+                <td class="col-desc">facial recognition/tracking demo.</td>
             </tr>
             <tr>
-                <td>JPEG Comp</td>
-                <td>Image compression tools.</td>
-                <td><a href="jpegcomp.html">[Open]</a></td>
+                <td class="col-name"><a href="jpegcomp.html">jpegcomp.html</a></td>
+                <td class="col-desc">local-only image compression tool.</td>
             </tr>
 
-            <tr class="category-header"><td colspan="3">Experiments & Games</td></tr>
+            <tr class="category-header"><td colspan="2">experiments and games</td></tr>
             <tr>
-                <td>Roulette</td>
-                <td>Probability simulation.</td>
-                <td><a href="roulette.html">[Play]</a></td>
+                <td class="col-name"><a href="roulette.html">roulette.html</a></td>
+                <td class="col-desc">single-player local-only roulette table simulator.</td>
             </tr>
             <tr>
-                <td>The Oracle</td>
-                <td>Prediction engine.</td>
-                <td><a href="oracle.html">[Consult]</a></td>
+                <td class="col-name"><a href="oracle.html">oracle.html</a></td>
+                <td class="col-desc">ultralightweight sttrpg oracle.</td>
             </tr>
             <tr>
-                <td>Soda</td>
-                <td>Visual experiment.</td>
-                <td><a href="soda.html">[View]</a></td>
+                <td class="col-name"><a href="soda.html">soda.html</a></td>
+                <td class="col-desc">russian roulette with soda.</td>
             </tr>
             <tr>
-                <td>VOIDSCREAM</td>
-                <td>Interactive experience.</td>
-                <td><a href="voidscream.html">[ENTER]</a></td>
+                <td class="col-name"><a href="voidscream.html">voidscream.html</a></td>
+                <td class="col-desc">my blog.</td>
             </tr>
         </tbody>
     </table>
 
     <br>
     <hr>
-    <p style="text-indent: 0; text-align: center; opacity: 0.7; font-size: 0.9em;">
-        &copy; Tori Smith 2025
+    <p style="text-indent: 0; text-align: center; opacity: 0.7;">
+        (c) thor smith 2025
     </p>
 
 
@@ -130,20 +160,20 @@
             const canvas = document.getElementById('node-animation');
             const ctx = canvas.getContext('2d');
 
-            // Set initial canvas size
+            // set initial canvas size
             canvas.width = canvas.offsetWidth;
             canvas.height = 250;
 
-            // Generate a random number of points (5 to 10)
+            // generate a random number of points (5 to 10)
             const numPoints = Math.floor(Math.random() * 6) + 5;
             let points = [];
 
-            // Helper to get random velocity
+            // helper to get random velocity
             function randomVelocity() {
-                return (Math.random() - 0.5) * 0.5; // Slow movement
+                return (Math.random() - 0.5) * 0.5; // slow movement
             }
 
-            // Create each point
+            // create each point
             for (let i = 0; i < numPoints; i++) {
                 points.push({
                     x: Math.random() * canvas.width,
@@ -154,10 +184,10 @@
             }
 
             function draw() {
-                // Clear the canvas
+                // clear the canvas
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-                // Draw white wireframes
+                // draw white wireframes
                 ctx.strokeStyle = 'white';
                 ctx.lineWidth = 0.5;
                 for (let i = 0; i < points.length; i++) {
@@ -169,7 +199,7 @@
                     }
                 }
 
-                // Draw red nodes
+                // draw red nodes
                 ctx.fillStyle = 'red';
                 for (let i = 0; i < points.length; i++) {
                     ctx.beginPath();
@@ -184,31 +214,31 @@
                     p.x += p.vx;
                     p.y += p.vy;
 
-                    // Bounce off the walls
+                    // bounce off the walls
                     if (p.x <= 0 || p.x >= canvas.width) p.vx *= -1;
                     if (p.y <= 0 || p.y >= canvas.height) p.vy *= -1;
                 }
             }
 
-            // Main animation loop
+            // main animation loop
             function animate() {
                 update();
                 draw();
                 requestAnimationFrame(animate);
             }
 
-            // Adjust canvas on window resize
+            // adjust canvas on window resize
             window.addEventListener('resize', () => {
                 canvas.width = canvas.offsetWidth;
                 canvas.height = 250;
-                // Ensure points stay in bounds
+                // ensure points stay in bounds
                 for (let p of points) {
                     if (p.x > canvas.width) p.x = canvas.width;
                     if (p.y > canvas.height) p.y = canvas.height;
                 }
             });
 
-            // Start the animation
+            // start the animation
             animate();
         });
     </script>
