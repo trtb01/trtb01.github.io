@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>THE ORACLE</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --panel-bg: #1e1e1e;
+            --border-color: #333333;
+            --accent-red: #ff3b30;
+            --btn-bg: #333333;
+            --btn-active: #4d4d4d;
+        }
+
+        body.light-mode {
+            --bg-color: #f2f2f2;
+            --text-color: #121212;
+            --panel-bg: #ffffff;
+            --border-color: #cccccc;
+            --accent-red: #cc0000;
+            --btn-bg: #e0e0e0;
+            --btn-active: #d1d1d1;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        h1 {
+            color: var(--accent-red);
+            font-size: 2rem;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Display Area */
+        .display-box {
+            background-color: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            padding: 30px 10px;
+            text-align: center;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .result-main {
+            font-size: 5rem;
+            font-weight: bold;
+            color: var(--accent-red);
+            line-height: 1;
+        }
+
+        .result-sub {
+            font-size: 2rem;
+            color: var(--text-color);
+            opacity: 0.8;
+        }
+
+        .label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            color: var(--text-color);
+            opacity: 0.5;
+            margin-top: -5px;
+        }
+
+        /* Controls */
+        button {
+            background-color: var(--btn-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            font-family: inherit;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.1s;
+            text-transform: uppercase;
+            width: 100%;
+        }
+
+        button:active {
+            background-color: var(--btn-active);
+            transform: translateY(2px);
+        }
+
+        .roll-btn {
+            border-color: var(--accent-red);
+            color: var(--accent-red);
+            font-size: 1.5rem;
+            padding: 20px;
+        }
+
+        /* Toggles Section */
+        .settings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .toggle-btn {
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+        }
+
+        .toggle-btn.active {
+            border: 1px solid var(--text-color);
+            background-color: var(--btn-active);
+        }
+
+        .status-dot {
+            height: 8px;
+            width: 8px;
+            border-radius: 50%;
+            background-color: var(--border-color);
+        }
+
+        .active .status-dot {
+            background-color: var(--accent-red);
+        }
+
+        /* Instructions Modal */
+        #instructions {
+            display: none;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        #instructions.show {
+            display: block;
+        }
+
+        .rule-table {
+            width: 100%;
+            margin-top: 10px;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+        
+        .rule-table td {
+            border-top: 1px solid var(--border-color);
+            padding: 8px 0;
+        }
+
+        .footer-btn {
+            margin-top: auto;
+            font-size: 0.8rem;
+            padding: 10px;
+            background: transparent;
+            border: none;
+            text-decoration: underline;
+            opacity: 0.6;
+        }
+
+    </style>
+</head>
+<body class="dark-mode">
+
+    <h1>The Oracle</h1>
+
+    <div class="container">
+        
+        <div class="display-box">
+            <div>
+                <div class="label">Outcome (d100)</div>
+                <div id="d100-display" class="result-main">--</div>
+            </div>
+            <div style="margin-top: 10px;">
+                <div class="label">Nuance (d10)</div>
+                <div id="modifier-display" class="result-sub">--</div>
+            </div>
+        </div>
+
+        <button class="roll-btn" onclick="rollDice()">ROLL</button>
+
+        <div class="settings">
+            <button id="shake-btn" class="toggle-btn" onclick="toggleShake()">
+                SHAKE TO ROLL <span class="status-dot"></span>
+            </button>
+            <button id="tts-btn" class="toggle-btn" onclick="toggleTTS()">
+                VOICE <span class="status-dot"></span>
+            </button>
+            <button id="theme-btn" class="toggle-btn" style="grid-column: span 2;" onclick="toggleTheme()">
+                SWITCH THEME (Light/Dark)
+            </button>
+        </div>
+
+        <button class="footer-btn" onclick="toggleInstructions()">How to Play</button>
+
+        <div id="instructions">
+            <p><strong>1. OUTCOME (d100)</strong><br>
+            Compare the big red number to your Target Number.<br>
+            <strong>≤ Target:</strong> SUCCESS<br>
+            <strong>> Target:</strong> FAILURE</p>
+
+            <p><strong>2. NUANCE (±d10)</strong><br>
+            Check the smaller number below.</p>
+            
+            <table class="rule-table">
+                <tr>
+                    <td style="color: var(--accent-red); font-weight: bold;">±8 or higher</td>
+                    <td>...AND<br>(Bonus if Success, Shortfall if Failure)</td>
+                </tr>
+                <tr>
+                    <td>±3 to ±7</td>
+                    <td>STANDARD<br>(Exactly as intended)</td>
+                </tr>
+                <tr>
+                    <td style="color: var(--accent-red); font-weight: bold;">Below ±3</td>
+                    <td>...BUT<br>(Complication if Success, Silver Lining if Failure)</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let isDarkMode = true;
+        let useShake = false;
+        let useTTS = false;
+        let shakeThreshold = 15;
+        let lastX, lastY, lastZ;
+        let lastUpdate = 0;
+        let shakeCooldown = false;
+
+        // DOM Elements
+        const d100El = document.getElementById('d100-display');
+        const modEl = document.getElementById('modifier-display');
+        const body = document.body;
+        const shakeBtn = document.getElementById('shake-btn');
+        const ttsBtn = document.getElementById('tts-btn');
+        const instructions = document.getElementById('instructions');
+
+        // Initialization
+        function init() {
+            // Load settings if present
+            if (localStorage.getItem('oracle_theme') === 'light') {
+                setTheme(false);
+            }
+        }
+
+        // Core Game Logic
+        function rollDice() {
+            // 1. d100 (1-100)
+            const d100 = Math.floor(Math.random() * 100) + 1;
+            
+            // 2. d10 (1-10)
+            const d10 = Math.floor(Math.random() * 10) + 1;
+            
+            // 3. Coin (Positive or Negative)
+            const isHeads = Math.random() > 0.5;
+            const modifier = isHeads ? d10 : -d10;
+
+            // Update UI
+            d100El.innerText = d100;
+            modEl.innerText = modifier > 0 ? "+" + modifier : modifier;
+
+            // Handle Voice
+            if (useTTS) {
+                speakResults(d100, modifier);
+            }
+        }
+
+        // Text to Speech Logic
+        function speakResults(d100, modifier) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Stop previous speech
+
+                let modText = "";
+                if (modifier < 0) {
+                    modText = "minus " + Math.abs(modifier);
+                } else {
+                    modText = Math.abs(modifier).toString();
+                }
+
+                // Create utterance: "75, minus 6"
+                const text = `${d100}, ${modText}`;
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Try to find a decent voice
+                utterance.rate = 1.1;
+                utterance.pitch = 1;
+                
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Settings Toggles
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            setTheme(isDarkMode);
+        }
+
+        function setTheme(isDark) {
+            isDarkMode = isDark;
+            if (isDark) {
+                body.classList.remove('light-mode');
+                body.classList.add('dark-mode');
+                localStorage.setItem('oracle_theme', 'dark');
+            } else {
+                body.classList.remove('dark-mode');
+                body.classList.add('light-mode');
+                localStorage.setItem('oracle_theme', 'light');
+            }
+        }
+
+        function toggleTTS() {
+            useTTS = !useTTS;
+            if (useTTS) {
+                ttsBtn.classList.add('active');
+            } else {
+                ttsBtn.classList.remove('active');
+            }
+        }
+
+        function toggleInstructions() {
+            instructions.classList.toggle('show');
+        }
+
+        // Shake Logic
+        function toggleShake() {
+            useShake = !useShake;
+            if (useShake) {
+                shakeBtn.classList.add('active');
+                requestMotionPermission();
+                window.addEventListener('devicemotion', handleMotion, false);
+            } else {
+                shakeBtn.classList.remove('active');
+                window.removeEventListener('devicemotion', handleMotion, false);
+            }
+        }
+
+        function requestMotionPermission() {
+            // iOS 13+ requirement
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(response => {
+                        if (response !== 'granted') {
+                            alert('Shake permission denied');
+                            toggleShake(); // Turn it back off
+                        }
+                    })
+                    .catch(console.error);
+            }
+        }
+
+        function handleMotion(event) {
+            if (!useShake || shakeCooldown) return;
+
+            const current = event.accelerationIncludingGravity;
+            if (!current) return;
+
+            const curTime = new Date().getTime();
+
+            if ((curTime - lastUpdate) > 100) {
+                const diffTime = curTime - lastUpdate;
+                lastUpdate = curTime;
+
+                if (!lastX) {
+                    lastX = current.x;
+                    lastY = current.y;
+                    lastZ = current.z;
+                    return;
+                }
+
+                const deltaX = current.x - lastX;
+                const deltaY = current.y - lastY;
+                const deltaZ = current.z - lastZ;
+
+                const speed = Math.abs(deltaX + deltaY + deltaZ) / diffTime * 10000;
+
+                if (speed > shakeThreshold * 100) {
+                    rollDice();
+                    shakeCooldown = true;
+                    setTimeout(() => { shakeCooldown = false; }, 1000); // 1 second cooldown
+                }
+
+                lastX = current.x;
+                lastY = current.y;
+                lastZ = current.z;
+            }
+        }
+
+        // Init
+        init();
+
+    </script>
+</body>
+</html>
+
