@@ -3,27 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRTB - About Me</title>
+    <title>trtb - about me</title>
     <link rel="stylesheet" href="trtb.css">
+    <style>
+        /* --- Page Specific Overrides --- */
+        
+        /* Ensure lowercase aesthetic is enforced strictly */
+        body {
+            text-transform: lowercase;
+            position: relative; 
+            padding-bottom: 100px; 
+        }
+
+        /* --- Header Centering --- */
+        h1 {
+            display: table;       /* Fits width to content */
+            margin: 0 auto;       /* Centers the block horizontally */
+            margin-bottom: 1rem;  /* Keep spacing below */
+        }
+
+        /* --- Corner Roses --- */
+        .rose-corner {
+            position: fixed;
+            top: 15px;
+            /* Scaled to viewport width, slightly larger than the spiders */
+            font-size: 5vw; 
+            z-index: 100;
+            user-select: none; 
+        }
+        .rose-left { left: 15px; }
+        .rose-right { right: 15px; }
+
+        /* --- Spider Animation Container --- */
+        .spider-track {
+            /* Remove fixed width so margins determine the width */
+            width: auto; 
+            height: 60px; /* Fixed height for them to wander in */
+            overflow: hidden;
+            /* 20% margin on left and right */
+            margin: 3rem 20%; 
+            border-top: 1px solid red;
+            border-bottom: 1px solid red;
+            background: black;
+            position: relative;
+        }
+
+        /* Individual Spider Styling */
+        .spider {
+            position: absolute;
+            top: 50%; /* Default center */
+            right: -50px; /* Start off-screen right */
+            /* Base size is set here, but JS overrides with VW units */
+            font-size: 2.5vw; 
+            user-select: none;
+            will-change: transform, right;
+        }
+
+        /* The crawl animation moves them across the screen */
+        @keyframes crawl {
+            0% { right: -15%; }
+            100% { right: 115%; }
+        }
+
+        /* The wiggle animation makes them jitter/rotate */
+        @keyframes wiggle {
+            0% { transform: translateY(-50%) rotate(0deg); }
+            25% { transform: translateY(-55%) rotate(5deg); }
+            50% { transform: translateY(-50%) rotate(0deg); }
+            75% { transform: translateY(-45%) rotate(-5deg); }
+            100% { transform: translateY(-50%) rotate(0deg); }
+        }
+
+        /* --- Bottom Symbols --- */
+        .bottom-totem {
+            text-align: center;
+            margin-top: 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .symbol-tri {
+            font-size: 3vw; /* Scaled to viewport */
+            line-height: 1;
+        }
+
+        .symbol-sq {
+            font-size: 2vw; /* Scaled to viewport */
+            line-height: 1;
+        }
+
+    </style>
 </head>
 <body>
+
+    <!-- Corner Roses -->
+    <div class="rose-corner rose-left">🌹</div>
+    <div class="rose-corner rose-right">🌹</div>
+
     <main class="content" id="main-content">
         <h1>
-            <span>Hi, I'm TRTB!</span>
+            <span>hi, i'm trtb!</span>
         </h1>
         
         <p>
-            I'm ace, agender, and really good with computers! I'm a cyclist, commuting all over town all the time on my beloved and battle-worn ebike. I like cooking, playing flight and driving simulators, and writing! I'm currently a college student, studing networking and IT at CCC. I'm having a great time!
+            i'm ace, agender, and really good with computers! i'm a cyclist, commuting all over town all the time on my beloved and battle-worn ebike. i like cooking, playing flight and driving simulators, and writing! i'm currently a college student, studing networking and it at ccc. i'm having a great time!
         </p>
         <p>
-            I'm also an activist in a few different spheres. I've been a board member of a local non-profit for eight years, where we make cycling better in our area for everyone; I've been volunteering there for 20 years total. I also donate a lot of time to the CCC GSA, where I do light outreach and gentle lobbying (as well as a great deal of graphic design and a little copy writing) to make life better for queer students and faculty on and surrounding campus. 
+            i'm also an activist in a few different spheres. i've been a board member of a local non-profit for eight years, where we make cycling better in our area for everyone; i've been volunteering there for 20 years total. i also donate a lot of time to the ccc gsa, where i do light outreach and gentle lobbying (as well as a great deal of graphic design and a little copy writing) to make life better for queer students and faculty on and surrounding campus. 
         </p>
         <p>
-            Like I say, I have a lot of fun, have lots of great friends, and do good things. 
+            like i say, i have a lot of fun, have lots of great friends, and do good things. 
         </p>
+
+        <!-- Spider Divider -->
+        <div class="spider-track" id="spider-track">
+            <!-- Spiders are generated by JS below -->
+        </div>
+
         <p class="signoff">
-            Fuck our timeline! haha! fill ur water bottles with soda from the fast food fountain!!! rahhhhh
+            fuck our timeline! haha! fill ur water bottles with soda from the fast food fountain!!! rahhhhh
         </p>
+
+        <!-- Bottom Symbols -->
+        <div class="bottom-totem">
+            <div class="symbol-tri">🔻</div>
+            <div class="symbol-sq">🟥</div>
+        </div>
+
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const track = document.getElementById('spider-track');
+            const spiderCount = 12; // Number of spiders
+            
+            for (let i = 0; i < spiderCount; i++) {
+                const spider = document.createElement('div');
+                spider.textContent = '🕷️';
+                spider.classList.add('spider');
+                
+                // Randomize Animation properties
+                
+                // Speed: between 8s and 15s to cross screen
+                const duration = 8 + Math.random() * 7; 
+                
+                // Delay: stagger them so they don't all come at once
+                // Negative delay starts them mid-animation so the track isn't empty on load
+                const delay = (Math.random() * 15) * -1; 
+                
+                // Vertical Offset (Jitter from center line)
+                // Moves them up or down by up to 15px
+                const verticalOffset = Math.floor(Math.random() * 30) - 15;
+                
+                // Size variation (0.8x to 1.4x normal size)
+                const sizeScale = 0.8 + Math.random() * 0.6;
+
+                // Wiggle speed (jitter)
+                const wiggleDuration = 0.1 + Math.random() * 0.2;
+
+                // Apply styles
+                // USING VW UNITS as requested: Base 2.5vw * scale factor
+                spider.style.fontSize = `${2.5 * sizeScale}vw`;
+                
+                spider.style.marginTop = `${verticalOffset}px`;
+                spider.style.animation = `crawl ${duration}s linear infinite ${delay}s, wiggle ${wiggleDuration}s ease-in-out infinite`;
+                
+                track.appendChild(spider);
+            }
+        });
+    </script>
 </body>
 </html>
