@@ -3,256 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>THE ORACLE</title>
+    <title>the oracle</title>
+    <link rel="stylesheet" href="trtb.css">
     <style>
-        :root {
-            --bg-color: #121212;
-            --text-color: #e0e0e0;
-            --panel-bg: #1e1e1e;
-            --border-color: #333333;
-            --accent-red: #ff3b30;
-            --btn-bg: #333333;
-            --btn-active: #4d4d4d;
-        }
-
-        body.light-mode {
-            --bg-color: #f2f2f2;
-            --text-color: #121212;
-            --panel-bg: #ffffff;
-            --border-color: #cccccc;
-            --accent-red: #cc0000;
-            --btn-bg: #e0e0e0;
-            --btn-active: #d1d1d1;
-        }
-
-        * {
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        /* --- Page Specific Overrides --- */
+        
         body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Courier New', Courier, monospace;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            text-transform: lowercase;
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
-            transition: background-color 0.3s, color 0.3s;
+            /* Override body padding for mobile alignment */
+            padding-top: 2rem; 
         }
 
+        /* Center the header like in about.html */
         h1 {
-            color: var(--accent-red);
-            font-size: 2rem;
-            margin-bottom: 10px;
-            letter-spacing: -1px;
-            text-transform: uppercase;
+            display: table;
+            margin: 0 auto 2rem auto;
         }
 
-        .container {
+        /* Game Container */
+        .game-container {
             width: 100%;
             max-width: 400px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 1rem;
         }
 
-        /* Display Area */
+        /* Display Box - Custom styling to fit theme but look like a screen */
         .display-box {
-            background-color: var(--panel-bg);
-            border: 2px solid var(--border-color);
-            padding: 30px 10px;
+            border: 1px solid white;
+            padding: 2rem 1rem;
             text-align: center;
-            border-radius: 4px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
         }
 
         .result-main {
             font-size: 5rem;
             font-weight: bold;
-            color: var(--accent-red);
+            color: red; /* trtb accent */
             line-height: 1;
+            margin: 0.5rem 0;
         }
 
         .result-sub {
             font-size: 2rem;
-            color: var(--text-color);
-            opacity: 0.8;
+            color: white;
+            opacity: 0.9;
         }
 
         .label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            color: var(--text-color);
-            opacity: 0.5;
-            margin-top: -5px;
+            font-size: 0.8rem;
+            color: #888; /* dim grey for labels */
+            margin-bottom: 0;
         }
 
-        /* Controls */
-        button {
-            background-color: var(--btn-bg);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
+        /* Roll Button - Make it stand out */
+        button.roll-btn {
+            width: 100%;
+            font-size: 1.5rem;
             padding: 15px;
-            font-family: inherit;
-            font-size: 1.2rem;
+            border-color: red;
+            color: red;
             font-weight: bold;
             cursor: pointer;
-            border-radius: 4px;
-            transition: background-color 0.1s;
-            text-transform: uppercase;
-            width: 100%;
-        }
-
-        button:active {
-            background-color: var(--btn-active);
-            transform: translateY(2px);
-        }
-
-        .roll-btn {
-            border-color: var(--accent-red);
-            color: var(--accent-red);
-            font-size: 1.5rem;
-            padding: 20px;
-        }
-
-        /* Toggles Section */
-        .settings {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .toggle-btn {
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 15px;
-        }
-
-        .toggle-btn.active {
-            border: 1px solid var(--text-color);
-            background-color: var(--btn-active);
-        }
-
-        .status-dot {
-            height: 8px;
-            width: 8px;
-            border-radius: 50%;
-            background-color: var(--border-color);
-        }
-
-        .active .status-dot {
-            background-color: var(--accent-red);
-        }
-
-        /* Instructions Modal */
-        #instructions {
-            display: none;
-            background-color: var(--panel-bg);
-            border: 1px solid var(--border-color);
-            padding: 20px;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            line-height: 1.4;
-        }
-
-        #instructions.show {
-            display: block;
-        }
-
-        .rule-table {
-            width: 100%;
-            margin-top: 10px;
-            border-collapse: collapse;
-            font-size: 0.8rem;
+            margin-top: 0;
         }
         
-        .rule-table td {
-            border-top: 1px solid var(--border-color);
-            padding: 8px 0;
+        button.roll-btn:active {
+            background-color: red;
+            color: black;
         }
 
-        .footer-btn {
-            margin-top: auto;
-            font-size: 0.8rem;
+        /* Settings Group */
+        .settings-group {
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid white;
             padding: 10px;
-            background: transparent;
-            border: none;
-            text-decoration: underline;
-            opacity: 0.6;
+            margin-top: 1rem;
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+        }
+        
+        /* Override margins for inputs inside the flex container */
+        .setting-item input {
+            margin: 0 10px 0 0; 
+        }
+
+        /* Table specific tweaks for inside details */
+        .rule-table td {
+            border: 1px solid red; /* Ensure borders match trtb table style */
         }
 
     </style>
 </head>
-<body class="dark-mode">
+<body>
 
-    <h1>The Oracle</h1>
+    <div class="game-container">
+        <h1>the oracle</h1>
 
-    <div class="container">
-        
+        <!-- Main Display -->
         <div class="display-box">
             <div>
-                <div class="label">Outcome (d100)</div>
+                <p class="label">outcome (d100)</p>
                 <div id="d100-display" class="result-main">--</div>
             </div>
-            <div style="margin-top: 10px;">
-                <div class="label">Nuance (d10)</div>
+            <hr style="border-color: #333; margin: 1.5rem 0;">
+            <div>
+                <p class="label">nuance (d10)</p>
                 <div id="modifier-display" class="result-sub">--</div>
             </div>
         </div>
 
-        <button class="roll-btn" onclick="rollDice()">ROLL</button>
+        <!-- Main Action -->
+        <button class="roll-btn" onclick="rollDice()">roll</button>
 
-        <div class="settings">
-            <button id="shake-btn" class="toggle-btn" onclick="toggleShake()">
-                SHAKE TO ROLL <span class="status-dot"></span>
-            </button>
-            <button id="tts-btn" class="toggle-btn" onclick="toggleTTS()">
-                VOICE <span class="status-dot"></span>
-            </button>
-            <button id="theme-btn" class="toggle-btn" style="grid-column: span 2;" onclick="toggleTheme()">
-                SWITCH THEME (Light/Dark)
-            </button>
+        <!-- Settings (Using Checkboxes for trtb styling) -->
+        <div class="settings-group">
+            <label class="setting-item">
+                <input type="checkbox" id="shake-toggle" onchange="toggleShake()">
+                shake to roll
+            </label>
+            <label class="setting-item">
+                <input type="checkbox" id="tts-toggle" onchange="toggleTTS()">
+                voice
+            </label>
         </div>
 
-        <button class="footer-btn" onclick="toggleInstructions()">How to Play</button>
+        <!-- Instructions via Details/Summary -->
+        <details>
+            <summary>how to play</summary>
+            <p><strong>1. outcome (d100)</strong></p>
+            <p>compare the big red number to your target number.</p>
+            <ul>
+                <li>≤ target: success</li>
+                <li>> target: failure</li>
+            </ul>
 
-        <div id="instructions">
-            <p><strong>1. OUTCOME (d100)</strong><br>
-            Compare the big red number to your Target Number.<br>
-            <strong>≤ Target:</strong> SUCCESS<br>
-            <strong>> Target:</strong> FAILURE</p>
+            <hr>
 
-            <p><strong>2. NUANCE (±d10)</strong><br>
-            Check the smaller number below.</p>
+            <p><strong>2. nuance (±d10)</strong></p>
+            <p>check the smaller white number.</p>
             
             <table class="rule-table">
-                <tr>
-                    <td style="color: var(--accent-red); font-weight: bold;">±8 or higher</td>
-                    <td>...AND<br>(Bonus if Success, Shortfall if Failure)</td>
-                </tr>
-                <tr>
-                    <td>±3 to ±7</td>
-                    <td>STANDARD<br>(Exactly as intended)</td>
-                </tr>
-                <tr>
-                    <td style="color: var(--accent-red); font-weight: bold;">Below ±3</td>
-                    <td>...BUT<br>(Complication if Success, Silver Lining if Failure)</td>
-                </tr>
+                <tbody>
+                    <tr>
+                        <td class="em">±8 or higher</td>
+                        <td>...and<br>(bonus / shortfall)</td>
+                    </tr>
+                    <tr>
+                        <td>±3 to ±7</td>
+                        <td>standard</td>
+                    </tr>
+                    <tr>
+                        <td class="em">below ±3</td>
+                        <td>...but<br>(complication / silver lining)</td>
+                    </tr>
+                </tbody>
             </table>
-        </div>
+        </details>
     </div>
 
     <script>
         // State
-        let isDarkMode = true;
         let useShake = false;
         let useTTS = false;
         let shakeThreshold = 15;
@@ -263,18 +183,6 @@
         // DOM Elements
         const d100El = document.getElementById('d100-display');
         const modEl = document.getElementById('modifier-display');
-        const body = document.body;
-        const shakeBtn = document.getElementById('shake-btn');
-        const ttsBtn = document.getElementById('tts-btn');
-        const instructions = document.getElementById('instructions');
-
-        // Initialization
-        function init() {
-            // Load settings if present
-            if (localStorage.getItem('oracle_theme') === 'light') {
-                setTheme(false);
-            }
-        }
 
         // Core Game Logic
         function rollDice() {
@@ -322,49 +230,22 @@
             }
         }
 
-        // Settings Toggles
-        function toggleTheme() {
-            isDarkMode = !isDarkMode;
-            setTheme(isDarkMode);
-        }
+        // Shake Logic
+        function toggleShake() {
+            const checkbox = document.getElementById('shake-toggle');
+            useShake = checkbox.checked;
 
-        function setTheme(isDark) {
-            isDarkMode = isDark;
-            if (isDark) {
-                body.classList.remove('light-mode');
-                body.classList.add('dark-mode');
-                localStorage.setItem('oracle_theme', 'dark');
+            if (useShake) {
+                requestMotionPermission();
+                window.addEventListener('devicemotion', handleMotion, false);
             } else {
-                body.classList.remove('dark-mode');
-                body.classList.add('light-mode');
-                localStorage.setItem('oracle_theme', 'light');
+                window.removeEventListener('devicemotion', handleMotion, false);
             }
         }
 
         function toggleTTS() {
-            useTTS = !useTTS;
-            if (useTTS) {
-                ttsBtn.classList.add('active');
-            } else {
-                ttsBtn.classList.remove('active');
-            }
-        }
-
-        function toggleInstructions() {
-            instructions.classList.toggle('show');
-        }
-
-        // Shake Logic
-        function toggleShake() {
-            useShake = !useShake;
-            if (useShake) {
-                shakeBtn.classList.add('active');
-                requestMotionPermission();
-                window.addEventListener('devicemotion', handleMotion, false);
-            } else {
-                shakeBtn.classList.remove('active');
-                window.removeEventListener('devicemotion', handleMotion, false);
-            }
+            const checkbox = document.getElementById('tts-toggle');
+            useTTS = checkbox.checked;
         }
 
         function requestMotionPermission() {
@@ -373,7 +254,8 @@
                 DeviceMotionEvent.requestPermission()
                     .then(response => {
                         if (response !== 'granted') {
-                            alert('Shake permission denied');
+                            alert('shake permission denied');
+                            document.getElementById('shake-toggle').checked = false;
                             toggleShake(); // Turn it back off
                         }
                     })
@@ -417,11 +299,6 @@
                 lastZ = current.z;
             }
         }
-
-        // Init
-        init();
-
     </script>
 </body>
 </html>
-
