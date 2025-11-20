@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRTB Crypto-Editor</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        /* =========================================
+           TRTB.CSS (MERGED)
+           ========================================= */
+        
+        /* --- CSS Variables --- */
+        :root {
+            --line-thick: 1px;
+            --page-paddi: 2%;        /* Reduced padding slightly to fit more tools */
+            --min-gap: 5px;
+            --tight-line: 1.1;
+            --font-size0: 14px;      /* Slightly smaller for density */
+            --indentatio: 3rem;
+            --slim-v-mar: 0.5%;
+            --hr-v-margi: 10px;
+            --para-inden: 2ch;
+            --head-inden: 4ch;
+        }
+
+        /* --- General Styling --- */
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+            margin: 0;
+            padding: var(--page-paddi);
+            box-sizing: border-box;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* App-like feel */
+        }
+
+        /* --- Typography & Elements --- */
+        p { margin: var(--slim-v-mar) 0; text-indent: var(--para-inden); }
+        
+        h1, h2, h3, h4, h5, h6 {
+            background-color: red;
+            color: black;
+            font-size: inherit;
+            margin: 0;
+            padding: 2px 10px;
+            display: inline-block;
+        }
+
+        a {
+            color: white;
+            text-decoration: overline;
+            text-decoration-color: red;
+        }
+        a:hover { background-color: white; color: black; }
+
+        ul, ol { list-style: none; padding-left: 0; margin: var(--slim-v-mar) 0; }
+        ul li::before { content: '•'; color: red; margin-right: 0.5em; }
+        ol { counter-reset: list-item; }
+        ol li::before { 
+            counter-increment: list-item; content: counter(list-item) ". "; 
+            color: red; margin-right: 0.5em; 
+        }
+
+        blockquote {
+            border-left: var(--line-thick) solid red;
+            padding-left: 15px;
+            font-style: italic;
+        }
+
+        hr {
+            border: none;
+            border-top: var(--line-thick) solid red;
+            margin: var(--hr-v-margi) 0;
+        }
+
+        /* --- Code & Tables --- */
+        pre, code {
+            background-color: #111;
+            border: var(--line-thick) solid white;
+            padding: var(--min-gap);
+            font-family: monospace;
+        }
+
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: var(--line-thick) solid red; padding: 5px; }
+        th { background-color: red; color: black; }
+
+        /* --- Form Elements --- */
+        input, textarea, select, button {
+            background-color: black;
+            color: red;
+            border: var(--line-thick) solid white;
+            padding: 5px;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            box-sizing: border-box;
+        }
+        
+        input:focus, textarea:focus, button:focus {
+            border-color: red;
+            outline: none;
+        }
+
+        /* =========================================
+           LAYOUT & APP STYLES
+           ========================================= */
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid white;
+            padding-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        /* --- Top Section: Markdown Editor (Expands) --- */
+        .editor-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            flex-grow: 1; /* Takes all available vertical space */
+            min-height: 0; /* Required for flex child scrolling */
+            margin-bottom: 10px;
+        }
+
+        .column {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .column-label {
+            color: white;
+            margin-bottom: 2px;
+            font-weight: bold;
+            border-bottom: 1px solid red;
+            display: inline-block;
+            width: fit-content;
+            font-size: 0.8rem;
+        }
+
+        #markdown-input {
+            width: 100%;
+            height: 100%;
+            resize: none;
+            color: #eee; /* Use white/grey for input for readability */
+            border-color: white;
+        }
+
+        #preview-pane {
+            border: var(--line-thick) solid white;
+            padding: 15px;
+            overflow-y: auto;
+            height: 100%;
+            background-color: black;
+        }
+        #preview-pane img { max-width: 100%; }
+
+        /* --- Bottom Section: Encryption Controls (Fixed Height) --- */
+        .crypto-section {
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            border-top: 1px double red;
+            padding-top: 10px;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .controls input[type="password"] {
+            flex-grow: 1;
+            min-width: 150px;
+        }
+
+        .controls button {
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        /* Button Colors */
+        #btn-encrypt { border-color: red; color: red; }
+        #btn-encrypt:hover { background-color: red; color: black; }
+
+        #btn-load { border-color: #4488ff; color: #4488ff; }
+        #btn-load:hover { background-color: #4488ff; color: black; }
+
+        #btn-export { border-color: #00ff00; color: #00ff00; }
+        #btn-export:hover { background-color: #00ff00; color: black; }
+
+        #output-text {
+            height: 120px; /* Fixed height for output */
+            resize: none;
+            color: red;
+            font-size: 0.8rem;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .editor-section {
+                grid-template-columns: 1fr;
+            }
+            body {
+                overflow-y: auto;
+                height: auto;
+            }
+            #markdown-input, #preview-pane {
+                min-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-header">
+        <h1>TRTB MD-CRYPTO</h1>
+        <span style="font-size: 0.8rem; color: red;">v2.0 // combined</span>
+    </div>
+
+    <div class="editor-section">
+        <div class="column">
+            <div class="column-label">INPUT (MARKDOWN / PLAIN)</div>
+            <textarea id="markdown-input" placeholder="# Secure Note
+
+Type here. This text will be encrypted when you use the controls below."></textarea>
+        </div>
+
+        <div class="column">
+            <div class="column-label">LIVE PREVIEW</div>
+            <div id="preview-pane"></div>
+        </div>
+    </div>
+
+    <div class="crypto-section">
+        <div class="column-label">ENCRYPTION CONTROLS</div>
+        
+        <div class="controls">
+            <button id="btn-load" onclick="decryptToWorkArea()" title="Decrypt output back to editor">load (decrypt) &uarr;</button>
+            <input type="password" id="password" placeholder="secret password" value="default">
+            <button id="btn-encrypt" onclick="generateEncryption()" title="Encrypt editor content to output">encrypt &darr;</button>
+            <button id="btn-export" onclick="exportEncrypted()">copy output</button>
+        </div>
+
+        <textarea id="output-text" placeholder="Encrypted output string appears here..."></textarea>
+    </div>
+
+    <script>
+        /* ============================
+           MARKDOWN LOGIC
+           ============================ */
+        const inputArea = document.getElementById('markdown-input');
+        const previewArea = document.getElementById('preview-pane');
+
+        // Render on Load
+        renderMarkdown();
+
+        // Render on Input
+        inputArea.addEventListener('input', () => {
+            renderMarkdown();
+        });
+
+        function renderMarkdown() {
+            const rawMarkdown = inputArea.value;
+            // marked.js configuration
+            const parsedHTML = marked.parse(rawMarkdown, { breaks: true });
+            previewArea.innerHTML = parsedHTML;
+        }
+
+
+        /* ============================
+           CRYPTO UTILITIES
+           ============================ */
+        const enc = new TextEncoder();
+        const dec = new TextDecoder();
+        const buff_to_base64 = (buff) => btoa(String.fromCharCode.apply(null, new Uint8Array(buff)));
+        const base64_to_buff = (b64) => {
+            const binary_string = atob(b64);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binary_string.charCodeAt(i);
+            return bytes;
+        };
+
+        async function getKeyMaterial(password) {
+            return window.crypto.subtle.importKey(
+                "raw", 
+                enc.encode(password), 
+                {name: "PBKDF2"}, 
+                false, 
+                ["deriveKey"]
+            );
+        }
+
+        async function getKey(keyMaterial, salt) {
+            return window.crypto.subtle.deriveKey(
+                {
+                    "name": "PBKDF2",
+                    salt: salt,
+                    "iterations": 100000,
+                    "hash": "SHA-256"
+                },
+                keyMaterial,
+                { "name": "AES-GCM", "length": 256},
+                true,
+                [ "encrypt", "decrypt" ]
+            );
+        }
+
+        /* ============================
+           ANIMATION LOGIC
+           ============================ */
+        function animateScramble(element, finalStr) {
+            const duration = 1000; 
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+            const start = Date.now();
+            let toggle = false; 
+            
+            function next() {
+                const now = Date.now();
+                const progress = (now - start) / duration;
+                
+                if (progress >= 1) {
+                    element.value = finalStr;
+                    element.style.color = "red"; 
+                    element.style.borderColor = "red";
+                    return;
+                }
+                
+                const len = finalStr.length;
+                let randomArr = [];
+                // Only scramble a subset if it's huge to save performance
+                const limit = Math.min(len, 200); 
+                
+                for (let i = 0; i < limit; i++) {
+                    randomArr.push(chars.charAt(Math.floor(Math.random() * chars.length)));
+                }
+                if(len > 200) randomArr.push("...");
+
+                element.value = randomArr.join('');
+                
+                const color = toggle ? "#00ff00" : "#4488ff";
+                element.style.color = color;
+                element.style.borderColor = color;
+                toggle = !toggle;
+
+                const delay = 20 + Math.pow(progress, 3) * 200;
+                setTimeout(next, delay);
+            }
+            next();
+        }
+
+        /* ============================
+           MAIN CRYPTO ACTIONS
+           ============================ */
+        
+        // ENCRYPT: Top (markdown) -> Bottom (output)
+        async function generateEncryption() {
+            // NOTE: We read from markdown-input now
+            const inputVal = document.getElementById("markdown-input").value;
+            const password = document.getElementById("password").value;
+            const outputField = document.getElementById("output-text");
+
+            if (!inputVal) return;
+            if (!password) { alert("please enter a password."); return; }
+
+            try {
+                const salt = window.crypto.getRandomValues(new Uint8Array(16));
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                
+                const keyMaterial = await getKeyMaterial(password);
+                const key = await getKey(keyMaterial, salt);
+
+                const encoded = enc.encode(inputVal);
+                const encrypted = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    key,
+                    encoded
+                );
+
+                const combined = new Uint8Array(salt.byteLength + iv.byteLength + encrypted.byteLength);
+                combined.set(salt, 0);
+                combined.set(iv, salt.byteLength);
+                combined.set(new Uint8Array(encrypted), salt.byteLength + iv.byteLength);
+
+                const finalB64 = buff_to_base64(combined);
+                animateScramble(outputField, finalB64);
+
+            } catch (e) {
+                console.error(e);
+                alert("error during encryption.");
+            }
+        }
+
+        // DECRYPT: Bottom (output) -> Top (markdown)
+        async function decryptToWorkArea() {
+            const outputVal = document.getElementById("output-text").value;
+            const password = document.getElementById("password").value;
+            // NOTE: We write to markdown-input now
+            const workField = document.getElementById("markdown-input");
+
+            if (!outputVal) return;
+            if (!password) { alert("please enter a password."); return; }
+
+            try {
+                document.getElementById("output-text").style.color = "red";
+                document.getElementById("output-text").style.borderColor = "white";
+
+                const data = base64_to_buff(outputVal);
+
+                if (data.length < 28) throw new Error("Invalid data length");
+                const salt = data.slice(0, 16);
+                const iv = data.slice(16, 28);
+                const ciphertext = data.slice(28);
+
+                const keyMaterial = await getKeyMaterial(password);
+                const key = await getKey(keyMaterial, salt);
+
+                const decrypted = await window.crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: iv },
+                    key,
+                    ciphertext
+                );
+
+                // Success: Update Input
+                workField.value = dec.decode(decrypted);
+                
+                // TRIGGER PREVIEW UPDATE
+                renderMarkdown();
+
+            } catch (e) {
+                console.error(e);
+                alert("decryption failed: wrong password or corrupted data.");
+            }
+        }
+
+        // EXPORT TO CLIPBOARD
+        function exportEncrypted() {
+            const output = document.getElementById("output-text");
+            
+            if (!output.value) {
+                alert("no encrypted text to export yet.");
+                return;
+            }
+
+            output.select();
+            output.setSelectionRange(0, 99999); 
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(output.value).then(() => {
+                    const originalBg = output.style.backgroundColor;
+                    output.style.backgroundColor = "#00ff00";
+                    output.style.color = "black";
+                    setTimeout(() => { 
+                        output.style.backgroundColor = ""; 
+                        output.style.color = "red"; 
+                    }, 200);
+                });
+            } else {
+                document.execCommand('copy');
+                alert("copied to clipboard!");
+            }
+        }
+    </script>
+</body>
+</html>
