@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 File Converter & Encrypter</title>
+    <style>
+        /* --- CSS Variables --- */
+        :root {
+            --line-thick: 1px;       /* Global variable for line thickness */
+            --page-paddi: 5%;        /* Padding around the entire page */
+            --min-gap: 5px;          /* Minimal padding for content inside borders */
+            --tight-line: 1.0;       /* Very tight vertical spacing for text */
+            --font-size0: 16px;      /* Base font size for all text */
+            --indentatio: 3rem;      /* Equivalent to ~0.5 inches */
+            --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
+            --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
+            --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
+            --head-inden: 4ch;       /* Headers indented 4 characters */
+        }
+
+        /* --- General Styling --- */
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+            margin: 0;
+            padding: var(--page-paddi);
+            box-sizing: border-box;
+        }
+
+        /* --- Paragraphs --- */
+        p {
+            margin: var(--slim-v-mar) 0;
+            text-indent: var(--para-inden);
+        }
+
+        /* --- Headers --- */
+        h1, h2, h3, h4, h5, h6 {
+            background-color: red;
+            color: black;
+            font-size: inherit;
+            margin-top: 0;
+            margin-bottom: 0;
+            margin-left: var(--head-inden);
+            padding: 5px 10px;
+            display: inline-block;
+            line-height: var(--tight-line);
+        }
+
+        /* --- Links --- */
+        a {
+            color: white;
+            text-decoration: none;
+            text-decoration-line: overline;
+            text-decoration-color: red;
+            text-decoration-thickness: var(--line-thick);
+            padding: 2px 4px;
+            transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+        }
+
+        a:hover {
+            background-color: white;
+            color: black;
+        }
+
+        /* --- Emphasis (.em class) --- */
+        .em {
+            color: red;
+        }
+
+        /* --- Code Blocks (pre, code) --- */
+        pre, code {
+            background-color: black;
+            color: white;
+            border: var(--line-thick) solid white;
+            padding: var(--min-gap);
+            margin: var(--slim-v-mar) 0;
+            display: block;
+            overflow-x: auto;
+            box-sizing: border-box;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+        }
+
+        :not(pre) > code {
+            border-top: none;
+            border-bottom: none;
+            border-left: var(--line-thick) solid white;
+            border-right: var(--line-thick) solid white;
+            padding: 0 3px;
+            display: inline-block;
+            vertical-align: middle;
+            line-height: inherit;
+        }
+
+        /* --- Form Elements --- */
+        input, textarea, select, button {
+            background-color: black;
+            color: red;
+            border: var(--line-thick) solid white;
+            padding: 5px;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            box-sizing: border-box;
+            line-height: var(--tight-line);
+            margin: var(--slim-v-mar) 0;
+            display: block;
+            width: 100%;
+        }
+
+        input:focus, textarea:focus, select:focus, button:focus {
+            border-color: red;
+            outline: none;
+        }
+        
+        button {
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background-color: red;
+            color: black;
+        }
+
+        /* --- Horizontal Rule (hr) --- */
+        hr {
+            border: none;
+            border-top: var(--line-thick) solid red;
+            margin: var(--hr-v-margi) 0;
+        }
+        
+        /* Utility for status messages */
+        #status {
+            color: red;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>FILE_PROCESSOR_V1</h1>
+    <p>Upload a file to convert it to Base64 string format. Optionally, provide a passcode to encrypt the output using AES-GCM.</p>
+    
+    <hr>
+
+    <label for="fileInput">Input Source:</label>
+    <input type="file" id="fileInput">
+
+    <label for="passcode">Encryption Passcode (Optional):</label>
+    <input type="password" id="passcode" placeholder="Leave empty for plain Base64">
+
+    <button id="convertBtn" onclick="processFile()">>> EXECUTE CONVERSION</button>
+
+    <hr>
+
+    <label for="output">System Output:</label>
+    <textarea id="output" rows="15" readonly placeholder="Waiting for input..."></textarea>
+    
+    <div id="status"></div>
+
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+        <button onclick="copyToClipboard()">[ COPY DATA ]</button>
+        <button onclick="downloadOutput()">[ SAVE AS .TXT ]</button>
+    </div>
+
+    <script>
+        // --- Main Logic ---
+
+        async function processFile() {
+            const fileInput = document.getElementById('fileInput');
+            const passInput = document.getElementById('passcode');
+            const status = document.getElementById('status');
+            const output = document.getElementById('output');
+
+            status.innerText = "Processing...";
+            output.value = "";
+
+            if (fileInput.files.length === 0) {
+                status.innerText = "ERROR: No file selected.";
+                return;
+            }
+
+            const file = fileInput.files[0];
+
+            try {
+                // 1. Read File as Base64
+                let base64String = await readFileAsDataURL(file);
+
+                // 2. Check if Encryption is requested
+                if (passInput.value.length > 0) {
+                    status.innerText = "Encrypting data...";
+                    const encryptedData = await encryptData(base64String, passInput.value);
+                    output.value = encryptedData;
+                    status.innerText = "SUCCESS: File converted and encrypted.";
+                } else {
+                    output.value = base64String;
+                    status.innerText = "SUCCESS: File converted to Base64.";
+                }
+            } catch (err) {
+                console.error(err);
+                status.innerText = "CRITICAL ERROR: " + err.message;
+            }
+        }
+
+        // --- Helper: Read File ---
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // --- Helper: Copy ---
+        function copyToClipboard() {
+            const copyText = document.getElementById("output");
+            copyText.select();
+            copyText.setSelectionRange(0, 999999); /* For mobile devices */
+            navigator.clipboard.writeText(copyText.value).then(() => {
+                document.getElementById('status').innerText = "System: Copied to clipboard.";
+            });
+        }
+
+        // --- Helper: Download ---
+        function downloadOutput() {
+            const text = document.getElementById("output").value;
+            if(!text) return;
+            
+            const blob = new Blob([text], { type: "text/plain" });
+            const anchor = document.createElement("a");
+            anchor.download = "output_data.txt";
+            anchor.href = window.URL.createObjectURL(blob);
+            anchor.target = "_blank";
+            anchor.style.display = "none";
+            document.body.appendChild(anchor);
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
+
+        // --- Encryption Logic (AES-GCM) ---
+        
+        async function encryptData(plainText, password) {
+            const enc = new TextEncoder();
+            const salt = window.crypto.getRandomValues(new Uint8Array(16));
+            const iv = window.crypto.getRandomValues(new Uint8Array(12));
+            
+            // Import Password
+            const keyMaterial = await window.crypto.subtle.importKey(
+                "raw", 
+                enc.encode(password), 
+                { name: "PBKDF2" }, 
+                false, 
+                ["deriveKey"]
+            );
+
+            // Derive Key
+            const key = await window.crypto.subtle.deriveKey(
+                {
+                    name: "PBKDF2",
+                    salt: salt,
+                    iterations: 100000,
+                    hash: "SHA-256"
+                },
+                keyMaterial,
+                { name: "AES-GCM", length: 256 },
+                true,
+                ["encrypt", "decrypt"]
+            );
+
+            // Encrypt
+            const encryptedContent = await window.crypto.subtle.encrypt(
+                {
+                    name: "AES-GCM",
+                    iv: iv
+                },
+                key,
+                enc.encode(plainText)
+            );
+
+            // Pack Data: Salt + IV + Ciphertext -> Base64
+            // We pack it all into a JSON object and base64 that so it's a single portable string
+            const package = {
+                s: bufferToBase64(salt),
+                iv: bufferToBase64(iv),
+                d: bufferToBase64(encryptedContent)
+            };
+
+            return btoa(JSON.stringify(package));
+        }
+
+        // ArrayBuffer to Base64 helper
+        function bufferToBase64(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
+
+    </script>
+</body>
+</html>
