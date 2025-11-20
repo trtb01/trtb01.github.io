@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>encry-t2.html</title>
+    <link rel="stylesheet" href="trtb.css">
+    <style>
+        /* --- Page Specific Overrides --- */
+        
+        body {
+            text-transform: lowercase;
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Full viewport height */
+            overflow: hidden; /* Prevent double scrollbars */
+        }
+
+        /* Header adjustment */
+        h1 {
+            margin: 0 0 10px 0;
+            display: table; /* Shrink to fit content */
+        }
+
+        /* Main Layout Container */
+        .workspace {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            gap: 10px;
+            overflow-y: auto; /* Scroll content if needed */
+            padding-bottom: 20px;
+        }
+
+        /* Text Areas */
+        .text-group {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        textarea {
+            flex-grow: 1;
+            resize: none; /* Let flexbox handle sizing */
+            width: 100%;
+            min-height: 150px;
+            font-family: monospace;
+        }
+
+        /* Controls Bar */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid white;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .controls input[type="password"] {
+            flex-grow: 1;
+            margin: 0;
+            min-width: 150px;
+        }
+
+        .controls button {
+            margin: 0;
+            flex-grow: 0;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* Specific Action Colors (TRTB Style: Colored Borders/Text) */
+        #btn-encrypt { border-color: red; color: red; }
+        #btn-encrypt:hover { background-color: red; color: black; }
+
+        #btn-load { border-color: #4488ff; color: #4488ff; }
+        #btn-load:hover { background-color: #4488ff; color: black; }
+
+        #btn-export { border-color: #00ff00; color: #00ff00; }
+        #btn-export:hover { background-color: #00ff00; color: black; }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            text-align: center;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            flex-shrink: 0;
+        }
+
+        /* Labels */
+        .label {
+            font-size: 0.8rem;
+            color: red;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>encry-t2.html</h1>
+
+    <div class="workspace">
+        
+        <!-- Input Section -->
+        <div class="text-group">
+            <div class="label">working text (unencrypted)</div>
+            <textarea id="input-text" placeholder="type your plain text here..."></textarea>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <button id="btn-load" onclick="decryptToWorkArea()">load &uarr;</button>
+            <input type="password" id="password" placeholder="secret password" value="default">
+            <button id="btn-encrypt" onclick="generateEncryption()">encrypt &darr;</button>
+            <button id="btn-export" onclick="exportEncrypted()">export</button>
+        </div>
+
+        <!-- Output Section -->
+        <div class="text-group">
+            <div class="label">encrypted output</div>
+            <textarea id="output-text" placeholder="encrypted code will appear here..."></textarea>
+        </div>
+
+        <footer>
+            trtb script // (c) thor smith 2025
+        </footer>
+    </div>
+
+    <script>
+        // --- EXPORT FUNCTIONALITY ---
+        function exportEncrypted() {
+            const output = document.getElementById("output-text");
+            
+            if (!output.value) {
+                alert("no encrypted text to export yet.");
+                return;
+            }
+
+            output.select();
+            output.setSelectionRange(0, 99999); // For mobile devices
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(output.value).then(() => {
+                    // Visual feedback using trtb colors
+                    const originalBg = output.style.backgroundColor;
+                    const originalColor = output.style.color;
+                    
+                    output.style.backgroundColor = "#00ff00";
+                    output.style.color = "black";
+                    
+                    setTimeout(() => { 
+                        output.style.backgroundColor = ""; 
+                        output.style.color = ""; 
+                    }, 200);
+                });
+            } else {
+                document.execCommand('copy');
+                alert("copied to clipboard!");
+            }
+        }
+
+        // --- CRYPTO UTILITIES ---
+        const enc = new TextEncoder();
+        const dec = new TextDecoder();
+        const buff_to_base64 = (buff) => btoa(String.fromCharCode.apply(null, new Uint8Array(buff)));
+        const base64_to_buff = (b64) => {
+            const binary_string = atob(b64);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) bytes[i] = binary_string.charCodeAt(i);
+            return bytes;
+        };
+
+        async function getKeyMaterial(password) {
+            return window.crypto.subtle.importKey(
+                "raw", 
+                enc.encode(password), 
+                {name: "PBKDF2"}, 
+                false, 
+                ["deriveKey"]
+            );
+        }
+
+        async function getKey(keyMaterial, salt) {
+            return window.crypto.subtle.deriveKey(
+                {
+                    "name": "PBKDF2",
+                    salt: salt,
+                    "iterations": 100000,
+                    "hash": "SHA-256"
+                },
+                keyMaterial,
+                { "name": "AES-GCM", "length": 256},
+                true,
+                [ "encrypt", "decrypt" ]
+            );
+        }
+
+        // --- MAIN LOGIC ---
+        async function generateEncryption() {
+            const inputVal = document.getElementById("input-text").value;
+            const password = document.getElementById("password").value;
+            const outputField = document.getElementById("output-text");
+
+            if (!inputVal) return;
+            if (!password) { alert("please enter a password."); return; }
+
+            try {
+                // 1. Generate Salt and IV
+                const salt = window.crypto.getRandomValues(new Uint8Array(16));
+                const iv = window.crypto.getRandomValues(new Uint8Array(12));
+                
+                // 2. Derive Key
+                const keyMaterial = await getKeyMaterial(password);
+                const key = await getKey(keyMaterial, salt);
+
+                // 3. Encrypt
+                const encoded = enc.encode(inputVal);
+                const encrypted = await window.crypto.subtle.encrypt(
+                    { name: "AES-GCM", iv: iv },
+                    key,
+                    encoded
+                );
+
+                // 4. Pack Salt + IV + Ciphertext into one buffer
+                const combined = new Uint8Array(salt.byteLength + iv.byteLength + encrypted.byteLength);
+                combined.set(salt, 0);
+                combined.set(iv, salt.byteLength);
+                combined.set(new Uint8Array(encrypted), salt.byteLength + iv.byteLength);
+
+                // 5. Output to Bottom Field
+                outputField.value = buff_to_base64(combined);
+
+            } catch (e) {
+                console.error(e);
+                alert("error during encryption.");
+            }
+        }
+
+        async function decryptToWorkArea() {
+            const outputVal = document.getElementById("output-text").value;
+            const password = document.getElementById("password").value;
+            const workField = document.getElementById("input-text");
+
+            if (!outputVal) return;
+            if (!password) { alert("please enter a password."); return; }
+
+            try {
+                // 1. Decode Base64
+                const data = base64_to_buff(outputVal);
+
+                // 2. Extract Salt (16 bytes), IV (12 bytes), and Ciphertext
+                if (data.length < 28) throw new Error("Invalid data length");
+                const salt = data.slice(0, 16);
+                const iv = data.slice(16, 28);
+                const ciphertext = data.slice(28);
+
+                // 3. Derive Key (using extracted salt)
+                const keyMaterial = await getKeyMaterial(password);
+                const key = await getKey(keyMaterial, salt);
+
+                // 4. Decrypt
+                const decrypted = await window.crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: iv },
+                    key,
+                    ciphertext
+                );
+
+                // 5. Success - Update Top Field
+                workField.value = dec.decode(decrypted);
+
+            } catch (e) {
+                console.error(e);
+                alert("decryption failed: wrong password or corrupted data.");
+            }
+        }
+    </script>
+</body>
+</html>
