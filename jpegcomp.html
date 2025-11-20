@@ -3,116 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickCompress</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>quickcompress</title>
+    
+    <link rel="stylesheet" href="trtb.css">
+
     <style>
-        /* Custom slider styling for better mobile touch targets */
-        input[type=range] {
-            -webkit-appearance: none; 
-            background: transparent; 
+        /* Utility class required for the JavaScript toggling */
+        .hidden {
+            display: none !important;
         }
+
+        /* Minimal overrides to make the range slider match the trtb theme 
+           (Black track, Red thumb) */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            border: none; /* Remove default input border from trtb.css for slider */
+            padding: 0;
+        }
+        
         input[type=range]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 24px;
-            width: 24px;
-            border-radius: 50%;
-            background: #3b82f6;
+            height: 20px;
+            width: 20px;
+            background: red;
+            border: 1px solid white;
             cursor: pointer;
-            margin-top: -10px; 
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            margin-top: -8px; 
         }
+        
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
             cursor: pointer;
-            background: #e2e8f0;
-            border-radius: 2px;
+            background: white;
         }
-        input[type=range]:focus {
-            outline: none;
-        }
-        /* Hide scrollbar for clean look */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;  
-            scrollbar-width: none;  
+
+        /* Lowercase enforcement */
+        body {
+            text-transform: lowercase;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<body>
 
-    <!-- Header -->
-    <header class="bg-white shadow-sm p-4 sticky top-0 z-10">
-        <div class="max-w-md mx-auto flex items-center justify-between">
-            <h1 class="text-xl font-bold text-blue-600 tracking-tight">QuickCompress</h1>
-            <span class="text-xs font-medium bg-blue-50 text-blue-600 px-2 py-1 rounded-full">JPEG Output</span>
-        </div>
-    </header>
+    <h1>quickcompress</h1>
+    <p>mode: jpeg output</p>
+    <hr>
 
-    <!-- Main Content -->
-    <main class="flex-grow p-4 flex flex-col items-center max-w-md mx-auto w-full space-y-6">
+    <main>
 
-        <!-- Upload Section -->
-        <div id="upload-area" class="w-full group transition-all duration-300 ease-in-out">
-            <label for="file-input" class="flex flex-col items-center justify-center w-full h-48 border-2 border-blue-300 border-dashed rounded-2xl cursor-pointer bg-white hover:bg-blue-50 transition-colors relative overflow-hidden shadow-sm">
-                <div class="flex flex-col items-center justify-center pt-5 pb-6 text-center p-4">
-                    <svg class="w-10 h-10 mb-3 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                    <p class="mb-1 text-sm text-slate-600 font-medium">Tap to upload image</p>
-                    <p class="text-xs text-slate-400">PNG, JPG, WEBP, HEIC</p>
-                </div>
-                <input id="file-input" type="file" class="hidden" accept="image/*" />
-            </label>
+        <div id="upload-area">
+            <p>select or drop an image to begin.</p>
+            <p class="em" style="font-size: 0.8em;">(supports: png, jpg, webp, heic)</p>
+            <input id="file-input" type="file" accept="image/*">
         </div>
 
-        <!-- Editor Section (Hidden by default) -->
-        <div id="editor-area" class="w-full hidden space-y-6 animate-fade-in">
+        <div id="editor-area" class="hidden">
             
-            <!-- Image Preview -->
-            <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-100">
-                <div class="relative w-full h-64 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center">
-                    <img id="preview-image" class="max-w-full max-h-full object-contain" alt="Preview">
+            <figure>
+                <img id="preview-image" alt="preview">
+                <figcaption>preview render</figcaption>
+            </figure>
+
+            <h3>statistics</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>metric</th>
+                        <th>value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>original size</td>
+                        <td id="original-size">-</td>
+                    </tr>
+                    <tr>
+                        <td>compressed size</td>
+                        <td id="compressed-size">-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <hr>
+
+            <h3>settings</h3>
+            <p>
+                compression level: <span id="quality-value" class="em">80%</span>
+            </p>
+            <div style="border: 1px solid white; padding: 10px;">
+                <input id="quality-slider" type="range" min="0.01" max="1" step="0.01" value="0.8">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8em;">
+                    <span>low quality</span>
+                    <span>high quality</span>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 gap-4">
-                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center">
-                    <p class="text-xs text-slate-400 uppercase tracking-wide">Original</p>
-                    <p id="original-size" class="text-sm font-bold text-slate-700">-</p>
-                </div>
-                <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-100 text-center relative overflow-hidden">
-                    <div class="absolute inset-0 bg-green-50 opacity-50"></div>
-                    <div class="relative z-10">
-                        <p class="text-xs text-green-600 uppercase tracking-wide">Compressed</p>
-                        <p id="compressed-size" class="text-sm font-bold text-green-700">-</p>
-                    </div>
-                </div>
-            </div>
+            <br>
 
-            <!-- Controls -->
-            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-100 space-y-4">
-                <div class="flex justify-between items-center">
-                    <label for="quality-slider" class="text-sm font-medium text-slate-700">Compression Level</label>
-                    <span id="quality-value" class="text-sm font-bold text-blue-600">80%</span>
-                </div>
-                <input id="quality-slider" type="range" min="0.01" max="1" step="0.01" value="0.8" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-                <div class="flex justify-between text-xs text-slate-400 px-1">
-                    <span>Low Quality</span>
-                    <span>High Quality</span>
-                </div>
-            </div>
+            <button id="download-btn">download image</button>
+            <button id="reset-btn" style="background-color: #111; border-color: #555;">start over</button>
 
-            <!-- Actions -->
-            <button id="download-btn" class="w-full py-4 px-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white text-base font-semibold rounded-xl shadow-md transition-transform transform active:scale-95 flex items-center justify-center space-x-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                <span>Download Image</span>
-            </button>
-
-            <button id="reset-btn" class="w-full py-3 text-slate-500 text-sm font-medium hover:text-slate-700 transition-colors">
-                Start Over
-            </button>
         </div>
 
     </main>
@@ -143,6 +136,8 @@
         resetBtn.addEventListener('click', resetApp);
 
         // Setup drag and drop visuals
+        // Note: trtb.css doesn't use dashed lines, so we rely on standard browser drag behavior
+        // attached to the div wrapper.
         ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
             uploadArea.addEventListener(eventName, preventDefaults, false);
         });
@@ -169,7 +164,7 @@
             if (files.length > 0) {
                 const file = files[0];
                 if (!file.type.startsWith('image/')) {
-                    alert('Please upload an image file.');
+                    alert('please upload an image file.');
                     return;
                 }
                 originalFile = file;
@@ -184,10 +179,11 @@
                 originalImage.onload = () => {
                     // Initial setup
                     originalSizeDisplay.textContent = formatBytes(file.size);
+                    
                     // Show editor, hide upload
                     uploadArea.classList.add('hidden');
                     editorArea.classList.remove('hidden');
-                    editorArea.classList.add('flex', 'flex-col'); // Ensure flex layout
+                    
                     // Initial compress
                     compressImage();
                 };
@@ -195,7 +191,7 @@
             reader.readAsDataURL(file);
         }
 
-        // Update the % text while dragging, but don't re-compress heavily until stop
+        // Update the % text while dragging
         function handleSliderInput(e) {
             const val = Math.round(e.target.value * 100);
             qualityValue.textContent = `${val}%`;
@@ -223,21 +219,18 @@
                 // Update UI
                 const url = URL.createObjectURL(blob);
                 previewImage.onload = () => {
-                    // Clean up memory after image loads
-                    // We don't revoke immediately so download works, 
-                    // we'll rely on the next update to handle new URLs
+                    // Clean up memory logic would go here
                 };
                 previewImage.src = url;
                 
                 compressedSizeDisplay.textContent = formatBytes(blob.size);
 
-                // Visual feedback on size reduction
-                if (blob.size < originalFile.size) {
-                    compressedSizeDisplay.classList.remove('text-red-600');
-                    compressedSizeDisplay.classList.add('text-green-700');
+                // Visual feedback on size reduction using trtb.css classes
+                // If compressed is LARGER than original, add 'em' (red text)
+                if (blob.size >= originalFile.size) {
+                    compressedSizeDisplay.classList.add('em');
                 } else {
-                    compressedSizeDisplay.classList.add('text-red-600');
-                    compressedSizeDisplay.classList.remove('text-green-700');
+                    compressedSizeDisplay.classList.remove('em');
                 }
 
             }, 'image/jpeg', quality);
@@ -265,7 +258,6 @@
             originalImage = new Image();
             
             editorArea.classList.add('hidden');
-            editorArea.classList.remove('flex');
             uploadArea.classList.remove('hidden');
             
             // Reset slider
@@ -274,14 +266,13 @@
         }
 
         function formatBytes(bytes, decimals = 2) {
-            if (bytes === 0) return '0 Bytes';
+            if (bytes === 0) return '0 bytes';
             const k = 1024;
             const dm = decimals < 0 ? 0 : decimals;
-            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const sizes = ['bytes', 'kb', 'mb', 'gb'];
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
         }
     </script>
 </body>
 </html>
-
