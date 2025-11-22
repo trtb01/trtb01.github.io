@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Image Viewer</title>
+    <style>
+        /* --- CSS Variables --- */
+        :root {
+            --line-thick: 1px;       /* Global variable for line thickness */
+            --page-paddi: 5%;        /* Padding around the entire page */
+            --min-gap: 5px;          /* Minimal padding for content inside borders */
+            --tight-line: 1.0;       /* Very tight vertical spacing for text */
+            --font-size0: 16px;      /* Base font size for all text (added a 0 to make 10 chars) */
+            --indentatio: 3rem;      /* Equivalent to ~0.5 inches (3 * 16px = 48px) */
+            --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
+            --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
+            --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
+            --head-inden: 4ch;       /* Headers indented 4 characters */
+        }
+
+        /* --- General Styling --- */
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+            margin: 0;
+            padding: var(--page-paddi);
+            box-sizing: border-box;
+        }
+
+        /* --- Paragraphs --- */
+        p {
+            margin: var(--slim-v-mar) 0;
+            text-indent: var(--para-inden);
+        }
+
+        /* --- Headers --- */
+        h1, h2, h3, h4, h5, h6 {
+            background-color: red;
+            color: black;
+            font-size: inherit;
+            margin-top: 0;
+            margin-bottom: 0;
+            margin-left: var(--head-inden);
+            padding: 5px 10px;
+            display: inline-block;
+            line-height: var(--tight-line);
+        }
+
+        /* --- Links --- */
+        a {
+            color: white;
+            text-decoration: none;
+            text-decoration-line: overline;
+            text-decoration-color: red;
+            text-decoration-thickness: var(--line-thick);
+            padding: 2px 4px;
+            transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+        }
+
+        a:hover {
+            background-color: white;
+            color: black;
+        }
+
+        /* --- Emphasis (.em class) --- */
+        .em {
+            color: red;
+        }
+
+        /* --- Code Blocks (pre, code) --- */
+        pre, code {
+            background-color: black;
+            color: white;
+            border: var(--line-thick) solid white;
+            padding: var(--min-gap);
+            margin: var(--slim-v-mar) 0;
+            display: block;
+            overflow-x: auto;
+            box-sizing: border-box;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+        }
+
+        /* Inline code (e.g., `code` tag not inside `pre`) */
+        :not(pre) > code {
+            border-top: none;
+            border-bottom: none;
+            border-left: var(--line-thick) solid white;
+            border-right: var(--line-thick) solid white;
+            padding-top: 0;
+            padding-bottom: 0;
+            padding-left: 3px;
+            padding-right: 3px;
+            display: inline-block;
+            vertical-align: middle; 
+            line-height: inherit;
+        }
+
+        /* --- Lists --- */
+        ul, ol {
+            list-style: none;
+            padding-left: 0;
+            border-left: none;
+            margin: var(--slim-v-mar) 0;
+        }
+
+        ul li::before {
+            content: '•';
+            color: red;
+            display: inline-block;
+            width: 1em;
+            margin-right: 0.5em;
+        }
+
+        ol {
+            counter-reset: list-item;
+        }
+        ol li::before {
+            counter-increment: list-item;
+            content: counter(list-item) ". ";
+            color: red;
+            display: inline-block;
+            width: 2em;
+            margin-right: 0.5em;
+            text-align: right;
+        }
+
+        /* --- Tables --- */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: var(--slim-v-mar) 0;
+            font-size: var(--font-size0);
+        }
+
+        th, td {
+            border: var(--line-thick) solid red;
+            padding: 8px;
+            text-align: left;
+            color: white;
+            line-height: var(--tight-line);
+        }
+
+        th {
+            background-color: red;
+            color: black;
+            font-weight: normal;
+            font-size: inherit;
+        }
+
+        /* Alternating row borders */
+        tr:nth-child(even) td, tr:nth-child(even) th {
+            border-bottom-color: white;
+        }
+        tr:nth-child(odd) td, tr:nth-child(odd) th {
+            border-bottom-color: red;
+        }
+        table tr:last-child td, table tr:last-child th {
+            border-bottom-color: red;
+        }
+
+        /* --- Blockquotes --- */
+        blockquote {
+            border-left: var(--line-thick) solid red;
+            padding-left: 15px;
+            margin: var(--slim-v-mar) 0;
+            font-style: italic;
+            color: white;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+            text-indent: var(--para-inden);
+        }
+
+        /* --- Images and All Other Content (External and Local) --- */
+        img,
+        video:not([src*="youtube.com"]):not([src*="vimeo.com"]),
+        audio,
+        figure,
+        iframe {
+            border: var(--line-thick) solid red;
+            display: block;
+            margin: var(--slim-v-mar) auto;
+            max-width: 100%;
+            height: auto;
+            box-sizing: border-box;
+            padding: var(--min-gap);
+        }
+
+        iframe {
+            border: calc(2 * var(--line-thick)) double red;
+        }
+
+        /* --- Horizontal Rule (hr) --- */
+        hr {
+            border: none;
+            border-top: var(--line-thick) solid red;
+            margin: var(--hr-v-margi) 0;
+        }
+
+        /* --- Form Elements --- */
+        input, textarea, select, button {
+            background-color: black;
+            color: red;
+            border: var(--line-thick) solid white;
+            padding: 5px;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            box-sizing: border-box;
+            line-height: var(--tight-line);
+            margin: var(--slim-v-mar) 0;
+            display: block;
+        }
+
+        input:focus, textarea:focus, select:focus, button:focus {
+            border-color: red;
+            outline: none;
+        }
+
+        input[type="checkbox"], input[type="radio"] {
+            appearance: none;
+            width: var(--font-size0);
+            height: var(--font-size0);
+            border: var(--line-thick) solid white;
+            vertical-align: middle;
+            margin-right: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        input[type="checkbox"]:checked, input[type="radio"]:checked {
+            background-color: red;
+        }
+
+        /* --- Details/Summary --- */
+        details {
+            margin: var(--slim-v-mar) 0;
+            border: var(--line-thick) solid black;
+            box-sizing: border-box;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+            color: white;
+        }
+
+        summary {
+            background-color: red;
+            color: black;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: inherit;
+            font-weight: bold;
+            display: block;
+            position: relative;
+            line-height: var(--tight-line);
+            list-style: none;
+        }
+        summary::-webkit-details-marker {
+            color: black;
+            font-size: var(--font-size0);
+            margin-right: var(--min-gap);
+        }
+        summary::marker {
+            color: black;
+            font-size: var(--font-size0);
+            margin-right: var(--min-gap);
+        }
+
+        details[open] {
+            border: var(--line-thick) solid red;
+            padding: var(--min-gap);
+        }
+        details[open] > *:not(summary) {
+            margin: var(--slim-v-mar) 0;
+        }
+
+        ::selection {
+            background-color: red;
+            color: black;
+        }
+
+        /* --- Custom Layout Logic for this App --- */
+        html, body {
+            height: 100%;
+        }
+        
+        .app-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+        }
+
+        .interface-box {
+            border: var(--line-thick) solid white;
+            padding: 15px;
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Override textarea specific to this app for better fit */
+        #b64-input {
+            height: 150px;
+            resize: none;
+        }
+
+        #decode-btn {
+            text-align: center;
+            cursor: pointer;
+        }
+        
+        #decode-btn:hover {
+            background-color: red;
+            color: black;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <div class="interface-box">
+            <h3>BASE64 IMAGE VIEWER</h3>
+            <textarea id="b64-input" placeholder="Paste Base64 string  here..."></textarea>
+            <button id="decode-btn">OPEN IMAGE</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('decode-btn').addEventListener('click', function() {
+            let input = document.getElementById('b64-input').value.trim();
+            
+            if (!input) return;
+
+            // Remove newlines which often break base64 strings
+            input = input.replace(/(\r\n|\n|\r)/gm, "");
+
+            // Heuristic: If it doesn't start with "data:", assume it's a raw string
+            // and default to PNG (most common) to try and render it.
+            if (!input.startsWith('data:')) {
+                input = 'data:image/png;base64,' + input;
+            }
+
+            // Create a new window
+            const newWin = window.open("");
+            
+            // Write the image directly into the new window
+            newWin.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Image Result</title>
+                    <style>
+                        body { margin: 0; background: #0e0e0e; display: flex; justify-content: center; align-items: center; height: 100vh; }
+                        img { max-width: 100%; max-height: 100%; display: block; }
+                    </style>
+                </head>
+                <body>
+                    <img src="${input}" alt="Decoded Base64 Image">
+                </body>
+                </html>
+            `);
+            newWin.document.close();
+        });
+    </script>
+</body>
+</html>
