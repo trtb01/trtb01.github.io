@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GOODnews.html</title>
+    <link rel="stylesheet" href="trtb.css">
+    <style>
+        /* --- Local Overrides & Layout --- */
+        body {
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Custom Post Container */
+        .p {
+            border: var(--line-thick) solid red;
+            padding: var(--min-gap);
+            margin-bottom: 2rem;
+        }
+
+        /* Custom Title Styling */
+        h2 {
+            font-weight: bold;
+            text-decoration: overline;
+            /* Red bg and black text are inherited from trtb.css */
+        }
+
+        /* Single Letter Helpers */
+        .e { color: red; } /* Emphasis */
+        
+        .d { /* Disclaimer */
+            border: var(--line-thick) solid red;
+            padding: var(--min-gap);
+            margin-top: 1rem;
+            font-size: 0.9em;
+        }
+
+        /* Ensure HR inside border doesn't look double if at bottom */
+        .p hr { display: none; } 
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>GOODnews.html</h1>
+        <div class="d">
+            <p class="e" style="text-indent: 0; margin: 0;">DISCLAIMER:</p>
+            <p style="text-indent: 0; margin: 0;">Verify all news independently.</p>
+        </div>
+    </header>
+
+    <hr>
+
+    <!-- TEMPLATE -->
+    <!--
+    <div class="p">
+        <h2>TITLE</h2>
+        <p>Content.</p>
+    </div>
+    -->
+
+    <main>
+
+        <div class="p">
+            <h2>RENEWABLES OVERTAKE COAL</h2>
+            <p>
+                Renewables have surpassed coal as the top electricity source worldwide.
+            </p>
+        </div>
+
+    </main>
+
+    <footer>
+        <p class="e">EOL</p>
+        <p>&copy; 2025 Thor Smith</p>
+    </footer>
+
+</body>
+</html>
