@@ -1,42 +1,49 @@
-rt<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GOODnews.html</title>
+    <!-- Assuming trtb.css defines variables like --line-thick and --min-gap -->
     <link rel="stylesheet" href="trtb.css">
     <style>
         /* --- Local Overrides & Layout --- */
+        :root {
+            /* Fallback variables in case trtb.css is missing during preview */
+            --line-thick: 2px;
+            --min-gap: 1rem;
+        }
+
         body {
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
+            font-family: sans-serif; /* Fallback font */
         }
 
         /* Custom Post Container */
         .p {
-            /* Inherited from original, used for individual stories */
             border: var(--line-thick) solid red;
             padding: var(--min-gap);
             margin-bottom: 2rem;
         }
         
-        /* New styling for the 10-Story Report/Wrapper to use a double solid border */
-        .10report {
-            /* Inherit basic .p styles but override the border */
-            border: calc(2 * var(--line-thick)) solid red;
+        /* FIXED: Renamed from .10report to .report-10 
+           (Classes cannot start with numbers)
+        */
+        .report-10 {
+            /* Use 'double' style. Width must be at least 3-4px to show separation. */
+            border: 6px double red; 
             padding: var(--min-gap);
             margin-bottom: 2rem;
-            /* Ensure it wraps content tightly and maintains the double line */
             overflow: hidden; 
         }
 
         /* Styling for the Date/Header inside the report */
         .report-date {
-            color: red; /* Emphasis color */
+            color: red; 
             font-size: 0.8em;
             margin-bottom: var(--min-gap);
-            /* Align right and remove standard paragraph indent */
             text-align: right;
             text-indent: 0;
             margin-top: 0;
@@ -46,11 +53,11 @@ rt<!DOCTYPE html>
         h2 {
             font-weight: bold;
             text-decoration: overline;
-            /* Red bg and black text are inherited from trtb.css */
+            margin-top: 0;
         }
 
         /* Single Letter Helpers */
-        .e { color: red; } /* Emphasis */
+        .e { color: red; } 
         
         .d { /* Disclaimer */
             border: var(--line-thick) solid red;
@@ -75,48 +82,36 @@ rt<!DOCTYPE html>
 
     <hr>
 
-    <!-- TEMPLATE -->
+    <main>
+
+    <!-- TEMPLATE: STANDARD POST -->
     <!--
     <div class="p">
         <h2>TITLE</h2>
         <p>Content.</p>
     </div>
+    -->
+
+    <!-- TEMPLATE: 10-STORY REPORT -->
+    <!--
     <div class="report-10">
         <p class="report-date">DATE</p>
-        <p>STORY 1 SUMMARY; STORY 2 SUMMARY; ... STORY 10 SUMMARY.</p>
-        <div class="p">
-            <h2>INDIVIDUAL STORY TITLE</h2>
-            <p>Individual story content.</p>
+        <p><strong>SUMMARY:</strong> STORY 1 SUMMARY; ...</p>
+        
+        <hr style="border: 0; border-top: 1px solid red; margin: 1rem 0;">
+
+        <div class="p" style="border: 1px solid red;">
+            <h2>STORY TITLE</h2>
+            <p>Story content.</p>
+        </div>
+        
+        <div class="p" style="border: 1px solid red;">
+            <h2>STORY TITLE</h2>
+            <p>Story content.</p>
         </div>
         ... (repeat for all stories)
     </div>
     -->
-
-    <main>
-
-        <!-- content -->
-
-        <!-- 10report wrapper wrapping the full stream of 10 stories -->
-
-        <div class="10report"><p class="report-date">11-21-25</p><p>Record Monarch Sightings in North America; US Grant Funds Indigenous Pollinator Habitats; USMCA Environmental Protections to Be Strengthened; Mexico Finalizes Strict Methane Pollution Rules; Canada and Mexico Boost Conservation Cooperation; Canada-Mexico Pledge to Cut Short-Lived GHGs; Canada and Mexico Enhance Water Strategies; North America Leads with Methane Standards Coverage; CEC Prioritizes Indigenous Voices in Conservation; North American Youth Drive Sustainable Solutions.</p><div class="p"><h2>11-21-25 Record Monarch Sightings in North America</h2><p>The 2025 Monarch Blitz community science program achieved new records across Canada, Mexico, and the US. Over 9,000 volunteers reported 33,000+ monarch sightings and 71,000+ milkweed observations. This growing participation provides crucial data for conservation efforts across the continent.</p></div><div class="p"><h2>11-21-25 US Grant Funds Indigenous Pollinator Habitats</h2><p>The US-based "Poeh Povi, The Flower Path: Indigenous Matriarch Farmer Collective" received a CEC grant to support pollinators and healthy habitats. This inspiring project aims to educate community members by distributing toolkits with information on native plants, pollinators, and seeds. The initiative highlights the importance of native women's leadership in conservation.</p></div><div class="p"><h2>11-21-25 USMCA Environmental Protections to Be Strengthened</h2><p>Members of Congress urged the USTR to build upon and strengthen the enhanced environmental protections within the USMCA during the upcoming 2026 review. These commitments demonstrate a shared dedication to maintaining and improving the trilateral framework for sustainability. The agreement includes first-of-its-kind mechanisms to address environmental compliance.</p></div><div class="p"><h2>11-21-25 Mexico Finalizes Strict Methane Pollution Rules</h2><p>Mexico successfully finalized groundbreaking regulations to dramatically cut methane pollution from its national oil and gas sector. This success is expected to reduce emissions by 40-45% by 2025, significantly contributing to global climate goals. The rules are based on the latest science and set a high bar for other oil and gas producing nations.</p></div><div class="p"><h2>11-21-25 Canada and Mexico Boost Conservation Cooperation</h2><p>Canada and Mexico announced an agreement to strengthen cooperation on environmental issues through the new 2025–2028 Action Plan. A key focus is the sustainable management of protected natural areas (NPAs), including the planned signing of a Memorandum of Understanding on NPA conservation by year-end. This collaboration reinforces a deep commitment to environmental stewardship between the two nations.</p></div><div class="p"><h2>11-21-25 Canada-Mexico Pledge to Cut Short-Lived GHGs</h2><p>As part of their new cooperation plan, Canada and Mexico committed to mitigating short-lived greenhouse gases (GHGs) like methane and black carbon. They plan to improve transparency and accountability regarding GHG emissions, including through methane certification regimes. This targets pollutants that have a powerful, immediate impact on climate change.</p></div><div class="p"><h2>11-21-25 Canada and Mexico Enhance Water Strategies</h2><p>The Canada-Mexico Action Plan includes a dedicated pledge to enhance water management strategies using technological innovation. The goal is effective freshwater resource management across both nations. This commitment addresses increasing challenges related to water scarcity and security in North America.</p></div><div class="p"><h2>11-21-25 North America Leads with Methane Standards Coverage</h2><p>Comprehensive methane standards are now in place across Canada and Mexico, combined with existing strong regulations in California and Colorado. This means that 45% of oil production and 27% of gas production in North America now occurs in regions with strict methane controls. This collaborative progress serves as a strong example of what is achievable globally in pollution reduction.</p></div><div class="p"><h2>11-21-25 CEC Prioritizes Indigenous Voices in Conservation</h2><p>The Commission for Environmental Cooperation (CEC) reaffirmed its commitment to fostering meaningful partnerships with Indigenous Peoples in the US, Canada, and Mexico. This effort ensures that Indigenous perspectives and expertise are appropriately included in trilateral environmental decision-making. The goal is to make environmental stewardship efforts more effective and culturally sound.</p></div><div class="p"><h2>11-21-25 North American Youth Drive Sustainable Solutions</h2><p>The CEC continues to report success in youth engagement programs across the continent. These efforts provide young people with opportunities to raise awareness and propose tangible, sustainable, and innovative solutions for environmental issues. Youth involvement is key to influencing future CEC strategies and projects.</p></div></div>
-        <div class="report-10">
-            <p class="report-date">November 21, 2025</p>
-            <p>
-                New West Coast Health Alliance Principles Finalized; California CAL FIRE Officers Shatter Training Records; Arizona Western College President Recognized for Leadership; Idaho Medicaid Seeks Input on New Comprehensive Managed Care; CMA Statement Upholds Vaccine Science in California; Governor Newsom Advances Government Efficiency in CA; CA Leaders Discuss Technology and Well-being at Summit; Tiny Microneedle Patch Dramatically Improves Heart Attack Recovery; Ingestible Pill Tool Set to Change Gut Health Diagnostics; Hot Tubs Trigger Surprising Health Benefits in New Research.
-            </p>
-            
-            <!-- Individual News Items (Wrapped inside report-10) -->
-            <div class="p"><h2>11-21-25 New West Coast Health Alliance Principles Finalized</h2><p>California, Oregon, Washington, and Hawaii have finalized shared principles for their Western Health Alliance. The Alliance will strengthen public confidence and coordination for health and vaccine recommendations based on scientific evidence.</p></div>
-            <div class="p"><h2>11-21-25 California CAL FIRE Officers Shatter Training Records</h2><p>The state of California has successfully trained 650 new CAL FIRE officers, a record-breaking number for the year. This expansion boosts the state's capacity for emergency response, which includes public health and disaster medical support across the region.</p></div>
-            <div class="p"><h2>11-21-25 Arizona Western College President Recognized for Leadership</h2><p>Arizona Governor Katie Hobbs issued a commendation to Dr. Daniel Corr, President of Arizona Western College (AWC), for his decade of transformative leadership. This recognition highlights AWC's success in community development, which often includes local wellness initiatives and educational outreach programs.</p></div>
-            <div class="p"><h2>11-21-25 Idaho Medicaid Seeks Input on New Comprehensive Managed Care</h2><p>Idaho Medicaid is actively soliciting public input on its transition to a comprehensive managed care system. This move is intended to modernize and improve the delivery of health services, aiming for more coordinated and effective care for Idaho residents.</p></div>
-            <div class="p"><h2>11-21-25 CMA Statement Upholds Vaccine Science in California</h2><p>The California Medical Association (CMA) issued a statement today upholding the scientific integrity of vaccines, counteracting misinformation. This action helps assure patients and physicians in California that public health guidance remains rooted in established medical evidence.</p></div>
-            <div class="p"><h2>11-21-25 Governor Newsom Advances Government Efficiency in CA</h2><p>Governor Newsom announced the completion of five new projects aimed at improving state government efficiency. Streamlining state operations often leads to better and faster delivery of essential services, including healthcare and wellness programs, to Californians.</p></div>
-            <div class="p"><h2>11-21-25 CA Leaders Discuss Technology and Well-being at Summit</h2><p>California First Partner Jennifer Siebel Newsom led a Gender Equity Summit focusing on technology and well-being. The discussion focused on the positive role of technology in promoting mental and emotional health, signaling state commitment to modern wellness strategies.</p></div>
-            <div class="p"><h2>11-21-25 Tiny Microneedle Patch Dramatically Improves Heart Attack Recovery</h2><p>Researchers today announced a dissolvable microneedle patch dramatically improved heart attack recovery in tests. The targeted patch delivers an immune-shifting compound directly to damaged heart tissue, promising a major breakthrough for cardiovascular health across the Western US and beyond.</p></div>
-            <div class="p"><h2>11-21-25 Ingestible Pill Tool Set to Change Gut Health Diagnostics</h2><p>A new tiny ingestible sphere, filled with engineered bacteria, can noninvasively detect intestinal bleeding by glowing when it encounters blood. This technology promises to simplify and accelerate gut health diagnosis, a key part of wellness, for patients in the Western US and globally.</p></div>
-            <div class="p"><h2>11-21-25 Hot Tubs Trigger Surprising Health Benefits in New Research</h2><p>Research published today suggests hot tubs may offer stronger boosts to blood flow and immune activity than saunas by raising core body temperature more effectively. This finding encourages the simple use of hydrotherapy as an accessible wellness tool for people in the Western US.</p></div>
-        </div>
 
     </main>
 
