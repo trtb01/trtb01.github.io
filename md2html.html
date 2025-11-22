@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown to HTML Generator</title>
+    <!-- 1. The Generator uses the external CSS file for its own look -->
+    <link rel="stylesheet" href="trtb.css">
+    
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        /* Specific styling for the Generator Interface elements */
+        #app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Layout Wrappers */
+        .header-section {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-wrap: wrap; /* Allows stacking on small screens */
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .left-column {
+            flex: 1;
+            min-width: 350px; /* Prevents squishing on small screens */
+        }
+
+        .right-column {
+            flex: 1;
+            min-width: 350px;
+        }
+
+        /* Panels */
+        .control-panel {
+            border: 1px solid red;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .preview-box {
+            border: 1px solid red; /* Changed to Red */
+            padding: 20px;
+            min-height: 400px;
+            background-color: black; 
+            overflow-y: auto;
+            max-height: 800px; /* Prevents it from getting infinite on very long docs */
+        }
+
+        .status-bar {
+            color: red;
+            font-style: italic;
+            margin-top: 10px;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            resize: vertical;
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .file-input-wrapper {
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 15px;
+        }
+
+        label {
+            color: red;
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .image-list {
+            font-size: 0.8em;
+            color: #aaa;
+            margin-top: 5px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px dashed #333;
+            padding: 5px;
+        }
+        
+        /* Helper to hide the actual file input but keep it functional */
+        .hidden-input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+
+    <!-- Top Header -->
+    <div class="header-section">
+        <h1>trtb's md2html</h1>
+        <p>Upload your markdown and images below to generate a self-contained HTML file.</p>
+        <hr>
+    </div>
+
+    <!-- Main Flex Content -->
+    <div class="main-content">
+        
+        <!-- LEFT COLUMN: CONTROLS -->
+        <div class="left-column">
+            <div class="control-panel">
+                
+                <!-- Page Title -->
+                <div class="file-input-wrapper">
+                    <label for="pageTitle">1. Page Title (Optional):</label>
+                    <input type="text" id="pageTitle" placeholder="Leave blank to use first H1 or default">
+                </div>
+
+                <!-- Markdown Input -->
+                <div class="file-input-wrapper">
+                    <label>2. Markdown Source:</label>
+                    <p style="font-size: 0.8em; color: #aaa;">Upload a .md file OR paste text below.</p>
+                    <input type="file" id="mdFileInput" accept=".md,.txt">
+                    <textarea id="mdInput" placeholder="# Paste Markdown here...&#10;&#10;Use [[1]] to insert the first image uploaded, [[2]] for the second, etc."></textarea>
+                </div>
+
+                <!-- Image Input -->
+                <div class="file-input-wrapper">
+                    <label>3. Images:</label>
+                    <p style="font-size: 0.8em; color: #aaa;">Use buttons below to manage images.</p>
+                    
+                    <!-- Buttons for Image Management -->
+                    <div class="btn-row" style="margin-bottom: 10px;">
+                        <button id="addImgBtn">Add Image(s)</button>
+                        <button id="clearImgBtn">Clear All Images</button>
+                    </div>
+
+                    <!-- Hidden Input -->
+                    <input type="file" id="imgInput" accept="image/*" multiple class="hidden-input">
+                    
+                    <div id="imgStatus" class="status-bar">0 images ready.</div>
+                    <div id="imageList" class="image-list"></div>
+                </div>
+
+                <!-- Actions -->
+                <div class="btn-row">
+                    <button id="previewBtn">Update Preview</button>
+                    <button id="downloadBtn">Download HTML File</button>
+                    <button id="copyBtn">Copy HTML Code</button>
+                </div>
+                <div id="actionStatus" class="status-bar"></div>
+
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: PREVIEW -->
+        <div class="right-column">
+            <h2 style="margin-top:0;">Live Preview</h2>
+            <div id="previewArea" class="preview-box">
+                <!-- Content will render here -->
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    // --- 1. INTERNAL CSS STORAGE ---
+    const MASTER_CSS = `
+/* --- CSS Variables --- */
+:root {
+    --line-thick: 1px;       /* Global variable for line thickness */
+    --page-paddi: 5%;        /* Padding around the entire page */
+    --min-gap: 5px;          /* Minimal padding for content inside borders */
+    --tight-line: 1.0;       /* Very tight vertical spacing for text */
+    --font-size0: 16px;      /* Base font size for all text (added a 0 to make 10 chars) */
+    --indentatio: 3rem;      /* Equivalent to ~0.5 inches (3 * 16px = 48px) */
+    --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
+    --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
+    --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
+    --head-inden: 4ch;       /* Headers indented 4 characters */
+}
+
+/* --- General Styling --- */
+body {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    margin: 0;
+    padding: var(--page-paddi);
+    box-sizing: border-box;
+}
+
+/* --- Paragraphs --- */
+p {
+    margin: var(--slim-v-mar) 0;
+    text-indent: var(--para-inden);
+}
+
+/* --- Headers --- */
+h1, h2, h3, h4, h5, h6 {
+    background-color: red;
+    color: black;
+    font-size: inherit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: var(--head-inden);
+    padding: 5px 10px;
+    display: inline-block;
+    line-height: var(--tight-line);
+}
+
+/* --- Links --- */
+a {
+    color: white;
+    text-decoration: none;
+    text-decoration-line: overline;
+    text-decoration-color: red;
+    text-decoration-thickness: var(--line-thick);
+    padding: 2px 4px;
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+a:hover {
+    background-color: white;
+    color: black;
+}
+
+/* --- Emphasis (.em class) --- */
+.em {
+    color: red;
+}
+
+/* --- Code Blocks (pre, code) --- */
+pre, code {
+    background-color: black;
+    color: white;
+    border: var(--line-thick) solid white;
+    padding: var(--min-gap);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+    overflow-x: auto;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+}
+
+/* Inline code (e.g., code tag not inside pre) */
+:not(pre) > code {
+    border-top: none;
+    border-bottom: none;
+    border-left: var(--line-thick) solid white;
+    border-right: var(--line-thick) solid white;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    display: inline-block;
+    vertical-align: middle; 
+    line-height: inherit;
+}
+
+/* --- Lists --- */
+ul, ol {
+    list-style: none;
+    padding-left: 0;
+    border-left: none;
+    margin: var(--slim-v-mar) 0;
+}
+
+ul li::before {
+    content: '•';
+    color: red;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.5em;
+}
+
+ol {
+    counter-reset: list-item;
+}
+ol li::before {
+    counter-increment: list-item;
+    content: counter(list-item) ". ";
+    color: red;
+    display: inline-block;
+    width: 2em;
+    margin-right: 0.5em;
+    text-align: right;
+}
+
+/* --- Tables --- */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: var(--slim-v-mar) 0;
+    font-size: var(--font-size0);
+}
+
+th, td {
+    border: var(--line-thick) solid red;
+    padding: 8px;
+    text-align: left;
+    color: white;
+    line-height: var(--tight-line);
+}
+
+th {
+    background-color: red;
+    color: black;
+    font-weight: normal;
+    font-size: inherit;
+}
+
+/* Alternating row borders */
+tr:nth-child(even) td, tr:nth-child(even) th {
+    border-bottom-color: white;
+}
+tr:nth-child(odd) td, tr:nth-child(odd) th {
+    border-bottom-color: red;
+}
+table tr:last-child td, table tr:last-child th {
+    border-bottom-color: red;
+}
+
+/* --- Blockquotes --- */
+blockquote {
+    border-left: var(--line-thick) solid red;
+    padding-left: 15px;
+    margin: var(--slim-v-mar) 0;
+    font-style: italic;
+    color: white;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    text-indent: var(--para-inden);
+}
+
+/* --- Images and All Other Content (External and Local) --- */
+/* EDITED: Changed 'auto' to '0' to align left */
+img,
+video:not([src*="youtube.com"]):not([src*="vimeo.com"]),
+audio,
+figure,
+iframe {
+    border: var(--line-thick) solid red;
+    display: block;
+    margin: var(--slim-v-mar) 0; 
+    max-width: 100%;
+    height: auto;
+    box-sizing: border-box;
+    padding: var(--min-gap);
+}
+
+/* Specific double border for external content (iframes) */
+iframe {
+    border: calc(2 * var(--line-thick)) double red;
+}
+
+/* --- Horizontal Rule (hr) --- */
+hr {
+    border: none;
+    border-top: var(--line-thick) solid red;
+    margin: var(--hr-v-margi) 0;
+}
+
+/* --- Form Elements --- */
+input, textarea, select, button {
+    background-color: black;
+    color: red;
+    border: var(--line-thick) solid white;
+    padding: 5px;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    box-sizing: border-box;
+    line-height: var(--tight-line);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+}
+
+input:focus, textarea:focus, select:focus, button:focus {
+    border-color: red;
+    outline: none;
+}
+
+input[type="checkbox"], input[type="radio"] {
+    appearance: none;
+    width: var(--font-size0);
+    height: var(--font-size0);
+    border: var(--line-thick) solid white;
+    vertical-align: middle;
+    margin-right: 5px;
+    cursor: pointer;
+    display: inline-block;
+}
+
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+    background-color: red;
+}
+
+/* --- Details/Summary --- */
+details {
+    margin: var(--slim-v-mar) 0;
+    border: var(--line-thick) solid black;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    color: white;
+}
+
+summary {
+    background-color: red;
+    color: black;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: inherit;
+    font-weight: bold;
+    display: block;
+    position: relative;
+    line-height: var(--tight-line);
+    list-style: none;
+}
+summary::-webkit-details-marker {
+    color: black;
+    font-size: var(--font-size0);
+    margin-right: var(--min-gap);
+}
+summary::marker {
+    color: black;
+    font-size: var(--font-size0);
+    margin-right: var(--min-gap);
+}
+
+details[open] {
+    border: var(--line-thick) solid red;
+    padding: var(--min-gap);
+}
+details[open] > *:not(summary) {
+    margin: var(--slim-v-mar) 0;
+}
+
+/* --- Selection Styling --- */
+::selection {
+    background-color: red;
+    color: black;
+}
+`;
+
+    // --- 2. INITIALIZATION & VARIABLES ---
+    let imageFiles = []; // Stores the actual File objects
+    const mdInput = document.getElementById('mdInput');
+    const mdFileInput = document.getElementById('mdFileInput');
+    const imgInput = document.getElementById('imgInput');
+    const imgStatus = document.getElementById('imgStatus');
+    const imageListDiv = document.getElementById('imageList');
+    const previewArea = document.getElementById('previewArea');
+    const statusDiv = document.getElementById('actionStatus');
+
+    // Configure Marked.js
+    marked.use({
+        gfm: true,
+        breaks: true
+    });
+
+    // --- 3. HELPER FUNCTIONS ---
+    function updateImageStatus() {
+        imgStatus.textContent = `${imageFiles.length} image(s) ready. Use [[1]] through [[${imageFiles.length}]].`;
+        
+        // Show list of files
+        if (imageFiles.length === 0) {
+            imageListDiv.innerHTML = "";
+            return;
+        }
+        
+        const listHtml = imageFiles.map((file, idx) => 
+            `<div>[[${idx + 1}]] - ${file.name}</div>`
+        ).join('');
+        imageListDiv.innerHTML = listHtml;
+    }
+
+    // --- 4. EVENT LISTENERS ---
+
+    // A. Handle Markdown File Upload
+    mdFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            mdInput.value = event.target.result;
+            generatePreview();
+        };
+        reader.readAsText(file);
+    });
+
+    // B. Handle Image Selection (Append Mode via Button)
+    document.getElementById('addImgBtn').addEventListener('click', () => {
+        imgInput.click();
+    });
+
+    imgInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            const newFiles = Array.from(e.target.files);
+            imageFiles = imageFiles.concat(newFiles); // Append logic
+            updateImageStatus();
+            generatePreview();
+            
+            // Reset input so you can select the same file again if needed
+            imgInput.value = ''; 
+        }
+    });
+
+    // C. Clear Images
+    document.getElementById('clearImgBtn').addEventListener('click', () => {
+        imageFiles = [];
+        updateImageStatus();
+        generatePreview();
+        imgInput.value = '';
+    });
+
+    // D. Buttons
+    document.getElementById('previewBtn').addEventListener('click', generatePreview);
+    document.getElementById('downloadBtn').addEventListener('click', downloadHTML);
+    document.getElementById('copyBtn').addEventListener('click', copyToClipboard);
+
+    // --- 5. CORE LOGIC ---
+
+    async function processMarkdownAndImages(rawMarkdown) {
+        // 1. Base64 encode all images first
+        const base64Images = await Promise.all(imageFiles.map(file => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }));
+
+        // 2. Replace placeholder tags [[1]], [[2]] with HTML img tags
+        let processedMarkdown = rawMarkdown.replace(/\[\[(\d+)\]\]/g, (match, number) => {
+            const index = parseInt(number, 10) - 1; // Convert 1-based to 0-based
+            if (base64Images[index]) {
+                // Return the image tag with base64 source
+                return `<img src="${base64Images[index]}" alt="Image ${number}">`;
+            } else {
+                return `<span style="color:red; border:1px solid red;">[MISSING IMAGE ${number}]</span>`;
+            }
+        });
+
+        // 3. Convert Markdown to HTML
+        return marked.parse(processedMarkdown);
+    }
+
+    async function generatePreview() {
+        statusDiv.textContent = "Generating preview...";
+        try {
+            const htmlContent = await processMarkdownAndImages(mdInput.value);
+            previewArea.innerHTML = htmlContent;
+            statusDiv.textContent = "Preview updated.";
+        } catch (err) {
+            console.error(err);
+            statusDiv.textContent = "Error processing images.";
+        }
+    }
+
+    async function assembleFinalHTML() {
+        const bodyContent = await processMarkdownAndImages(mdInput.value);
+        
+        // Determine Title
+        let finalTitle = document.getElementById('pageTitle').value.trim();
+        if (!finalTitle) {
+            // Try to grab the first H1 from the preview
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = bodyContent;
+            const h1 = tempDiv.querySelector('h1');
+            finalTitle = h1 ? h1.innerText : "html file";
+        }
+
+        // Use the hardcoded CSS which we modified to force left alignment
+        let cssContent = MASTER_CSS;
+
+        // Construct the file
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${finalTitle}</title>
+    <style>
+${cssContent}
+    </style>
+</head>
+<body>
+${bodyContent}
+</body>
+</html>`;
+    }
+
+    async function downloadHTML() {
+        statusDiv.textContent = "Preparing download...";
+        const finalHTML = await assembleFinalHTML();
+        
+        // Create Blob
+        const blob = new window.Blob([finalHTML], { type: 'text/html' });
+        
+        // Create Filename
+        let title = document.getElementById('pageTitle').value.trim();
+        if(!title) {
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = await processMarkdownAndImages(mdInput.value);
+            const h1 = tempDiv.querySelector('h1');
+            title = h1 ? h1.innerText : "generated_page";
+        }
+        
+        const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase().substring(0, 50) + ".html";
+
+        // Trigger Download
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        
+        statusDiv.textContent = `Downloaded as ${filename}`;
+    }
+
+    async function copyToClipboard() {
+        statusDiv.textContent = "Copying...";
+        const finalHTML = await assembleFinalHTML();
+        
+        try {
+            // Using modern API but needs secure context (https or localhost)
+            // Fallback for some iframes if allowed
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(finalHTML);
+                statusDiv.textContent = "HTML copied to clipboard!";
+            } else {
+                 // Textarea fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = finalHTML;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                statusDiv.textContent = "HTML copied to clipboard (fallback).";
+            }
+        } catch (err) {
+            statusDiv.textContent = "Failed to copy.";
+            console.error(err);
+        }
+    }
+
+</script>
+
+</body>
+</html>
