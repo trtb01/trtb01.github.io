@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tori's Study Guide</title>
+    <style>
+
+/* --- CSS Variables --- */
+:root {
+    --line-thick: 1px;       /* Global variable for line thickness */
+    --page-paddi: 5%;        /* Padding around the entire page */
+    --min-gap: 5px;          /* Minimal padding for content inside borders */
+    --tight-line: 1.0;       /* Very tight vertical spacing for text */
+    --font-size0: 16px;      /* Base font size for all text (added a 0 to make 10 chars) */
+    --indentatio: 3rem;      /* Equivalent to ~0.5 inches (3 * 16px = 48px) */
+    --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
+    --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
+    --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
+    --head-inden: 4ch;       /* Headers indented 4 characters */
+}
+
+/* --- General Styling --- */
+body {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    margin: 0;
+    padding: var(--page-paddi);
+    box-sizing: border-box;
+}
+
+/* --- Paragraphs --- */
+p {
+    margin: var(--slim-v-mar) 0;
+    text-indent: var(--para-inden);
+}
+
+/* --- Headers --- */
+h1, h2, h3, h4, h5, h6 {
+    background-color: red;
+    color: black;
+    font-size: inherit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: var(--head-inden);
+    padding: 5px 10px;
+    display: inline-block;
+    line-height: var(--tight-line);
+}
+
+/* --- Links --- */
+a {
+    color: white;
+    text-decoration: none;
+    text-decoration-line: overline;
+    text-decoration-color: red;
+    text-decoration-thickness: var(--line-thick);
+    padding: 2px 4px;
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+a:hover {
+    background-color: white;
+    color: black;
+}
+
+/* --- Emphasis (.em class) --- */
+.em {
+    color: red;
+}
+
+/* --- Code Blocks (pre, code) --- */
+pre, code {
+    background-color: black;
+    color: white;
+    border: var(--line-thick) solid white;
+    padding: var(--min-gap);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+    overflow-x: auto;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+}
+
+/* Inline code (e.g., code tag not inside pre) */
+:not(pre) > code {
+    border-top: none;
+    border-bottom: none;
+    border-left: var(--line-thick) solid white;
+    border-right: var(--line-thick) solid white;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: inherit;
+}
+
+/* --- Lists --- */
+ul, ol {
+    list-style: none;
+    padding-left: 0;
+    border-left: none;
+    margin: var(--slim-v-mar) 0;
+}
+
+ul li::before {
+    content: '•';
+    color: red;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.5em;
+}
+
+ol {
+    counter-reset: list-item;
+}
+ol li::before {
+    counter-increment: list-item;
+    content: counter(list-item) ". ";
+    color: red;
+    display: inline-block;
+    width: 2em;
+    margin-right: 0.5em;
+    text-align: right;
+}
+
+/* --- Tables --- */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: var(--slim-v-mar) 0;
+    font-size: var(--font-size0);
+}
+
+th, td {
+    border: var(--line-thick) solid red;
+    padding: 8px;
+    text-align: left;
+    color: white;
+    line-height: var(--tight-line);
+}
+
+th {
+    background-color: red;
+    color: black;
+    font-weight: normal;
+    font-size: inherit;
+}
+
+/* Alternating row borders */
+tr:nth-child(even) td, tr:nth-child(even) th {
+    border-bottom-color: white;
+}
+tr:nth-child(odd) td, tr:nth-child(odd) th {
+    border-bottom-color: red;
+}
+table tr:last-child td, table tr:last-child th {
+    border-bottom-color: red;
+}
+
+/* --- Blockquotes --- */
+blockquote {
+    border-left: var(--line-thick) solid red;
+    padding-left: 15px;
+    margin: var(--slim-v-mar) 0;
+    font-style: italic;
+    color: white;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    text-indent: var(--para-inden);
+}
+
+/* --- Images and All Other Content (External and Local) --- */
+/* EDITED: Changed 'auto' to '0' to align left */
+img,
+video:not([src*="youtube.com"]):not([src*="vimeo.com"]),
+audio,
+figure,
+iframe {
+    border: var(--line-thick) solid red;
+    display: block;
+    margin: var(--slim-v-mar) 0;
+    max-width: 100%;
+    height: auto;
+    box-sizing: border-box;
+    padding: var(--min-gap);
+}
+
+/* Specific double border for external content (iframes) */
+iframe {
+    border: calc(2 * var(--line-thick)) double red;
+}
+
+/* --- Horizontal Rule (hr) --- */
+hr {
+    border: none;
+    border-top: var(--line-thick) solid red;
+    margin: var(--hr-v-margi) 0;
+}
+
+/* --- Form Elements --- */
+input, textarea, select, button {
+    background-color: black;
+    color: red;
+    border: var(--line-thick) solid white;
+    padding: 5px;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    box-sizing: border-box;
+    line-height: var(--tight-line);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+}
+
+input:focus, textarea:focus, select:focus, button:focus {
+    border-color: red;
+    outline: none;
+}
+
+input[type="checkbox"], input[type="radio"] {
+    appearance: none;
+    width: var(--font-size0);
+    height: var(--font-size0);
+    border: var(--line-thick) solid white;
+    vertical-align: middle;
+    margin-right: 5px;
+    cursor: pointer;
+    display: inline-block;
+}
+
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+    background-color: red;
+}
+
+/* --- Details/Summary --- */
+details {
+    margin: var(--slim-v-mar) 0;
+    border: var(--line-thick) solid black;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    color: white;
+}
+
+summary {
+    background-color: red;
+    color: black;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: inherit;
+    font-weight: bold;
+    display: block;
+    position: relative;
+    line-height: var(--tight-line);
+    list-style: none;
+}
+summary::-webkit-details-marker {
+    color: black;
+    font-size: var(--font-size0);
+    margin-right: var(--min-gap);
+}
+summary::marker {
+    color: black;
+    font-size: var(--font-size0);
+    margin-right: var(--min-gap);
+}
+
+details[open] {
+    border: var(--line-thick) solid red;
+    padding: var(--min-gap);
+}
+details[open] > *:not(summary) {
+    margin: var(--slim-v-mar) 0;
+}
+
+/* --- Selection Styling --- */
+::selection {
+    background-color: red;
+    color: black;
+}
+
+/* --- EMBEDDED GRAPHIC STYLES --- */
+.embedded-graphic-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 30px; /* Reduced gap */
+  padding: 10px;
+  margin: 20px 0;
+  border: var(--line-thick) solid red; /* Optional: Keep consistent with other elements */
+  max-width: 400px; /* Limit width */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.chart-container {
+  position: relative;
+  width: 150px; /* Scaled down from 300px */
+  height: 150px;
+}
+
+.pie-chart {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(
+    /* 23 Found (White) */
+    white 0deg 276deg,
+    /* 7 Missing (Red) */
+    red 276deg 360deg
+  );
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
+
+  /* Animation */
+  opacity: 0;
+  animation: chart-enter 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.center-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  height: 60%;
+  background-color: black;
+  border-radius: 50%;
+}
+
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  opacity: 0;
+  animation: fade-in 1s ease-out 0.5s forwards;
+}
+
+.info-panel h1 {
+  font-size: 2rem; /* Scaled down from 4rem */
+  margin: 0;
+  font-weight: 700;
+  line-height: 1;
+  background-color: transparent; /* Override global h1 */
+  color: white; /* Override global h1 */
+  padding: 0;
+  margin-left: 0;
+}
+
+.info-panel h2 {
+  font-size: 0.8rem; /* Scaled down from 1.5rem */
+  margin: 2px 0 10px 0;
+  font-weight: 400;
+  color: #cccccc;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  background-color: transparent; /* Override global h2 */
+  padding: 0;
+  margin-left: 0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* Reduced gap */
+  font-size: 0.8rem; /* Scaled down */
+  margin-bottom: 5px;
+}
+
+.dot {
+  width: 10px; /* Scaled down */
+  height: 10px;
+  border-radius: 50%;
+}
+
+.dot.white { background-color: white; box-shadow: 0 0 5px white; }
+.dot.red { background-color: red; box-shadow: 0 0 5px red; }
+
+/* Frowny Face Animation */
+.frown {
+  position: absolute;
+  bottom: -40px;
+  left: 5px;
+  font-size: 2.5rem; /* Scaled down */
+  color: #ff3333;
+  font-weight: bold;
+  transform-origin: center;
+  opacity: 0;
+  animation: frown-sequence 4s ease-in-out 1.5s forwards;
+}
+
+@keyframes chart-enter {
+  0% { opacity: 0; transform: scale(0) rotate(-180deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes frown-sequence {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.8); }
+  15% { opacity: 1; transform: rotate(-15deg) scale(1.1); }
+  30% { transform: rotate(10deg) scale(1); }
+  45% { transform: rotate(-5deg) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(-5deg); }
+}
+
+    </style>
+</head>
+<body>
+<h1>Hi, Tori here.</h1>
+<p><em><strong>We may be cooked.</strong></em></p>
+<p>I&#39;ve added all my images with all yours, transcribed them all and put them here at this URL. You&#39;re welcome. Just try and pass. Lol. </p>
+<p><strong>Issue!</strong> We do NOT have all of the dates.  </p>
+
+<!-- EMBEDDED GRAPHIC START -->
+<div class="embedded-graphic-wrapper">
+  <div class="chart-container">
+    <div class="pie-chart"></div>
+    <div class="center-hole"></div>
+  </div>
+
+  <div class="info-panel">
+    <h1>23/30</h1>
+    <h2>Collected</h2>
+
+    <div class="legend-item">
+      <div class="dot white"></div>
+      <span>23 Found</span>
+    </div>
+    <div class="legend-item">
+      <div class="dot red"></div>
+      <span>7 Missing</span>
+    </div>
+
+    <!-- Animated Frown -->
+    <div class="frown">:(</div>
+  </div>
+</div>
+<!-- EMBEDDED GRAPHIC END -->
+
+<table>
+<thead>
+<tr>
+<th align="left">Date</th>
+<th align="left">Note</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>Aug 12 (Tue)</strong></td>
+<td align="left"><em>[Missing Note - First Day]</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Aug 14 (Thu)</strong></td>
+<td align="left"><em>The human body generally starts to lose muscle after age 30 - this is among the reasons why metabolism starts to decline around this age</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Aug 19 (Tue)</strong></td>
+<td align="left"><em>Beginner lifters, if consistent, make the most progress within their first year – they can gain on average 20 pounds of muscle</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Aug 21 (Thu)</strong></td>
+<td align="left"><em>Movement of the day: &quot;2-rep rule&quot; benchpress</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Aug 26 (Tue)</strong></td>
+<td align="left"><em>Compound movements like the squat, deadlift, and bench press recruit several different muscle groups at once and should be done at the beginning of a workout routine. Movement of the day: &quot;super sets&quot; deadlifts.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Aug 28 (Thu)</strong></td>
+<td align="left"><em>Having a strong core often means more powerful and controlled movements - It is the foundation to all lifts as it helps to maintain proper form and technique</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 2 (Tue)</strong></td>
+<td align="left"><em>Muscle imbalances wreak havoc on your body overtime! These can occur if one muscle group is stronger/more developed than other muscle groups (i.e. quadriceps and hamstrings) or even if one side of your body is stronger than the other (i.e. R leg is stronger than L leg)</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 4 (Thu)</strong></td>
+<td align="left"><em>[Missing Note]</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 9 (Tue)</strong></td>
+<td align="left"><em>There are three different types of stretching. Static, dynamic, and ballistic. Movement of the day: drop/reverse sets, lunges.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 11 (Thu)</strong></td>
+<td align="left"><em>Delayed onset muscle soreness or DOMS is caused by microscopic tears made in a muscle due to weight training and can last on average 48 to 72 hours. Movement of the day: around the world.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 16 (Tue)</strong></td>
+<td align="left"><em>Free weights are better than machines when it comes to gaining mass, strength, coordination, and stability. Movement of the day: Bulgarian split squats.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 18 (Thu)</strong></td>
+<td align="left"><em>Muscular endurance: light weight 2-3 sets of 12+ reps ≤ 30 secs break. Muscular hypertrophy (mass): moderate weight 3-6 sets of 6-12 reps 30 secs-1.5 min break. Muscular strength: heavy weight 2-6 sets of ≤ 6 reps 2-5 min break. *Remember the 2-rep rule!</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 23 (Tue)</strong></td>
+<td align="left"><em>Running miles and miles on end is not the best method to lose weight. An ideal workout regimen to stay in shape should incorporate weight training, some type of cardio, and flexibility. Movement of the day: pendulum lunge</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 25 (Thu)</strong></td>
+<td align="left"><em>The more consistently and intensely you exercise, the more likely you will develop Athlete&#39;s Heart - which is an increase in heart mass and in the chambers of the heart. This can lead to more efficient blood flow.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Sep 30 (Tue)</strong></td>
+<td align="left"><em>There are 3 different types of muscle contractions – eccentric, concentric, isometric. Movement of the day: step ups</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 2 (Thu)</strong></td>
+<td align="left"><em>[Missing Note]</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 7 (Tue)</strong></td>
+<td align="left"><em>Depending on how active you are and the type of activity you will you do will determine how many grams of protein your body will need per day. Sedentary individuals need only about 0.8 grams per kilogram of body weight. Endurance athletes 1.2-1.4 grams. Strength and power athletes 1.4 to 2.0 grams.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 9 (Thu)</strong></td>
+<td align="left"><em>Just like protein, the amount of carbs you will need daily depends on how active you are and the type and intensity of activity you do. Sedentary individuals will need less than 3g per kg of bodyweight; endurance athletes, 8-12g (mainly for moderate intensity, long duration &gt;4 hours); Strength/power athletes, 5-10g. Movement of the day: Arnold press</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 14 (Tue)</strong></td>
+<td align="left"><em>Consuming fat will not necessarily make you fat! This macronutrient, aside from carbs and protein, is so essential, our body needs a certain amount of fat for energy, cell growth, blood clotting, and for absorption of vitamins and minerals. Movement of the day: Barbell Glute Bridge.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 16 (Thu)</strong></td>
+<td align="left"><em>Your glutes (your butt) are the largest muscles in the human body and are composed of 3 different muscles – gluteus maximus, gluteus medius, gluteus minimus. Movement of the day: barbell rows</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 21 (Tue)</strong></td>
+<td align="left"><em>Your quadriceps (front of the thigh) are the largest muscles in your legs and are composed of 4 different muscles – vastus lateralis, vastus medialis, vastus intermedius, rectus femoris. Movement of the day: glute kickbacks</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 23 (Thu)</strong></td>
+<td align="left"><em>Your hamstrings (back of the thigh) are the opposing muscle group to the quadriceps and are made of 3 different muscles – semitendinosus, semimembranosus, and biceps femoris. Movement of the day: dumbbell rows</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 28 (Tue)</strong></td>
+<td align="left"><em>Muscle does NOT turn to fat if you stop exercising and exercising does NOT change fat into muscle. They are 2 entirely different components! Movement of the day: side kicks</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Oct 30 (Thu)</strong></td>
+<td align="left"><em>You cannot spot reduce a specific part of your body! If you want to lose fat in a specific area, then you need to reduce fat on your whole body. Movement of the day: upright rows</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Nov 4 (Tue)</strong></td>
+<td align="left"><em>[Missing Note]</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Nov 6 (Thu)</strong></td>
+<td align="left"><em>There are 3 different types of skeletal muscle fibers – type 1, type 2a, type 2x. Movement of the day: deadbugs</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Nov 11 (Tue)</strong></td>
+<td align="left"><em>[Holiday - Veterans Day]</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Nov 13 (Thu)</strong></td>
+<td align="left"><em>[Missing Note]</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Nov 18 (Tue)</strong></td>
+<td align="left"><em>Poor posture is among the leading causes of a wide variety of health problems such as breathing difficulties, muscle pain, nerve damage, and can even cause psychological issues. Movement of the day: waiter&#39;s carry</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Nov 20 (Thu)</strong></td>
+<td align="left"><em>[Last Day]</em></td>
+</tr>
+</tbody></table>
+
+<br>
+
+<p>handcoded html webpage by Tori, aka trtb.</p>
+<a href="https://www.instagram.com/thereal_toebeans/">ig</a>
+
+</body>
+</html>
