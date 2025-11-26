@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>trtbTIP:</title>
+    <style>
+
+/* --- CSS Variables --- */
+:root {
+    --line-thick: 1px;       /* Global variable for line thickness */
+    --page-paddi: 5%;        /* Padding around the entire page */
+    --min-gap: 5px;          /* Minimal padding for content inside borders */
+    --tight-line: 1.0;       /* Very tight vertical spacing for text */
+    --font-size0: 16px;      /* Base font size for all text (added a 0 to make 10 chars) */
+    --indentatio: 3rem;      /* Equivalent to ~0.5 inches (3 * 16px = 48px) */
+    --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
+    --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
+    --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
+    --head-inden: 4ch;       /* Headers indented 4 characters */
+}
+
+/* --- General Styling --- */
+body {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    margin: 0;
+    padding: var(--page-paddi);
+    box-sizing: border-box;
+}
+
+/* --- Paragraphs --- */
+p {
+    margin: var(--slim-v-mar) 0;
+    text-indent: var(--para-inden);
+}
+
+/* --- Headers --- */
+h1, h2, h3, h4, h5, h6 {
+    background-color: red;
+    color: black;
+    font-size: inherit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: var(--head-inden);
+    padding: 5px 10px;
+    display: inline-block;
+    line-height: var(--tight-line);
+}
+
+/* --- Links --- */
+a {
+    color: white;
+    text-decoration: none;
+    text-decoration-line: overline;
+    text-decoration-color: red;
+    text-decoration-thickness: var(--line-thick);
+    padding: 2px 4px;
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+a:hover {
+    background-color: white;
+    color: black;
+}
+
+/* --- Emphasis (.em class) --- */
+.em {
+    color: red;
+}
+
+/* --- Code Blocks (pre, code) --- */
+pre, code {
+    background-color: black;
+    color: white;
+    border: var(--line-thick) solid white;
+    padding: var(--min-gap);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+    overflow-x: auto;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+}
+
+/* Inline code (e.g., code tag not inside pre) */
+:not(pre) > code {
+    border-top: none;
+    border-bottom: none;
+    border-left: var(--line-thick) solid white;
+    border-right: var(--line-thick) solid white;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    display: inline-block;
+    vertical-align: middle; 
+    line-height: inherit;
+}
+
+/* --- Lists --- */
+ul, ol {
+    list-style: none;
+    padding-left: 0;
+    border-left: none;
+    margin: var(--slim-v-mar) 0;
+}
+
+ul li::before {
+    content: '•';
+    color: red;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.5em;
+}
+
+ol {
+    counter-reset: list-item;
+}
+ol li::before {
+    counter-increment: list-item;
+    content: counter(list-item) ". ";
+    color: red;
+    display: inline-block;
+    width: 2em;
+    margin-right: 0.5em;
+    text-align: right;
+}
+
+/* --- Tables --- */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: var(--slim-v-mar) 0;
+    font-size: var(--font-size0);
+}
+
+th, td {
+    border: var(--line-thick) solid red;
+    padding: 8px;
+    text-align: left;
+    color: white;
+    line-height: var(--tight-line);
+}
+
+th {
+    background-color: red;
+    color: black;
+    font-weight: normal;
+    font-size: inherit;
+}
+
+/* Alternating row borders */
+tr:nth-child(even) td, tr:nth-child(even) th {
+    border-bottom-color: white;
+}
+tr:nth-child(odd) td, tr:nth-child(odd) th {
+    border-bottom-color: red;
+}
+table tr:last-child td, table tr:last-child th {
+    border-bottom-color: red;
+}
+
+/* --- Blockquotes --- */
+blockquote {
+    border-left: var(--line-thick) solid red;
+    padding-left: 15px;
+    margin: var(--slim-v-mar) 0;
+    font-style: italic;
+    color: white;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    text-indent: var(--para-inden);
+}
+
+/* --- Images and All Other Content (External and Local) --- */
+/* EDITED: Changed 'auto' to '0' to align left */
+img,
+video:not([src*="youtube.com"]):not([src*="vimeo.com"]),
+audio,
+figure,
+iframe {
+    border: var(--line-thick) solid red;
+    display: block;
+    margin: var(--slim-v-mar) 0; 
+    max-width: 100%;
+    height: auto;
+    box-sizing: border-box;
+    padding: var(--min-gap);
+}
+
+/* Specific double border for external content (iframes) */
+iframe {
+    border: calc(2 * var(--line-thick)) double red;
+}
+
+/* --- Horizontal Rule (hr) --- */
+hr {
+    border: none;
+    border-top: var(--line-thick) solid red;
+    margin: var(--hr-v-margi) 0;
+}
+
+/* --- Form Elements --- */
+input, textarea, select, button {
+    background-color: black;
+    color: red;
+    border: var(--line-thick) solid white;
+    padding: 5px;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    box-sizing: border-box;
+    line-height: var(--tight-line);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+}
+
+input:focus, textarea:focus, select:focus, button:focus {
+    border-color: red;
+    outline: none;
+}
+
+input[type="checkbox"], input[type="radio"] {
+    appearance: none;
+    width: var(--font-size0);
+    height: var(--font-size0);
+    border: var(--line-thick) solid white;
+    vertical-align: middle;
+    margin-right: 5px;
+    cursor: pointer;
+    display: inline-block;
+}
+
+input[type="checkbox"]:checked, input[type="radio"]:checked {
+    background-color: red;
+}
+
+/* --- Details/Summary --- */
+details {
+    margin: var(--slim-v-mar) 0;
+    border: var(--line-thick) solid black;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    color: white;
+}
+
+summary {
+    background-color: red;
+    color: black;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: inherit;
+    font-weight: bold;
+    display: block;
+    position: relative;
+    line-height: var(--tight-line);
+    list-style: none;
+}
+summary::-webkit-details-marker {
+    color: black;
+    font-size: var(--font-size0);
+    margin-right: var(--min-gap);
+}
+summary::marker {
+    color: black;
+    font-size: var(--font-size0);
+    margin-right: var(--min-gap);
+}
+
+details[open] {
+    border: var(--line-thick) solid red;
+    padding: var(--min-gap);
+}
+details[open] > *:not(summary) {
+    margin: var(--slim-v-mar) 0;
+}
+
+/* --- Selection Styling --- */
+::selection {
+    background-color: red;
+    color: black;
+}
+
+    </style>
+</head>
+<body>
+<h1>trtbTIP:</h1>
+<p><em><strong>Disabling Adult and Sexual Content on Steam Store Recommendations</strong></em></p>
+<p>Hello fellow ace individuals! The steam store is full of allosexuals! This simply won&#39;t DO!! /j</p>
+<p>Follow along to make your steam store (all of it) nice and comfy for <em>you.</em> Not those uh... peculiar people. (Whom we all know and love) </p>
+<hr>
+<h3>Step 1: Access Store Preferences</h3>
+<p><strong>Action</strong><br><em>Click on your account name to open the drop-down menu, then select Store Preferences.</em></p>
+<p><strong>Location</strong><br><em>The top right corner of the Steam client or website.</em></p>
+<p><strong>Visual Cue</strong><br><em>Your account name is located next to your profile picture and wallet balance.</em></p>
+<h3>Step 2: Disable Adult Content Categories</h3>
+<p><strong>Action</strong><br><em>Locate the &quot;Mature Content Filtering&quot; section. Uncheck the boxes for Adult Only Sexual Content and Frequent Nudity or Sexual Content (and any others you ).</em></p>
+<p><strong>Explanation</strong><br><em>Unchecking these boxes completely filters out and hides this content from the store.</em> <strong>Location</strong><br><em>The top section of the Store Preferences page.</em></p>
+<p><strong>Visual Cue</strong><br><em>A table with check-boxes under the columns &quot;Store&quot; and &quot;Community.&quot;</em></p>
+<h3>Step 3: Exclude Specific Tags</h3>
+<p><strong>Action</strong><br><em>Type the following terms into the &quot;Tags to exclude&quot; search bar and select them: Nudity, Sexual Content, Hentai, NSFW.</em></p>
+<p><strong>Location</strong><br><em>Scroll down to the section labeled &quot;TAGS TO EXCLUDE.&quot;</em></p>
+<p><strong>Visual Cue</strong><br><em>A search bar prompting you to &quot;enter a tag.&quot;</em></p>
+<h3>Conclusion</h3>
+<p><strong>Your choices will be immediate! No more stuff that makes you wanna puke!! :D Enjoy your new happy gaming paradise!!</strong></p>
+<p>Thanks for reading!! Hi CCCGSA! </p>
+<p>-Tori</p>
+<img src="data:image/jpeg;base64,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" alt="Image 1">
+*art by *VioletMadness7**
+
+<hr>
+<hr>
+<h3>Appendix</h3>
+<p>Here&#39;s a quick list of all of the specific options in Steam to filter out all that sex shit (or whatever else you&#39;re not comfy with!):</p>
+<p><strong>Mature Content Filtering</strong></p>
+<ul>
+<li><p><strong>General Mature Content:</strong> Topics that may not be appropriate for all audiences.</p>
+</li>
+<li><p><strong>Frequent Violence or Gore:</strong> Content featuring extreme violence.</p>
+</li>
+<li><p><strong>Some Nudity or Sexual Content:</strong> Content where nudity/sexual themes are not the primary focus.</p>
+</li>
+<li><p><strong>Frequent Nudity or Sexual Content:</strong> Content primarily featuring nudity or sexual themes.</p>
+</li>
+</ul>
+<p><strong>Adult Only Sexual Content</strong></p>
+<ul>
+<li><strong>Adult Only Sexual Content:</strong> A specific checkbox for explicit content intended for adults only (requires age affirmation).</li>
+</ul>
+<p><strong>Community Content Preferences (Chat Filtering)</strong></p>
+<ul>
+<li><p><strong>Language Preferences:</strong> Options to filter strong profanity and slurs (Filter both, Allow profanity but filter slurs, or Do not filter).</p>
+</li>
+<li><p><strong>User Group Preferences:</strong> Checkbox to &quot;Do not filter text from my Steam Friends.&quot;</p>
+</li>
+<li><p><strong>Additional Custom Filtered Words:</strong> Input fields to &quot;Always filter&quot; or &quot;Never filter&quot; specific words.</p>
+</li>
+</ul>
+<p><strong>Tags &amp; Ignored Products</strong></p>
+<ul>
+<li><p><strong>Tags To Exclude:</strong> Input field to filter out games by specific tags (e.g., Horror, Anime).</p>
+</li>
+<li><p><strong>Ignored Products:</strong> View and manage specific titles you have manually set to &quot;Ignore.&quot;</p>
+</li>
+</ul>
+
+</body>
+</html>
