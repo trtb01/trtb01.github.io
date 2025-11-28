@@ -8,16 +8,16 @@
 
 /* --- CSS Variables --- */
 :root {
-    --line-thick: 1px;       /* Global variable for line thickness */
-    --page-paddi: 5%;        /* Padding around the entire page */
-    --min-gap: 5px;          /* Minimal padding for content inside borders */
-    --tight-line: 1.0;       /* Very tight vertical spacing for text */
-    --font-size0: 16px;      /* Base font size for all text (added a 0 to make 10 chars) */
-    --indentatio: 3rem;      /* Equivalent to ~0.5 inches (3 * 16px = 48px) */
-    --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
-    --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
-    --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
-    --head-inden: 4ch;       /* Headers indented 4 characters */
+    --line-thick: 1px;        /* Global variable for line thickness */
+    --page-paddi: 5%;         /* Padding around the entire page */
+    --min-gap: 5px;           /* Minimal padding for content inside borders */
+    --tight-line: 1.0;        /* Very tight vertical spacing for text */
+    --font-size0: 16px;       /* Base font size for all text (added a 0 to make 10 chars) */
+    --indentatio: 3rem;       /* Equivalent to ~0.5 inches (3 * 16px = 48px) */
+    --slim-v-mar: 0.5%;       /* Very very slim vertical margins for blocks */
+    --hr-v-margi: 2%;         /* Slightly more visible margin for HR */
+    --para-inden: 2ch;        /* First line of paragraph indented 2 characters */
+    --head-inden: 4ch;        /* Headers indented 4 characters */
 }
 
 /* --- General Styling --- */
@@ -311,10 +311,10 @@ details[open] > *:not(summary) {
   height: 100%;
   border-radius: 50%;
   background: conic-gradient(
-    /* 23 Found (White) */
-    white 0deg 276deg,
-    /* 7 Missing (Red) */
-    red 276deg 360deg
+    /* 27 Found (White) -> 27/30 = 90% = 324deg */
+    white 0deg 324deg,
+    /* 3 Missing (Red) */
+    red 324deg 360deg
   );
   box-shadow: 0 0 15px rgba(255, 255, 255, 0.15);
 
@@ -423,7 +423,6 @@ details[open] > *:not(summary) {
 <p>I&#39;ve added all my images with all yours, transcribed them all and put them here at this URL. You&#39;re welcome. Just try and pass. Lol. </p>
 <p><strong>Issue!</strong> We do NOT have all of the dates.  </p>
 
-<!-- EMBEDDED GRAPHIC START -->
 <div class="embedded-graphic-wrapper">
   <div class="chart-container">
     <div class="pie-chart"></div>
@@ -431,24 +430,21 @@ details[open] > *:not(summary) {
   </div>
 
   <div class="info-panel">
-    <h1>23/30</h1>
+    <h1>27/30</h1>
     <h2>Collected</h2>
 
     <div class="legend-item">
       <div class="dot white"></div>
-      <span>23 Found</span>
+      <span>27 Found</span>
     </div>
     <div class="legend-item">
       <div class="dot red"></div>
-      <span>7 Missing</span>
+      <span>3 Missing</span>
     </div>
 
-    <!-- Animated Frown -->
     <div class="frown">:(</div>
   </div>
 </div>
-<!-- EMBEDDED GRAPHIC END -->
-
 <table>
 <thead>
 <tr>
@@ -575,6 +571,22 @@ details[open] > *:not(summary) {
 <tr>
 <td align="left"><strong>Nov 20 (Thu)</strong></td>
 <td align="left"><em>[Last Day]</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Undated</strong></td>
+<td align="left"><em>Carbs and protein are your best friends when building muscle. Our body uses carbs for energy to perform during exercise and protein is required to gain muscle. Do not feel the need to skip out on them or drastically decrease your intake of them, especially if you lift weights.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Undated</strong></td>
+<td align="left"><em>When we sweat heavily, we lose both water and electrolytes. That's why our sweat tastes salty and why sodium and water intake are important.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Undated</strong></td>
+<td align="left"><em>Your weight can fluctuate anywhere from five to six pounds or more throughout the day depending on what you eat and drink and how much you exercise and even how much or little you sleep. During intense workouts, our body releases the stress hormone cortisol. Acutely, this can have some positive effects, but overtraining can lead to excessive amounts being released, which can be detrimental to muscle growth.</em></td>
+</tr>
+<tr>
+<td align="left"><strong>Undated</strong></td>
+<td align="left"><em>There are two different types of cardio. High intensity interval training and low intensity steady state.</em></td>
 </tr>
 </tbody></table>
 
