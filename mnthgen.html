@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>simple markdown calendar</title>
+    <title>simple markdown calendar (monday start)</title>
     <style>
         body {
             background-color: #000000;
@@ -13,13 +13,11 @@
             text-transform: lowercase;
         }
 
-        /* minimal layout */
         .container {
             max-width: 600px;
             margin: 0 auto;
         }
 
-        /* input styling */
         select, button {
             background-color: #000000;
             color: #ffffff;
@@ -47,7 +45,6 @@
             color: #ff0000;
         }
 
-        /* output area */
         textarea {
             width: 100%;
             height: 600px;
@@ -99,7 +96,6 @@
     const yearSelect = document.getElementById('year-select');
     const outputArea = document.getElementById('output');
 
-    // populate months
     const months = [
         "january", "february", "march", "april", "may", "june", 
         "july", "august", "september", "october", "november", "december"
@@ -112,7 +108,6 @@
         monthSelect.appendChild(opt);
     });
 
-    // populate years (current and next)
     const currentYear = new Date().getFullYear();
     [currentYear, currentYear + 1].forEach(y => {
         const opt = document.createElement('option');
@@ -121,7 +116,6 @@
         yearSelect.appendChild(opt);
     });
 
-    // set defaults to current date
     const today = new Date();
     monthSelect.value = today.getMonth();
     yearSelect.value = currentYear;
@@ -134,20 +128,23 @@
         const monthIndex = parseInt(monthSelect.value);
         const year = parseInt(yearSelect.value);
         
-        // get days in month (0th day of next month gets last day of current)
+        // get days in month
         const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
 
         let markdown = "";
         let currentWeek = 1;
 
-        // generate according to strict template logic (days 1-7 = week 1, etc)
+        // print first week header immediately
+        markdown += `# week ${pad(currentWeek)}\n`;
+
         for (let day = 1; day <= daysInMonth; day++) {
-            
-            // start a new week header every 7 days, or on the very first day
-            if (day === 1 || (day - 1) % 7 === 0) {
-                if (day > 1) markdown += "\n"; // add spacing between weeks
-                markdown += `# week ${pad(currentWeek)}\n`;
+            const dateObj = new Date(year, monthIndex, day);
+            const dayOfWeek = dateObj.getDay(); // 0=sun, 1=mon, ... 6=sat
+
+            // If it is Monday (1) and NOT the first day of the month, start a new week
+            if (dayOfWeek === 1 && day !== 1) {
                 currentWeek++;
+                markdown += `\n# week ${pad(currentWeek)}\n`;
             }
 
             markdown += `## day ${pad(day)}\n`;
@@ -173,9 +170,9 @@
         }, 1000);
     }
 
-    // generate on load
     generateCalendar();
 
+    
 </script>
 
 </body>
