@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>simple markdown calendar</title>
+    <style>
+        body {
+            background-color: #000000;
+            color: #ffffff;
+            font-family: monospace;
+            margin: 20px;
+            text-transform: lowercase;
+        }
+
+        /* minimal layout */
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* input styling */
+        select, button {
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #ff0000;
+            padding: 10px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            font-family: inherit;
+            cursor: pointer;
+            text-transform: lowercase;
+        }
+
+        select:focus, button:focus, button:active {
+            outline: none;
+            background-color: #ff0000;
+            color: #000000;
+        }
+
+        button#copy-btn {
+            border: 1px solid #ffffff;
+        }
+        
+        button#copy-btn:hover {
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        /* output area */
+        textarea {
+            width: 100%;
+            height: 600px;
+            background-color: #000000;
+            color: #ffffff;
+            border: 1px solid #333;
+            padding: 10px;
+            margin-top: 20px;
+            font-family: monospace;
+            resize: none;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #ff0000;
+        }
+
+        .controls {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        label {
+            margin-right: 5px;
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="controls">
+        <label>month</label>
+        <select id="month-select"></select>
+
+        <label>year</label>
+        <select id="year-select"></select>
+
+        <button onclick="generateCalendar()">generate markdown</button>
+        <button id="copy-btn" onclick="copyToClipboard()">copy to clipboard</button>
+    </div>
+
+    <textarea id="output" readonly></textarea>
+</div>
+
+<script>
+    const monthSelect = document.getElementById('month-select');
+    const yearSelect = document.getElementById('year-select');
+    const outputArea = document.getElementById('output');
+
+    // populate months
+    const months = [
+        "january", "february", "march", "april", "may", "june", 
+        "july", "august", "september", "october", "november", "december"
+    ];
+
+    months.forEach((m, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = m;
+        monthSelect.appendChild(opt);
+    });
+
+    // populate years (current and next)
+    const currentYear = new Date().getFullYear();
+    [currentYear, currentYear + 1].forEach(y => {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+    });
+
+    // set defaults to current date
+    const today = new Date();
+    monthSelect.value = today.getMonth();
+    yearSelect.value = currentYear;
+
+    function pad(num) {
+        return num.toString().padStart(2, '0');
+    }
+
+    function generateCalendar() {
+        const monthIndex = parseInt(monthSelect.value);
+        const year = parseInt(yearSelect.value);
+        
+        // get days in month (0th day of next month gets last day of current)
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
+
+        let markdown = "";
+        let currentWeek = 1;
+
+        // generate according to strict template logic (days 1-7 = week 1, etc)
+        for (let day = 1; day <= daysInMonth; day++) {
+            
+            // start a new week header every 7 days, or on the very first day
+            if (day === 1 || (day - 1) % 7 === 0) {
+                if (day > 1) markdown += "\n"; // add spacing between weeks
+                markdown += `# week ${pad(currentWeek)}\n`;
+                currentWeek++;
+            }
+
+            markdown += `## day ${pad(day)}\n`;
+        }
+
+        outputArea.value = markdown;
+    }
+
+    function copyToClipboard() {
+        outputArea.select();
+        document.execCommand('copy');
+        
+        const btn = document.getElementById('copy-btn');
+        const originalText = btn.textContent;
+        btn.textContent = "copied!";
+        btn.style.backgroundColor = "#ff0000";
+        btn.style.color = "#000000";
+        
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.backgroundColor = "#000000";
+            btn.style.color = "#ffffff";
+        }, 1000);
+    }
+
+    // generate on load
+    generateCalendar();
+
+</script>
+
+</body>
+</html>
