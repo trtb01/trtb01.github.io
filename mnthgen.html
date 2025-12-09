@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>simple markdown calendar (monday start)</title>
+    <title>simple markdown calendar (dates)</title>
     <style>
         body {
             background-color: #000000;
@@ -101,6 +101,10 @@
         "july", "august", "september", "october", "november", "december"
     ];
 
+    const dayNames = [
+        "sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"
+    ];
+
     months.forEach((m, index) => {
         const opt = document.createElement('option');
         opt.value = index;
@@ -134,20 +138,25 @@
         let markdown = "";
         let currentWeek = 1;
 
-        // print first week header immediately
         markdown += `# week ${pad(currentWeek)}\n`;
 
         for (let day = 1; day <= daysInMonth; day++) {
             const dateObj = new Date(year, monthIndex, day);
             const dayOfWeek = dateObj.getDay(); // 0=sun, 1=mon, ... 6=sat
-
-            // If it is Monday (1) and NOT the first day of the month, start a new week
+            
+            // Check for Monday start to split weeks
             if (dayOfWeek === 1 && day !== 1) {
                 currentWeek++;
                 markdown += `\n# week ${pad(currentWeek)}\n`;
             }
 
-            markdown += `## day ${pad(day)}\n`;
+            // formatting: yy-mm-dd - dayname
+            const yy = year.toString().slice(-2);
+            const mm = pad(monthIndex + 1);
+            const dd = pad(day);
+            const dName = dayNames[dayOfWeek];
+
+            markdown += `## ${yy}-${mm}-${dd} - ${dName}\n`;
         }
 
         outputArea.value = markdown;
@@ -172,8 +181,8 @@
 
     generateCalendar();
 
-    
 </script>
 
 </body>
-</html>
+</
+    html>
