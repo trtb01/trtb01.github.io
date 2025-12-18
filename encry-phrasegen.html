@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Secure Passphrase Generator</title>
+    <title>TRTB Passphrase Generator V2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <style>
         /* --- CSS Variables --- */
         :root {
-            --line-thick: 1px;       /* Global variable for line thickness */
-            --page-paddi: 5%;        /* Padding around the entire page */
-            --min-gap: 5px;          /* Minimal padding for content inside borders */
-            --tight-line: 1.0;       /* Very tight vertical spacing for text */
-            --font-size0: 16px;      /* Base font size for all text */
-            --indentatio: 3rem;      /* Equivalent to ~0.5 inches */
-            --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
-            --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
-            --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
-            --head-inden: 4ch;       /* Headers indented 4 characters */
+            --line-thick: 1px;
+            --page-paddi: 5%;
+            --min-gap: 5px;
+            --tight-line: 1.1;
+            --font-size0: 16px;
+            --slim-v-mar: 0.5%;
+            --hr-v-margi: 2%;
+            --head-inden: 4ch;
         }
 
         /* --- General Styling --- */
@@ -26,381 +25,456 @@
             font-family: monospace;
             font-size: var(--font-size0);
             line-height: var(--tight-line);
-            margin: 0;
             padding: var(--page-paddi);
             box-sizing: border-box;
         }
 
-        p { margin: var(--slim-v-mar) 0; text-indent: var(--para-inden); }
-
-        h1, h2, h3, h4, h5, h6 {
+        h1, h2, h3 {
             background-color: red;
             color: black;
-            font-size: inherit;
-            margin: 0 0 0 var(--head-inden);
-            padding: 5px 10px;
             display: inline-block;
-            line-height: var(--tight-line);
+            padding: 5px 10px;
+            margin-left: var(--head-inden);
         }
-
-        a {
-            color: white;
-            text-decoration: overline;
-            text-decoration-color: red;
-            text-decoration-thickness: var(--line-thick);
-            padding: 2px 4px;
-            transition: 0.1s;
-        }
-        a:hover { background-color: white; color: black; }
 
         .em { color: red; }
 
-        pre, code {
-            background-color: black;
-            color: white;
-            border: var(--line-thick) solid white;
-            padding: var(--min-gap);
-            margin: var(--slim-v-mar) 0;
-            display: block;
-            overflow-x: auto;
-            box-sizing: border-box;
-            font-size: var(--font-size0);
-            line-height: var(--tight-line);
-            white-space: pre-wrap; /* Allows text wrapping in output */
-        }
-
-        input, textarea, select, button {
+        /* --- Layout Utils --- */
+        .row { display: flex; gap: 15px; margin-bottom: 10px; flex-wrap: wrap; }
+        .col { flex: 1; min-width: 200px; }
+        
+        /* --- Inputs & Interactive --- */
+        input, select, button, textarea {
             background-color: black;
             color: red;
             border: var(--line-thick) solid white;
-            padding: 5px;
+            padding: 8px;
             font-family: monospace;
-            font-size: var(--font-size0);
-            box-sizing: border-box;
-            line-height: var(--tight-line);
-            margin: var(--slim-v-mar) 0;
-            display: block;
             width: 100%;
+            box-sizing: border-box;
+            margin-top: 5px;
         }
-
-        input:focus, textarea:focus, select:focus, button:focus {
-            border-color: red;
-            outline: none;
-        }
-
-        /* Custom Checkbox Styling Wrapper */
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin: 5px 0;
-        }
-
-        input[type="checkbox"] {
-            appearance: none;
-            width: var(--font-size0);
-            height: var(--font-size0);
-            border: var(--line-thick) solid white;
-            margin-right: 10px;
-            cursor: pointer;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-
-        input[type="checkbox"]:checked { background-color: red; }
-
-        details {
-            margin: var(--slim-v-mar) 0;
-            border: var(--line-thick) solid black;
-            color: white;
-        }
-
-        summary {
-            background-color: red;
-            color: black;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-weight: bold;
-            list-style: none;
-        }
-
-        details[open] { border: var(--line-thick) solid red; padding: var(--min-gap); }
-
-        hr {
-            border: none;
-            border-top: var(--line-thick) solid red;
-            margin: var(--hr-v-margi) 0;
-        }
-
-        /* Utility classes for layout */
-        .row { display: flex; gap: 10px; margin-bottom: 5px; }
-        .col { flex: 1; }
+        input:focus, button:focus { outline: 1px solid red; border-color: red; }
         
+        button { cursor: pointer; font-weight: bold; transition: 0.1s; }
+        button:hover { background-color: white; color: black; }
+
+        label { color: white; display: block; font-size: 0.9em; margin-top: 5px;}
+
+        /* --- Drag & Drop --- */
         #drop-area {
             border: 2px dashed red;
             padding: 20px;
             text-align: center;
             margin-bottom: 20px;
-            transition: background-color 0.2s;
             cursor: pointer;
         }
-        #drop-area.highlight { background-color: #330000; }
-        #file-status { text-indent: 0; margin-top: 10px; color: red; }
+        #drop-area.highlight { background-color: #220000; }
 
-        label { display: block; margin-bottom: 2px; color: white;}
+        /* --- Output Area --- */
+        .result-card {
+            border: 1px solid white;
+            padding: 10px;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .pass-text {
+            font-size: 1.2em;
+            color: red;
+            word-break: break-all;
+            background: #111;
+            padding: 10px;
+            border: 1px solid #333;
+        }
+        .meta-info {
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 5px;
+        }
+        .phonetic-guide {
+            color: #aaa;
+            font-style: italic;
+            margin-top: 5px;
+            font-size: 0.85em;
+        }
+        .qr-container {
+            margin-top: 10px;
+            background: white;
+            padding: 10px;
+            display: none; /* Hidden by default */
+            width: fit-content;
+        }
+        .copy-btn {
+            background-color: #333;
+            color: white;
+            border: 1px solid #555;
+            width: auto;
+            display: inline-block;
+            padding: 2px 10px;
+            margin-top: 5px;
+            font-size: 0.8em;
+        }
+
+        /* --- Feature Specifics --- */
+        input[type="checkbox"] { width: auto; display: inline-block; margin-right: 10px; }
+        .checkbox-wrapper { display: flex; align-items: center; margin: 5px 0; }
+        
+        input[type="range"] { -webkit-appearance: none; background: #333; height: 5px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 15px; height: 15px; background: red; cursor: pointer; }
+
     </style>
 </head>
 <body>
 
-    <h1>TRTB Passphrase Generator</h1>
-    <hr>
-    
-    <p>Drag and drop your <span class="em">.wordlist</span> file below, or click to select.</p>
+    <h1>TRTB Generator v2.0</h1>
+    <hr style="border:0; border-top:1px solid red; margin: 20px 0;">
 
     <div id="drop-area">
-        <p style="text-indent: 0;">DROP FILE HERE</p>
+        <p style="margin:0;">DROP .WORDLIST FILE HERE</p>
         <input type="file" id="fileElem" accept=".wordlist,.txt" style="display:none">
-        <div id="file-status">No file loaded</div>
-    </div>
-
-    <details open>
-        <summary>Configuration</summary>
+        <div id="file-status" style="color:red; margin-top:5px;">No file loaded</div>
         
-        <div class="row">
-            <div class="col">
-                <label>Words per Passphrase</label>
-                <input type="number" id="wordCount" value="4" min="1">
+        <div class="row" style="margin-top:15px; justify-content: center;">
+            <div style="width: 150px; text-align: left;">
+                <label>Min Word Length</label>
+                <input type="number" id="sourceMin" value="4">
             </div>
-            <div class="col">
-                <label>Passphrases to Generate</label>
-                <input type="number" id="genCount" value="10" min="1">
-            </div>
-        </div>
-
-        <div class="row">
-            <div class="col">
-                <label>Casing Style</label>
-                <select id="casingStyle">
-                    <option value="lower">lower case</option>
-                    <option value="upper">UPPER CASE</option>
-                    <option value="title">Title Case</option>
-                    <option value="random-word">Random (Per Word)</option>
-                    <option value="random-letter">RaNdOm (Per Letter)</option>
-                </select>
+            <div style="width: 150px; text-align: left;">
+                <label>Max Word Length</label>
+                <input type="number" id="sourceMax" value="15">
             </div>
         </div>
-
-        <hr>
-        <p style="text-indent: 0;"><span class="em">Separators (Between Words)</span></p>
-
-        <div class="row">
-            <div class="col">
-                <div class="checkbox-group">
-                    <input type="checkbox" id="sep-alpha" checked> <label>Letters (a-z)</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="sep-num" checked> <label>Numbers (0-9)</label>
-                </div>
-                <div class="checkbox-group">
-                    <input type="checkbox" id="sep-sym" checked> <label>Special (!@#)</label>
-                </div>
-            </div>
-            <div class="col">
-                <label>Min Separator Length</label>
-                <input type="number" id="sepMin" value="1" min="0">
-                <label>Max Separator Length</label>
-                <input type="number" id="sepMax" value="3" min="0">
-            </div>
-        </div>
-
-        <hr>
-        <p style="text-indent: 0;"><span class="em">Constraints</span></p>
-
-        <div class="row">
-            <div class="col">
-                <label>Min Total Length</label>
-                <input type="number" id="totalMin" value="20">
-            </div>
-            <div class="col">
-                <label>Max Total Length</label>
-                <input type="number" id="totalMax" value="128">
-            </div>
-        </div>
-
-    </details>
-
-    <button id="generateBtn">GENERATE PASSPHRASES</button>
-
-    <div id="output-container" style="display:none;">
-        <h3>Results</h3>
-        <pre id="output"></pre>
     </div>
+
+    <div class="row">
+        <div class="col">
+            <h3 style="margin:0;">Basics</h3>
+            <label>Amount of Words</label>
+            <input type="number" id="wordCount" value="4" min="1">
+            
+            <label>Passphrases to Generate</label>
+            <input type="number" id="genCount" value="5" min="1">
+        </div>
+
+        <div class="col">
+            <h3 style="margin:0;">Text Style</h3>
+            <label>Casing</label>
+            <select id="casingStyle">
+                <option value="lower">lower case</option>
+                <option value="upper">UPPER CASE</option>
+                <option value="title">Title Case</option>
+                <option value="random-letter">RaNdOm (Sponge)</option>
+            </select>
+
+            <label>Sponge Ratio (for Random Casing)</label>
+            <input type="range" id="spongeRatio" min="0" max="100" value="50">
+
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="leetSpeak">
+                <label>Enable Leet Speak (e=3, a=4...)</label>
+            </div>
+
+            <label>Typo Probability (%)</label>
+            <input type="number" id="typoProb" value="0" min="0" max="100">
+        </div>
+
+        <div class="col">
+            <h3 style="margin:0;">Security</h3>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="sep-num" checked> <label>Num Separators</label>
+            </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="sep-sym" checked> <label>Symbol Separators</label>
+            </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="sep-strict">
+                <label>Strict (Force 1+ Num & Sym)</label>
+            </div>
+            
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="useSalt">
+                <label>Add Random Salt (Prefix/Suffix)</label>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row" style="border-top: 1px solid #333; padding-top:10px;">
+        <div class="col">
+            <label class="em">Display Features</label>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="showQR"> <label>Generate QR Codes</label>
+            </div>
+            <div class="checkbox-wrapper">
+                <input type="checkbox" id="showPhonetic" checked> <label>Show Phonetic Guide</label>
+            </div>
+        </div>
+    </div>
+
+    <button id="generateBtn" style="font-size: 1.2em; padding: 15px; margin-top: 20px;">GENERATE SECURE PASSPHRASES</button>
+
+    <div id="output-container" style="margin-top: 30px;"></div>
 
     <script>
-        // --- State ---
-        let wordList = [];
+        // --- Global State ---
+        let fullWordList = [];
+        let filteredList = [];
+
+        // --- Elements ---
         const dropArea = document.getElementById('drop-area');
         const fileElem = document.getElementById('fileElem');
         const statusDiv = document.getElementById('file-status');
         const generateBtn = document.getElementById('generateBtn');
-        const outputPre = document.getElementById('output');
         const outputContainer = document.getElementById('output-container');
 
-        // --- Drag & Drop / File Handling ---
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
-        });
-
-        dropArea.addEventListener('drop', handleDrop, false);
+        // --- File Handling ---
         dropArea.addEventListener('click', () => fileElem.click());
-        fileElem.addEventListener('change', function() {
-            handleFiles(this.files);
-        });
+        dropArea.addEventListener('dragover', (e) => { e.preventDefault(); dropArea.classList.add('highlight'); });
+        dropArea.addEventListener('dragleave', () => dropArea.classList.remove('highlight'));
+        dropArea.addEventListener('drop', handleDrop);
+        fileElem.addEventListener('change', (e) => handleFiles(e.target.files));
 
         function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            handleFiles(files);
+            e.preventDefault();
+            dropArea.classList.remove('highlight');
+            handleFiles(e.dataTransfer.files);
         }
 
         function handleFiles(files) {
-            if (files.length > 0) {
-                const file = files[0];
-                statusDiv.innerText = `Reading: ${file.name}...`;
+            if (files.length) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
-                    const content = e.target.result;
-                    // Split by newlines, trim, remove empty strings
-                    wordList = content.split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
-                    statusDiv.innerText = `Loaded ${wordList.length} words from ${file.name}`;
-                    statusDiv.style.color = "white";
-                    dropArea.style.borderColor = "white";
+                reader.onload = (e) => {
+                    fullWordList = e.target.result.split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
+                    filterList(); // Apply initial filter
                 };
-                reader.readAsText(file);
+                reader.readAsText(files[0]);
             }
         }
 
-        // --- Secure Random Utils ---
+        // Feature 14: Filter list based on length inputs
+        function filterList() {
+            const min = parseInt(document.getElementById('sourceMin').value) || 0;
+            const max = parseInt(document.getElementById('sourceMax').value) || 999;
+            
+            filteredList = fullWordList.filter(w => w.length >= min && w.length <= max);
+            
+            if (filteredList.length === 0 && fullWordList.length > 0) {
+                statusDiv.innerText = `Error: No words found between ${min}-${max} chars.`;
+                statusDiv.style.color = "red";
+            } else if (fullWordList.length > 0) {
+                statusDiv.innerText = `Ready: ${filteredList.length} words loaded (filtered from ${fullWordList.length}).`;
+                statusDiv.style.color = "#0f0";
+                dropArea.style.borderColor = "#0f0";
+            }
+        }
+
+        document.getElementById('sourceMin').addEventListener('change', filterList);
+        document.getElementById('sourceMax').addEventListener('change', filterList);
+
+        // --- Secure Random ---
         function getSecureRandomInt(max) {
-            // Returns integer 0 to max-1
             const array = new Uint32Array(1);
             window.crypto.getRandomValues(array);
             return array[0] % max;
         }
-
-        function getSecureRandomRange(min, max) {
-            const range = max - min + 1;
-            const array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            return (array[0] % range) + min;
-        }
-
-        function getRandomArrayItem(arr) {
-            if (arr.length === 0) return '';
+        
+        function getRandomItem(arr) {
             return arr[getSecureRandomInt(arr.length)];
         }
 
-        // --- Generator Logic ---
+        // --- Core Generator ---
         generateBtn.addEventListener('click', () => {
-            if (wordList.length === 0) {
-                alert("Please load a .wordlist file first.");
+            if (filteredList.length < 5) {
+                alert("Please load a valid wordlist first (check your length filters).");
                 return;
             }
 
+            outputContainer.innerHTML = "";
+            
             const config = {
-                wordCount: parseInt(document.getElementById('wordCount').value),
-                genCount: parseInt(document.getElementById('genCount').value),
+                count: parseInt(document.getElementById('wordCount').value),
+                loops: parseInt(document.getElementById('genCount').value),
                 casing: document.getElementById('casingStyle').value,
-                sepAlpha: document.getElementById('sep-alpha').checked,
+                spongeRatio: parseInt(document.getElementById('spongeRatio').value) / 100,
+                leet: document.getElementById('leetSpeak').checked,
+                typoProb: parseInt(document.getElementById('typoProb').value),
                 sepNum: document.getElementById('sep-num').checked,
                 sepSym: document.getElementById('sep-sym').checked,
-                sepMin: parseInt(document.getElementById('sepMin').value),
-                sepMax: parseInt(document.getElementById('sepMax').value),
-                totalMin: parseInt(document.getElementById('totalMin').value),
-                totalMax: parseInt(document.getElementById('totalMax').value)
+                sepStrict: document.getElementById('sep-strict').checked,
+                salt: document.getElementById('useSalt').checked,
+                qr: document.getElementById('showQR').checked,
+                phonetic: document.getElementById('showPhonetic').checked
             };
 
-            // Build Separator Character Pool
-            let sepPool = "";
-            if (config.sepAlpha) sepPool += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-            if (config.sepNum) sepPool += "0123456789";
-            if (config.sepSym) sepPool += "!@#$%^&*()-_=+[]{};:,.<>?/|";
-            
-            // Fallback if no separators selected but length requested
-            if (sepPool === "" && config.sepMax > 0) {
-                 // default to just space or dash if user unchecks everything
-                 sepPool = "-_ "; 
+            for (let i = 0; i < config.loops; i++) {
+                createPassphraseCard(config);
             }
-
-            let results = [];
-            let attempts = 0;
-            const MAX_ATTEMPTS = config.genCount * 100; // Prevent infinite loops
-
-            while (results.length < config.genCount && attempts < MAX_ATTEMPTS) {
-                attempts++;
-                let phrase = "";
-                
-                // Construct one passphrase
-                for (let i = 0; i < config.wordCount; i++) {
-                    // 1. Pick Word
-                    let word = getRandomArrayItem(wordList);
-
-                    // 2. Apply Casing
-                    word = applyCasing(word, config.casing);
-                    phrase += word;
-
-                    // 3. Add Separator (if not the last word)
-                    if (i < config.wordCount - 1) {
-                        const sepLen = getSecureRandomRange(config.sepMin, config.sepMax);
-                        for (let s = 0; s < sepLen; s++) {
-                            phrase += getRandomArrayItem(sepPool);
-                        }
-                    }
-                }
-
-                // 4. Validate Constraints
-                if (phrase.length >= config.totalMin && phrase.length <= config.totalMax) {
-                    results.push(phrase);
-                }
-            }
-
-            if (results.length === 0) {
-                outputPre.innerText = "Could not generate passwords meeting constraints. Check Min/Max length.";
-            } else {
-                outputPre.innerText = results.join("\n");
-            }
-            outputContainer.style.display = 'block';
         });
 
-        function applyCasing(word, style) {
-            switch (style) {
-                case 'lower': return word.toLowerCase();
-                case 'upper': return word.toUpperCase();
-                case 'title': return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
-                case 'random-word':
-                    // Recursive call with random style choice
-                    const styles = ['lower', 'upper', 'title'];
-                    return applyCasing(word, getRandomArrayItem(styles));
-                case 'random-letter':
-                    return word.split('').map(c => {
-                        return (getSecureRandomInt(2) === 0) ? c.toLowerCase() : c.toUpperCase();
-                    }).join('');
-                default: return word;
+        function createPassphraseCard(cfg) {
+            // 1. Select Words
+            let words = [];
+            for (let i = 0; i < cfg.count; i++) words.push(getRandomItem(filteredList));
+
+            // 2. Feature 6: Typos
+            words = words.map(w => {
+                if (getSecureRandomInt(100) < cfg.typoProb) return applyTypo(w);
+                return w;
+            });
+
+            // 3. Feature 3: Leet Speak
+            if (cfg.leet) words = words.map(applyLeet);
+
+            // 4. Apply Casing (Feature 15 inside)
+            words = words.map(w => applyCasing(w, cfg.casing, cfg.spongeRatio));
+
+            // 5. Separators (Feature 13 Strict Logic)
+            let separators = [];
+            let sepPool = "";
+            if (cfg.sepNum) sepPool += "0123456789";
+            if (cfg.sepSym) sepPool += "!@#$%^&*-_+=?";
+            if (sepPool === "") sepPool = "-"; // Fallback
+
+            // Generate basic separators
+            for (let i = 0; i < cfg.count - 1; i++) separators.push(getRandomItem(sepPool));
+
+            // If Strict, ensure we have at least one of each requested type
+            if (cfg.sepStrict && (cfg.count - 1) >= 2) {
+                if (cfg.sepNum && !separators.some(s => /[0-9]/.test(s))) {
+                    separators[0] = getRandomItem("0123456789");
+                }
+                if (cfg.sepSym && !separators.some(s => /[!@#$%^&*-_+=?]/.test(s))) {
+                    // Pick a different index if possible to avoid overwriting the number we just fixed
+                    let idx = (separators.length > 1) ? 1 : 0;
+                    separators[idx] = getRandomItem("!@#$%^&*-_+=?");
+                }
             }
+
+            // Assemble
+            let finalPass = "";
+            for (let i = 0; i < words.length; i++) {
+                finalPass += words[i];
+                if (i < words.length - 1) finalPass += separators[i];
+            }
+
+            // 6. Feature 5: Salt
+            if (cfg.salt) {
+                const saltChars = "abcdef0123456789";
+                const salt1 = getRandomItem(saltChars) + getRandomItem(saltChars) + getRandomItem(saltChars);
+                const salt2 = getRandomItem(saltChars) + getRandomItem(saltChars) + getRandomItem(saltChars);
+                finalPass = `${salt1}|${finalPass}|${salt2}`;
+            }
+
+            // Render
+            renderResult(finalPass, cfg);
         }
 
+        // --- Render Logic ---
+        function renderResult(pass, cfg) {
+            const card = document.createElement('div');
+            card.className = 'result-card';
+
+            // Feature 8: Entropy Calc (Estimate)
+            // Bits = log2( PoolSize ^ Words ) + Separator entropy
+            const wordEntropy = cfg.count * Math.log2(filteredList.length);
+            // Rough separator entropy estimate
+            const sepEntropy = (cfg.count - 1) * 3; // ~3 bits per separator
+            const totalEntropy = Math.round(wordEntropy + sepEntropy);
+
+            // Feature 4: Weakness Check (Basic)
+            let warning = "";
+            if (totalEntropy < 40) warning = "<span class='em'>[WEAK]</span> ";
+            if (pass.length < 12) warning += "<span class='em'>[TOO SHORT]</span> ";
+
+            let html = `
+                <div class="pass-text" id="p-${getSecureRandomInt(99999)}">${pass}</div>
+                <div class="meta-info">
+                    ${warning} Length: ${pass.length} chars | 
+                    Entropy: ~${totalEntropy} bits
+                </div>
+                <button class="copy-btn">Copy (Nuke in 60s)</button>
+            `;
+
+            // Feature 11: Phonetic
+            if (cfg.phonetic) {
+                html += `<div class="phonetic-guide">${toPhonetic(pass)}</div>`;
+            }
+
+            // Feature 10: QR
+            if (cfg.qr) {
+                html += `<div class="qr-container"></div>`;
+            }
+
+            card.innerHTML = html;
+            outputContainer.appendChild(card);
+
+            // Handle QR generation after DOM insertion
+            if (cfg.qr) {
+                const qrDiv = card.querySelector('.qr-container');
+                qrDiv.style.display = 'block';
+                new QRCode(qrDiv, { text: pass, width: 100, height: 100 });
+            }
+
+            // Feature 12: Clipboard Nuke
+            const copyBtn = card.querySelector('.copy-btn');
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(pass).then(() => {
+                    copyBtn.innerText = "COPIED! (Clearing in 60s)";
+                    copyBtn.style.color = "#0f0";
+                    setTimeout(() => {
+                        navigator.clipboard.writeText(" "); // Nuke
+                        copyBtn.innerText = "Clipboard Cleared";
+                        copyBtn.style.color = "white";
+                    }, 60000);
+                });
+            });
+        }
+
+        // --- Helpers ---
+        function applyTypo(word) {
+            if (word.length < 2) return word;
+            // Swap two random adjacent characters
+            const idx = getSecureRandomInt(word.length - 1);
+            const arr = word.split('');
+            const temp = arr[idx];
+            arr[idx] = arr[idx+1];
+            arr[idx+1] = temp;
+            return arr.join('');
+        }
+
+        function applyLeet(word) {
+            const map = { 'a':'4', 'e':'3', 'i':'1', 'o':'0', 's':'5', 't':'7', 'l':'1' };
+            return word.split('').map(c => map[c.toLowerCase()] || c).join('');
+        }
+
+        function applyCasing(word, style, ratio) {
+            if (style === 'lower') return word.toLowerCase();
+            if (style === 'upper') return word.toUpperCase();
+            if (style === 'title') return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+            if (style === 'random-letter') {
+                return word.split('').map(c => {
+                    // Feature 15: Use ratio (slider)
+                    return (Math.random() < ratio) ? c.toUpperCase() : c.toLowerCase();
+                }).join('');
+            }
+            return word;
+        }
+
+        function toPhonetic(str) {
+            const phonetics = {
+                'a':'Alpha', 'b':'Bravo', 'c':'Charlie', 'd':'Delta', 'e':'Echo', 'f':'Foxtrot',
+                'g':'Golf', 'h':'Hotel', 'i':'India', 'j':'Juliett', 'k':'Kilo', 'l':'Lima',
+                'm':'Mike', 'n':'November', 'o':'Oscar', 'p':'Papa', 'q':'Quebec', 'r':'Romeo',
+                's':'Sierra', 't':'Tango', 'u':'Uniform', 'v':'Victor', 'w':'Whiskey', 'x':'X-ray',
+                'y':'Yankee', 'z':'Zulu', '0':'Zero', '1':'One', '2':'Two', '3':'Three',
+                '4':'Four', '5':'Five', '6':'Six', '7':'Seven', '8':'Eight', '9':'Nine',
+                '-':'Dash', '_':'Underscore', '!':'Bang', '@':'At', '#':'Hash', '$':'Dollar',
+                '%':'Percent', '^':'Caret', '&':'And', '*':'Star'
+            };
+            // Just show phonetic for first 20 chars to save space
+            const chars = str.split('').slice(0, 20);
+            const res = chars.map(c => phonetics[c.toLowerCase()] || c).join(' ');
+            return (str.length > 20) ? res + "..." : res;
+        }
     </script>
 </body>
 </html>
