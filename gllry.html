@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRTB Gallery Builder</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+    <style id="user-css">
+/* --- CSS Variables --- */
+:root {
+    --line-thick: 1px;       /* Global variable for line thickness */
+    --page-paddi: 5%;        /* Padding around the entire page */
+    --min-gap: 5px;          /* Minimal padding for content inside borders */
+    --tight-line: 1.0;       /* Very tight vertical spacing for text */
+    --font-size0: 16px;      /* Base font size for all text (added a 0 to make 10 chars) */
+    --indentatio: 3rem;      /* Equivalent to ~0.5 inches (3 * 16px = 48px) */
+    --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
+    --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
+    --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
+    --head-inden: 4ch;       /* Headers indented 4 characters */
+    
+    /* Dynamic Gallery Vars */
+    --grid-cols: 4;
+    --grid-gap: 10px;
+}
+
+/* --- General Styling --- */
+body {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    margin: 0;
+    padding: var(--page-paddi);
+    box-sizing: border-box;
+}
+
+/* --- Paragraphs --- */
+p {
+    margin: var(--slim-v-mar) 0;
+    text-indent: var(--para-inden);
+}
+
+/* --- Headers --- */
+h1, h2, h3, h4, h5, h6 {
+    background-color: red;
+    color: black;
+    font-size: inherit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: var(--head-inden);
+    padding: 5px 10px;
+    display: inline-block;
+    line-height: var(--tight-line);
+}
+
+/* --- Links --- */
+a {
+    color: white;
+    text-decoration: none;
+    text-decoration-line: overline;
+    text-decoration-color: red;
+    text-decoration-thickness: var(--line-thick);
+    padding: 2px 4px;
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+a:hover {
+    background-color: white;
+    color: black;
+}
+
+/* --- Emphasis (.em class) --- */
+.em, em, i {
+    color: red;
+    font-style: italic;
+}
+
+strong, b {
+    color: white;
+    font-weight: bold;
+    text-decoration: underline red;
+}
+
+/* --- Code Blocks (pre, code) --- */
+pre, code {
+    background-color: black;
+    color: white;
+    border: var(--line-thick) solid white;
+    padding: var(--min-gap);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+    overflow-x: auto;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+}
+
+:not(pre) > code {
+    border-top: none;
+    border-bottom: none;
+    border-left: var(--line-thick) solid white;
+    border-right: var(--line-thick) solid white;
+    padding: 0 3px;
+    display: inline-block;
+    vertical-align: middle;
+    line-height: inherit;
+}
+
+/* --- Lists --- */
+ul, ol {
+    list-style: none;
+    padding-left: 0;
+    border-left: none;
+    margin: var(--slim-v-mar) 0;
+}
+
+ul li::before {
+    content: '•';
+    color: red;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.5em;
+}
+
+ol {
+    counter-reset: list-item;
+}
+ol li::before {
+    counter-increment: list-item;
+    content: counter(list-item) ". ";
+    color: red;
+    display: inline-block;
+    width: 2em;
+    margin-right: 0.5em;
+    text-align: right;
+}
+
+/* --- Images --- */
+img {
+    border: var(--line-thick) solid red;
+    display: block;
+    max-width: 100%;
+    height: auto;
+    box-sizing: border-box;
+    padding: var(--min-gap);
+}
+
+/* --- Horizontal Rule (hr) --- */
+hr {
+    border: none;
+    border-top: var(--line-thick) solid red;
+    margin: var(--hr-v-margi) 0;
+}
+
+/* --- Form Elements --- */
+input, textarea, select, button {
+    background-color: black;
+    color: red;
+    border: var(--line-thick) solid white;
+    padding: 5px;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    box-sizing: border-box;
+    line-height: var(--tight-line);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+    width: 100%;
+}
+
+input:focus, textarea:focus, select:focus, button:focus {
+    border-color: red;
+    outline: none;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+button:hover {
+    background-color: red;
+    color: black;
+}
+
+/* --- Builder Specific Styles (Not for output) --- */
+#builder-controls {
+    border: 1px solid white;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+.control-group {
+    margin-bottom: 10px;
+}
+.section-wrapper {
+    border: 1px dashed #333;
+    padding: 10px;
+    margin-bottom: 20px;
+    position: relative;
+}
+.section-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.drag-handle {
+    cursor: move;
+    background: red;
+    color: black;
+    padding: 2px 5px;
+    display: inline-block;
+    width: auto;
+}
+.remove-btn {
+    width: auto;
+    display: inline-block;
+}
+
+/* --- Gallery Grid Logic --- */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-cols), 1fr);
+    gap: var(--grid-gap);
+    margin-top: 10px;
+}
+.gallery-item {
+    position: relative;
+    cursor: grab;
+}
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Centers image in its tile */
+    display: block;
+    margin: 0;
+}
+.gallery-item a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    padding: 0;
+}
+.gallery-item a:hover {
+    background-color: transparent;
+}
+
+/* Span Logic */
+.span-col-2 { grid-column: span 2; }
+.span-row-2 { grid-row: span 2; }
+
+/* Mobile fallback */
+@media (max-width: 600px) {
+    :root { --grid-cols: 1 !important; }
+    .span-col-2 { grid-column: span 1; }
+}
+
+/* Remove button for images in builder */
+.img-remove {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: red;
+    color: black;
+    border: 1px solid white;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 2px 5px;
+    z-index: 10;
+}
+    </style>
+</head>
+<body>
+
+    <h1>TRTB Gallery Generator</h1>
+    <p>Upload images, arrange sections, and generate a self-contained HTML file.</p>
+    <hr>
+
+    <div id="builder-controls">
+        <h3>Page Settings</h3>
+        <div class="control-group">
+            <label>Page Title:</label>
+            <input type="text" id="page-title" value="My Gallery" oninput="updatePageTitle()">
+        </div>
+        <div class="control-group">
+            <label>Columns (Grid Width):</label>
+            <input type="number" id="grid-cols-input" value="4" min="1" max="8" onchange="updateCSSVars()">
+        </div>
+        <div class="control-group">
+            <label>Gap Size (px):</label>
+            <input type="number" id="grid-gap-input" value="10" min="0" max="50" onchange="updateCSSVars()">
+        </div>
+        <div class="control-group">
+            <button onclick="addSection()">+ Add New Section</button>
+        </div>
+        <div class="control-group">
+            <button onclick="generateDownload()" style="border-color: red;">DOWNLOAD FINAL HTML FILE</button>
+        </div>
+    </div>
+
+    <div id="preview-area">
+        <h1 id="live-page-title">My Gallery</h1>
+        <div id="sections-container">
+            </div>
+    </div>
+
+    <input type="file" id="image-upload-input" multiple accept="image/*" style="display:none">
+    
+    <script>
+        let currentUploadSectionId = null;
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', () => {
+            updateCSSVars();
+            addSection(); // Start with one section
+            
+            // Setup global drag for sections
+            new Sortable(document.getElementById('sections-container'), {
+                animation: 150,
+                handle: '.section-drag-handle'
+            });
+        });
+
+        // --- State Management ---
+        function updateCSSVars() {
+            const cols = document.getElementById('grid-cols-input').value;
+            const gap = document.getElementById('grid-gap-input').value;
+            document.documentElement.style.setProperty('--grid-cols', cols);
+            document.documentElement.style.setProperty('--grid-gap', gap + 'px');
+        }
+
+        function updatePageTitle() {
+            document.getElementById('live-page-title').innerText = document.getElementById('page-title').value;
+        }
+
+        // --- Section Logic ---
+        function addSection() {
+            const id = Date.now();
+            const container = document.getElementById('sections-container');
+            
+            const div = document.createElement('div');
+            div.className = 'section-wrapper';
+            div.id = `section-${id}`;
+            div.innerHTML = `
+                <div class="section-controls">
+                    <span class="drag-handle section-drag-handle">DRAG SECTION</span>
+                    <button class="remove-btn" onclick="removeSection('${id}')">Remove Section</button>
+                    <button onclick="triggerUpload('${id}')">Upload Images to this Section</button>
+                </div>
+                
+                <label>Section Title:</label>
+                <input type="text" class="sec-title-input" placeholder="Section Title" oninput="updateSectionPreview('${id}')">
+                
+                <label>Summary (Markdown supported):</label>
+                <textarea class="sec-desc-input" placeholder="Summary text..." oninput="updateSectionPreview('${id}')"></textarea>
+
+                <hr>
+
+                <div class="section-preview-header">
+                    <h2 class="live-sec-title"></h2>
+                    <div class="live-sec-desc em"></div>
+                </div>
+
+                <div class="gallery-grid" id="grid-${id}"></div>
+            `;
+            
+            container.appendChild(div);
+
+            // Initialize Sortable for this grid
+            new Sortable(document.getElementById(`grid-${id}`), {
+                animation: 150
+            });
+        }
+
+        function removeSection(id) {
+            if(confirm('Delete this section?')) {
+                document.getElementById(`section-${id}`).remove();
+            }
+        }
+
+        function updateSectionPreview(id) {
+            const wrapper = document.getElementById(`section-${id}`);
+            const titleInput = wrapper.querySelector('.sec-title-input').value;
+            const descInput = wrapper.querySelector('.sec-desc-input').value;
+
+            wrapper.querySelector('.live-sec-title').innerText = titleInput;
+            wrapper.querySelector('.live-sec-desc').innerHTML = marked.parse(descInput);
+        }
+
+        // --- Image Handling ---
+        function triggerUpload(sectionId) {
+            currentUploadSectionId = sectionId;
+            document.getElementById('image-upload-input').click();
+        }
+
+        document.getElementById('image-upload-input').addEventListener('change', async function(e) {
+            if (!currentUploadSectionId || this.files.length === 0) return;
+            
+            const grid = document.getElementById(`grid-${currentUploadSectionId}`);
+            
+            for (let file of this.files) {
+                const processed = await processImage(file);
+                createGridItem(grid, processed);
+            }
+            
+            // Reset input
+            this.value = '';
+        });
+
+        function processImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        // Canvas for WebP conversion & Resizing logic
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        // Optional: Cap max dimension to 1920 to save size
+                        const MAX_DIM = 1920;
+                        if (width > MAX_DIM || height > MAX_DIM) {
+                            if (width > height) {
+                                height *= MAX_DIM / width;
+                                width = MAX_DIM;
+                            } else {
+                                width *= MAX_DIM / height;
+                                height = MAX_DIM;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Determine Spanning
+                        const ratio = width / height;
+                        let spanClass = '';
+                        if (ratio > 1.7) spanClass = 'span-col-2';
+                        else if (ratio < 0.6) spanClass = 'span-row-2';
+
+                        resolve({
+                            src: canvas.toDataURL('image/webp', 0.8), // 80% quality
+                            spanClass: spanClass
+                        });
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function createGridItem(container, imgData) {
+            const div = document.createElement('div');
+            div.className = `gallery-item ${imgData.spanClass}`;
+            div.innerHTML = `
+                <div class="img-remove" onclick="this.parentElement.remove()">X</div>
+                <a href="${imgData.src}" target="_blank">
+                    <img src="${imgData.src}">
+                </a>
+            `;
+            container.appendChild(div);
+        }
+
+        // --- Generator ---
+        function generateDownload() {
+            // Clone the sections container to manipulate for output
+            const containerClone = document.getElementById('sections-container').cloneNode(true);
+            
+            // Clean up the clone
+            const sections = containerClone.querySelectorAll('.section-wrapper');
+            let outputHTML = '';
+
+            sections.forEach(sec => {
+                // Remove editor controls
+                const title = sec.querySelector('.live-sec-title').innerText;
+                const desc = sec.querySelector('.live-sec-desc').innerHTML;
+                const gridItems = sec.querySelectorAll('.gallery-item');
+                
+                // Build Clean HTML for this section
+                outputHTML += `
+                    <section>
+                        ${title ? `<h2>${title}</h2>` : ''}
+                        ${desc ? `<div class="em">${desc}</div>` : ''}
+                        <hr>
+                        <div class="gallery-grid">
+                `;
+
+                gridItems.forEach(item => {
+                    const img = item.querySelector('img');
+                    const link = item.querySelector('a');
+                    // Get classes but remove "gallery-item" if needed, keeping spans
+                    const spanClass = item.className.replace('gallery-item', '').trim();
+                    
+                    outputHTML += `
+                        <div class="gallery-item ${spanClass}">
+                            <a href="${link.getAttribute('href')}" target="_blank">
+                                <img src="${img.getAttribute('src')}" loading="lazy">
+                            </a>
+                        </div>
+                    `;
+                });
+
+                outputHTML += `</div></section><br>`;
+            });
+
+            // Get CSS Vars
+            const gridCols = document.documentElement.style.getPropertyValue('--grid-cols') || 4;
+            const gridGap = document.documentElement.style.getPropertyValue('--grid-gap') || '10px';
+            const pageTitle = document.getElementById('page-title').value;
+
+            // Extract the user CSS text content
+            const cssContent = document.getElementById('user-css').innerHTML;
+
+            // Construct Final File
+            const finalFile = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${pageTitle}</title>
+<style>
+${cssContent}
+
+/* Override Vars from Builder Settings */
+:root {
+    --grid-cols: ${gridCols};
+    --grid-gap: ${gridGap};
+}
+
+/* Ensure clean output styles */
+.section-wrapper, .section-controls, input, textarea, button { display: none; }
+/* Re-enable display for grid vars */
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-cols), 1fr);
+    gap: var(--grid-gap);
+    margin-top: 10px;
+}
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.gallery-item a { display:block; width:100%; height:100%; }
+.span-col-2 { grid-column: span 2; }
+.span-row-2 { grid-row: span 2; }
+@media (max-width: 600px) {
+    :root { --grid-cols: 1 !important; }
+    .span-col-2 { grid-column: span 1; }
+}
+</style>
+</head>
+<body>
+    <h1>${pageTitle}</h1>
+    <hr>
+    ${outputHTML}
+</body>
+</html>`;
+
+            // Trigger Download
+            const blob = new Blob([finalFile], {type: 'text/html'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'gallery.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+    </script>
+</body>
+</html>
