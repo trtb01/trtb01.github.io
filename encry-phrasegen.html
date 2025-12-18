@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Passphrase Generator</title>
+    <style>
+        /* --- CSS Variables --- */
+        :root {
+            --line-thick: 1px;       /* Global variable for line thickness */
+            --page-paddi: 5%;        /* Padding around the entire page */
+            --min-gap: 5px;          /* Minimal padding for content inside borders */
+            --tight-line: 1.0;       /* Very tight vertical spacing for text */
+            --font-size0: 16px;      /* Base font size for all text */
+            --indentatio: 3rem;      /* Equivalent to ~0.5 inches */
+            --slim-v-mar: 0.5%;      /* Very very slim vertical margins for blocks */
+            --hr-v-margi: 2%;        /* Slightly more visible margin for HR */
+            --para-inden: 2ch;       /* First line of paragraph indented 2 characters */
+            --head-inden: 4ch;       /* Headers indented 4 characters */
+        }
+
+        /* --- General Styling --- */
+        body {
+            background-color: black;
+            color: white;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+            margin: 0;
+            padding: var(--page-paddi);
+            box-sizing: border-box;
+        }
+
+        p { margin: var(--slim-v-mar) 0; text-indent: var(--para-inden); }
+
+        h1, h2, h3, h4, h5, h6 {
+            background-color: red;
+            color: black;
+            font-size: inherit;
+            margin: 0 0 0 var(--head-inden);
+            padding: 5px 10px;
+            display: inline-block;
+            line-height: var(--tight-line);
+        }
+
+        a {
+            color: white;
+            text-decoration: overline;
+            text-decoration-color: red;
+            text-decoration-thickness: var(--line-thick);
+            padding: 2px 4px;
+            transition: 0.1s;
+        }
+        a:hover { background-color: white; color: black; }
+
+        .em { color: red; }
+
+        pre, code {
+            background-color: black;
+            color: white;
+            border: var(--line-thick) solid white;
+            padding: var(--min-gap);
+            margin: var(--slim-v-mar) 0;
+            display: block;
+            overflow-x: auto;
+            box-sizing: border-box;
+            font-size: var(--font-size0);
+            line-height: var(--tight-line);
+            white-space: pre-wrap; /* Allows text wrapping in output */
+        }
+
+        input, textarea, select, button {
+            background-color: black;
+            color: red;
+            border: var(--line-thick) solid white;
+            padding: 5px;
+            font-family: monospace;
+            font-size: var(--font-size0);
+            box-sizing: border-box;
+            line-height: var(--tight-line);
+            margin: var(--slim-v-mar) 0;
+            display: block;
+            width: 100%;
+        }
+
+        input:focus, textarea:focus, select:focus, button:focus {
+            border-color: red;
+            outline: none;
+        }
+
+        /* Custom Checkbox Styling Wrapper */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        input[type="checkbox"] {
+            appearance: none;
+            width: var(--font-size0);
+            height: var(--font-size0);
+            border: var(--line-thick) solid white;
+            margin-right: 10px;
+            cursor: pointer;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        input[type="checkbox"]:checked { background-color: red; }
+
+        details {
+            margin: var(--slim-v-mar) 0;
+            border: var(--line-thick) solid black;
+            color: white;
+        }
+
+        summary {
+            background-color: red;
+            color: black;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: bold;
+            list-style: none;
+        }
+
+        details[open] { border: var(--line-thick) solid red; padding: var(--min-gap); }
+
+        hr {
+            border: none;
+            border-top: var(--line-thick) solid red;
+            margin: var(--hr-v-margi) 0;
+        }
+
+        /* Utility classes for layout */
+        .row { display: flex; gap: 10px; margin-bottom: 5px; }
+        .col { flex: 1; }
+        
+        #drop-area {
+            border: 2px dashed red;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        #drop-area.highlight { background-color: #330000; }
+        #file-status { text-indent: 0; margin-top: 10px; color: red; }
+
+        label { display: block; margin-bottom: 2px; color: white;}
+    </style>
+</head>
+<body>
+
+    <h1>TRTB Passphrase Generator</h1>
+    <hr>
+    
+    <p>Drag and drop your <span class="em">.wordlist</span> file below, or click to select.</p>
+
+    <div id="drop-area">
+        <p style="text-indent: 0;">DROP FILE HERE</p>
+        <input type="file" id="fileElem" accept=".wordlist,.txt" style="display:none">
+        <div id="file-status">No file loaded</div>
+    </div>
+
+    <details open>
+        <summary>Configuration</summary>
+        
+        <div class="row">
+            <div class="col">
+                <label>Words per Passphrase</label>
+                <input type="number" id="wordCount" value="4" min="1">
+            </div>
+            <div class="col">
+                <label>Passphrases to Generate</label>
+                <input type="number" id="genCount" value="10" min="1">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col">
+                <label>Casing Style</label>
+                <select id="casingStyle">
+                    <option value="lower">lower case</option>
+                    <option value="upper">UPPER CASE</option>
+                    <option value="title">Title Case</option>
+                    <option value="random-word">Random (Per Word)</option>
+                    <option value="random-letter">RaNdOm (Per Letter)</option>
+                </select>
+            </div>
+        </div>
+
+        <hr>
+        <p style="text-indent: 0;"><span class="em">Separators (Between Words)</span></p>
+
+        <div class="row">
+            <div class="col">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="sep-alpha" checked> <label>Letters (a-z)</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="sep-num" checked> <label>Numbers (0-9)</label>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="sep-sym" checked> <label>Special (!@#)</label>
+                </div>
+            </div>
+            <div class="col">
+                <label>Min Separator Length</label>
+                <input type="number" id="sepMin" value="1" min="0">
+                <label>Max Separator Length</label>
+                <input type="number" id="sepMax" value="3" min="0">
+            </div>
+        </div>
+
+        <hr>
+        <p style="text-indent: 0;"><span class="em">Constraints</span></p>
+
+        <div class="row">
+            <div class="col">
+                <label>Min Total Length</label>
+                <input type="number" id="totalMin" value="20">
+            </div>
+            <div class="col">
+                <label>Max Total Length</label>
+                <input type="number" id="totalMax" value="128">
+            </div>
+        </div>
+
+    </details>
+
+    <button id="generateBtn">GENERATE PASSPHRASES</button>
+
+    <div id="output-container" style="display:none;">
+        <h3>Results</h3>
+        <pre id="output"></pre>
+    </div>
+
+    <script>
+        // --- State ---
+        let wordList = [];
+        const dropArea = document.getElementById('drop-area');
+        const fileElem = document.getElementById('fileElem');
+        const statusDiv = document.getElementById('file-status');
+        const generateBtn = document.getElementById('generateBtn');
+        const outputPre = document.getElementById('output');
+        const outputContainer = document.getElementById('output-container');
+
+        // --- Drag & Drop / File Handling ---
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+        });
+
+        dropArea.addEventListener('drop', handleDrop, false);
+        dropArea.addEventListener('click', () => fileElem.click());
+        fileElem.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                const file = files[0];
+                statusDiv.innerText = `Reading: ${file.name}...`;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    // Split by newlines, trim, remove empty strings
+                    wordList = content.split(/\r?\n/).map(w => w.trim()).filter(w => w.length > 0);
+                    statusDiv.innerText = `Loaded ${wordList.length} words from ${file.name}`;
+                    statusDiv.style.color = "white";
+                    dropArea.style.borderColor = "white";
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // --- Secure Random Utils ---
+        function getSecureRandomInt(max) {
+            // Returns integer 0 to max-1
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return array[0] % max;
+        }
+
+        function getSecureRandomRange(min, max) {
+            const range = max - min + 1;
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return (array[0] % range) + min;
+        }
+
+        function getRandomArrayItem(arr) {
+            if (arr.length === 0) return '';
+            return arr[getSecureRandomInt(arr.length)];
+        }
+
+        // --- Generator Logic ---
+        generateBtn.addEventListener('click', () => {
+            if (wordList.length === 0) {
+                alert("Please load a .wordlist file first.");
+                return;
+            }
+
+            const config = {
+                wordCount: parseInt(document.getElementById('wordCount').value),
+                genCount: parseInt(document.getElementById('genCount').value),
+                casing: document.getElementById('casingStyle').value,
+                sepAlpha: document.getElementById('sep-alpha').checked,
+                sepNum: document.getElementById('sep-num').checked,
+                sepSym: document.getElementById('sep-sym').checked,
+                sepMin: parseInt(document.getElementById('sepMin').value),
+                sepMax: parseInt(document.getElementById('sepMax').value),
+                totalMin: parseInt(document.getElementById('totalMin').value),
+                totalMax: parseInt(document.getElementById('totalMax').value)
+            };
+
+            // Build Separator Character Pool
+            let sepPool = "";
+            if (config.sepAlpha) sepPool += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            if (config.sepNum) sepPool += "0123456789";
+            if (config.sepSym) sepPool += "!@#$%^&*()-_=+[]{};:,.<>?/|";
+            
+            // Fallback if no separators selected but length requested
+            if (sepPool === "" && config.sepMax > 0) {
+                 // default to just space or dash if user unchecks everything
+                 sepPool = "-_ "; 
+            }
+
+            let results = [];
+            let attempts = 0;
+            const MAX_ATTEMPTS = config.genCount * 100; // Prevent infinite loops
+
+            while (results.length < config.genCount && attempts < MAX_ATTEMPTS) {
+                attempts++;
+                let phrase = "";
+                
+                // Construct one passphrase
+                for (let i = 0; i < config.wordCount; i++) {
+                    // 1. Pick Word
+                    let word = getRandomArrayItem(wordList);
+
+                    // 2. Apply Casing
+                    word = applyCasing(word, config.casing);
+                    phrase += word;
+
+                    // 3. Add Separator (if not the last word)
+                    if (i < config.wordCount - 1) {
+                        const sepLen = getSecureRandomRange(config.sepMin, config.sepMax);
+                        for (let s = 0; s < sepLen; s++) {
+                            phrase += getRandomArrayItem(sepPool);
+                        }
+                    }
+                }
+
+                // 4. Validate Constraints
+                if (phrase.length >= config.totalMin && phrase.length <= config.totalMax) {
+                    results.push(phrase);
+                }
+            }
+
+            if (results.length === 0) {
+                outputPre.innerText = "Could not generate passwords meeting constraints. Check Min/Max length.";
+            } else {
+                outputPre.innerText = results.join("\n");
+            }
+            outputContainer.style.display = 'block';
+        });
+
+        function applyCasing(word, style) {
+            switch (style) {
+                case 'lower': return word.toLowerCase();
+                case 'upper': return word.toUpperCase();
+                case 'title': return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                case 'random-word':
+                    // Recursive call with random style choice
+                    const styles = ['lower', 'upper', 'title'];
+                    return applyCasing(word, getRandomArrayItem(styles));
+                case 'random-letter':
+                    return word.split('').map(c => {
+                        return (getSecureRandomInt(2) === 0) ? c.toLowerCase() : c.toUpperCase();
+                    }).join('');
+                default: return word;
+            }
+        }
+
+    </script>
+</body>
+</html>
