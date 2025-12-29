@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stark Player</title>
+    <title>Stark Player Red</title>
+    <!-- Library to extract album art -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
             --bg-color: #000000;
             --fg-color: #ffffff;
+            --accent-color: #FF0000; /* Pure Red */
             --border: 2px solid var(--fg-color);
         }
 
         * {
             box-sizing: border-box;
-            /* Enforce squared corners everywhere */
-            border-radius: 0 !important; 
+            border-radius: 0 !important; /* Enforce squared corners */
         }
 
         body, html {
@@ -25,257 +27,285 @@
             width: 100%;
             background-color: var(--bg-color);
             color: var(--fg-color);
-            font-family: 'Courier New', Courier, monospace; /* Monospace for stark aesthetic */
+            font-family: 'Courier New', Courier, monospace;
             overflow: hidden;
             display: flex;
+            flex-direction: row; /* Horizontal layout for Sidebar */
         }
 
-        /* --- Left Sidebar (Path Display) --- */
-        #path-display {
-            width: 250px; /* Fixed width sidebar */
+        /* --- Right Sidebar (Title) --- */
+        #right-sidebar {
+            width: 80px; /* Fixed width for the vertical title */
             height: 100vh;
-            border-right: var(--border);
-            padding: 15px;
-            font-size: 0.9rem;
-            word-wrap: break-word;
-            overflow-y: auto;
+            border-left: var(--border);
+            background-color: var(--bg-color);
             display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            line-height: 1.4;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            order: 2; /* Ensure it stays on the right */
         }
 
-        #path-label {
+        #track-title {
+            writing-mode: vertical-rl; /* Vertical text */
+            text-orientation: mixed;
+            transform: rotate(180deg); /* Reads bottom-to-top */
+            color: var(--accent-color);
             font-weight: bold;
-            border-bottom: 1px dashed var(--fg-color);
-            margin-bottom: 10px;
-            padding-bottom: 5px;
+            font-size: 2rem;
+            white-space: nowrap;
             text-transform: uppercase;
+            letter-spacing: 2px;
+            max-height: 100%;
         }
 
-        /* --- Main Content Area --- */
-        #main-area {
+        /* --- Main Layout Column --- */
+        #main-column {
             flex-grow: 1;
-            position: relative;
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            order: 1;
+            position: relative;
         }
 
-        /* --- Top Left Button Area (Overlaid or part of layout) --- */
-        #top-controls {
-            position: absolute;
-            top: 0;
-            left: 0;
-            padding: 15px;
-            z-index: 10;
-            display: flex;
-            gap: 10px;
-            background-color: var(--bg-color); /* Cover art behind it */
+        /* --- Top Button --- */
+        #load-area {
+            width: 100%;
+            height: 60px; /* Fixed height for header area */
             border-bottom: var(--border);
-            border-right: var(--border);
+            display: flex;
         }
 
-        input[type="file"] {
-            display: none;
-        }
-
-        button {
+        #load-btn {
+            width: 100%;
+            height: 100%;
             background-color: var(--bg-color);
             color: var(--fg-color);
-            border: var(--border);
-            padding: 10px 20px;
+            border: none;
             font-family: inherit;
             font-weight: bold;
+            font-size: 1.2rem;
             text-transform: uppercase;
             cursor: pointer;
-            transition: background 0.1s, color 0.1s;
+            transition: background 0.1s;
         }
 
-        button:hover {
-            background-color: var(--fg-color);
-            color: var(--bg-color);
+        #load-btn:hover {
+            background-color: #222;
         }
 
-        button:active {
-            background-color: #888;
+        #load-btn:active {
+            background-color: #444;
         }
 
-        #url-input {
-            background: black;
-            border: var(--border);
-            color: white;
-            font-family: inherit;
-            padding: 10px;
-            width: 300px;
-        }
-
-        /* --- Cover Art Display --- */
-        #cover-container {
+        /* --- Center Art Area --- */
+        #art-area {
             flex-grow: 1;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding-bottom: 80px; /* Make room for bottom bar */
+            background-color: var(--bg-color);
+            overflow: hidden;
+            position: relative;
         }
 
-        #cover-art {
-            max-width: 90%; /* Leaves 5% margin on sides */
-            max-height: 80%;
-            border: var(--border);
-            display: none; /* Hidden by default until art is found */
+        #album-art {
+            /* 5% margins implies max width/height of 90% */
+            max-width: 90%;
+            max-height: 90%;
             object-fit: contain;
+            /* Squared border, no shadow as requested */
+            border: var(--border);
+            display: none; 
         }
 
-        #no-cover-text {
-            border: 1px dashed #333;
-            padding: 20px;
+        #empty-state-msg {
             color: #333;
+            text-align: center;
             display: block;
         }
 
         /* --- Bottom Controls --- */
-        #bottom-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        #controls-area {
+            height: 10vh; /* Exactly 10% of height */
             width: 100%;
-            height: 80px;
             border-top: var(--border);
             display: flex;
+            flex-direction: row;
         }
 
-        .control-btn {
-            flex-grow: 1;
-            font-size: 1.5rem;
+        #play-btn {
+            flex-grow: 4; /* Takes up "most" of the space */
+            background-color: var(--bg-color);
+            color: var(--fg-color);
             border: none;
             border-right: var(--border);
-            height: 100%;
+            font-family: inherit;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
         }
 
-        .control-btn:last-child {
-            border-right: none;
+        #repeat-btn {
+            flex-grow: 1; /* Takes up the rest */
+            background-color: var(--bg-color);
+            color: var(--fg-color);
+            border: none;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
         }
 
-        .active-state {
-            background-color: var(--fg-color) !important;
-            color: var(--bg-color) !important;
+        #play-btn:hover, #repeat-btn:hover {
+            background-color: var(--fg-color);
+            color: var(--bg-color);
         }
 
+        .active-repeat {
+            background-color: #333 !important;
+            color: white !important;
+            border-left: 5px solid var(--accent-color);
+        }
+
+        /* Hidden inputs */
+        input[type="file"] { display: none; }
+        
     </style>
 </head>
 <body>
 
-    <audio id="audio-player"></audio>
+    <!-- Main Content (Left Side) -->
+    <div id="main-column">
+        <!-- Top Bar -->
+        <div id="load-area">
+            <button id="load-btn">LOAD FILE / (CTRL+V for URL)</button>
+            <input type="file" id="file-input" accept=".mp3, .flac, .wav, .ogg, audio/*">
+        </div>
 
-    <div id="path-display">
-        <div id="path-label">Current Source:</div>
-        <div id="path-text">No file loaded.</div>
+        <!-- Art Area -->
+        <div id="art-area">
+            <div id="empty-state-msg">NO FILE LOADED</div>
+            <img id="album-art" src="" alt="">
+        </div>
+
+        <!-- Bottom Controls -->
+        <div id="controls-area">
+            <button id="play-btn">PLAY</button>
+            <button id="repeat-btn">REPEAT: OFF</button>
+        </div>
     </div>
 
-    <div id="main-area">
-        
-        <div id="top-controls">
-            <button id="load-file-btn">Load Local File</button>
-            <input type="file" id="file-input" accept=".mp3, .flac, audio/*">
-            
-            <input type="text" id="url-input" placeholder="OR PASTE URL HERE + ENTER">
-        </div>
-
-        <div id="cover-container">
-            <div id="no-cover-text">NO SIGNAL</div>
-            <img id="cover-art" src="" alt="Album Cover">
-        </div>
-
-        <div id="bottom-controls">
-            <button id="play-pause-btn" class="control-btn">PLAY</button>
-            <button id="repeat-btn" class="control-btn">REPEAT: OFF</button>
-        </div>
-
+    <!-- Right Sidebar (Title) -->
+    <div id="right-sidebar">
+        <div id="track-title"></div>
     </div>
+
+    <!-- Hidden Audio Element -->
+    <audio id="audio-player" crossorigin="anonymous"></audio>
 
     <script>
         const audioPlayer = document.getElementById('audio-player');
         const fileInput = document.getElementById('file-input');
-        const loadFileBtn = document.getElementById('load-file-btn');
-        const urlInput = document.getElementById('url-input');
-        
-        const playPauseBtn = document.getElementById('play-pause-btn');
+        const loadBtn = document.getElementById('load-btn');
+        const playBtn = document.getElementById('play-btn');
         const repeatBtn = document.getElementById('repeat-btn');
-        
-        const pathText = document.getElementById('path-text');
-        const coverArt = document.getElementById('cover-art');
-        const noCoverText = document.getElementById('no-cover-text');
+        const trackTitle = document.getElementById('track-title');
+        const albumArt = document.getElementById('album-art');
+        const emptyStateMsg = document.getElementById('empty-state-msg');
 
         let isRepeating = false;
         let isPlaying = false;
 
-        // --- Event Listeners ---
+        // --- Interaction ---
 
-        // 1. Top Left Button -> Triggers hidden file input
-        loadFileBtn.addEventListener('click', () => {
+        // 1. Load File Button
+        loadBtn.addEventListener('click', () => {
             fileInput.click();
         });
 
-        // 2. File Selected from Local Disk
+        // 2. File Selected
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const objectUrl = URL.createObjectURL(file);
-                loadTrack(objectUrl, file.name, file); // Pass file object for ID3 tags
-            }
-        });
-
-        // 3. URL Input
-        urlInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const url = urlInput.value.trim();
-                if (url) {
-                    loadTrack(url, url, null);
+                if (audioPlayer.src.startsWith('blob:')) {
+                    URL.revokeObjectURL(audioPlayer.src);
                 }
+                loadTrack(objectUrl, file.name, file);
             }
         });
 
-        // 4. Play/Pause Button
-        playPauseBtn.addEventListener('click', togglePlay);
+        // 3. Paste URL Support (Hidden Web Link Feature)
+        document.addEventListener('paste', (e) => {
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            if (pastedText && (pastedText.startsWith('http') || pastedText.startsWith('www'))) {
+                loadTrack(pastedText, pastedText, null);
+            }
+        });
 
-        // 5. Repeat Button
+        // 4. Play/Pause
+        playBtn.addEventListener('click', togglePlay);
+
+        // 5. Repeat
         repeatBtn.addEventListener('click', () => {
             isRepeating = !isRepeating;
             audioPlayer.loop = isRepeating;
             
             if (isRepeating) {
                 repeatBtn.innerText = "REPEAT: ON";
-                repeatBtn.classList.add('active-state');
+                repeatBtn.classList.add('active-repeat');
             } else {
                 repeatBtn.innerText = "REPEAT: OFF";
-                repeatBtn.classList.remove('active-state');
+                repeatBtn.classList.remove('active-repeat');
             }
         });
 
-        // Auto-update Play/Pause button on audio end if not repeating
+        // Audio Events
         audioPlayer.addEventListener('ended', () => {
             if (!isRepeating) {
                 isPlaying = false;
-                playPauseBtn.innerText = "PLAY";
+                playBtn.innerText = "PLAY";
             }
         });
 
-        // --- Core Functions ---
+        audioPlayer.addEventListener('error', () => {
+            trackTitle.innerText = "ERROR LOADING FILE";
+            playBtn.innerText = "ERR";
+        });
+
+        // --- Functions ---
 
         function loadTrack(src, name, fileObject) {
             audioPlayer.src = src;
-            pathText.innerText = name; // Update sidebar
+            trackTitle.innerText = name;
             
-            // Reset cover
-            coverArt.style.display = 'none';
-            noCoverText.style.display = 'block';
-            noCoverText.innerText = "LOADING DATA...";
+            // Reset Art UI
+            albumArt.style.display = 'none';
+            albumArt.src = '';
+            emptyStateMsg.style.display = 'block';
+            emptyStateMsg.innerText = "LOADING METADATA...";
 
-            // Attempt to read metadata if it's a local file
+            // Metadata Extraction
             if (fileObject && window.jsmediatags) {
                 window.jsmediatags.read(fileObject, {
                     onSuccess: function(tag) {
                         const tags = tag.tags;
+                        
+                        // Use ID3 Title if available, else filename
+                        if(tags.title) {
+                            trackTitle.innerText = tags.title.toUpperCase();
+                            if(tags.artist) {
+                                trackTitle.innerText += " - " + tags.artist.toUpperCase();
+                            }
+                        }
+
+                        // Picture
                         if (tags.picture) {
                             const { data, format } = tags.picture;
                             let base64String = "";
@@ -284,31 +314,30 @@
                             }
                             const base64 = "data:" + format + ";base64," + window.btoa(base64String);
                             
-                            coverArt.src = base64;
-                            coverArt.style.display = 'block';
-                            noCoverText.style.display = 'none';
+                            albumArt.src = base64;
+                            albumArt.style.display = 'block';
+                            emptyStateMsg.style.display = 'none';
                         } else {
-                            noCoverText.innerText = "NO COVER ART FOUND";
+                            emptyStateMsg.style.display = 'none'; // Blank if no art
                         }
                     },
                     onError: function(error) {
                         console.log(error);
-                        noCoverText.innerText = "NO COVER ART FOUND";
+                        emptyStateMsg.style.display = 'none'; // Blank on error
                     }
                 });
             } else {
-                // It's a URL or lib failed, try default behavior or just show path
-                noCoverText.innerText = "WEB SOURCE / NO DATA";
+                // Web Link or no lib
+                emptyStateMsg.style.display = 'none'; // Blank for web links
             }
 
-            // Auto play
+            // Play
             audioPlayer.play().then(() => {
                 isPlaying = true;
-                playPauseBtn.innerText = "PAUSE";
+                playBtn.innerText = "PAUSE";
             }).catch(e => {
-                console.log("Auto-play prevented:", e);
                 isPlaying = false;
-                playPauseBtn.innerText = "PLAY";
+                playBtn.innerText = "PLAY";
             });
         }
 
@@ -316,13 +345,14 @@
             if (audioPlayer.paused) {
                 audioPlayer.play();
                 isPlaying = true;
-                playPauseBtn.innerText = "PAUSE";
+                playBtn.innerText = "PAUSE";
             } else {
                 audioPlayer.pause();
                 isPlaying = false;
-                playPauseBtn.innerText = "PLAY";
+                playBtn.innerText = "PLAY";
             }
         }
     </script>
 </body>
 </html>
+
