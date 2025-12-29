@@ -2,303 +2,462 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>the oracle</title>
-    <link rel="stylesheet" href="trtb.css">
     <style>
-        /* --- Page Specific Overrides --- */
-        
+        /*
+         * TRTB.css (Thor's Radical Technical Brutalism)
+         * Version: 2.0.0
+         * Author: Thor Smith
+         */
+
+        :root {
+            /* Color Palette */
+            --bg: #000000;
+            --fg: #ffffff;
+            --accent: #ff0000;
+
+            /* Borders - UNIFORM 2PX */
+            --border-width: 2px;
+
+            /* Spacing */
+            --pad-inner: 5px;
+            --indent: 10px;
+            
+            /* Typography */
+            --font-main: monospace;
+            --base-scale: 0.85; 
+        }
+
+        /* Theme Switch: Light Mode Overrides */
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --fg: #000000;
+        }
+
+        /* Global Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border-radius: 0 !important; /* Strictly 90-degree corners */
+            font-family: var(--font-main);
+            font-size: calc(1rem * var(--base-scale));
+            text-transform: lowercase; /* ENFORCED LOWERCASE */
+        }
+
         body {
-            text-transform: lowercase;
+            background-color: var(--bg);
+            color: var(--fg);
             display: flex;
             flex-direction: column;
-            align-items: center;
             min-height: 100vh;
-            /* Override body padding for mobile alignment */
-            padding-top: 2rem; 
+            padding: 40px 20px; 
         }
 
-        /* Center the header like in about.html */
-        h1 {
-            display: table;
-            margin: 0 auto 2rem auto;
-        }
+        /* --- Mandatory Layout Structure --- */
 
-        /* Game Container */
-        .game-container {
+        /* Top Metadata Row */
+        #trtb_header {
+            display: flex;
+            justify-content: space-between;
             width: 100%;
-            max-width: 400px;
+            margin-bottom: 5px;
+            padding: 0 2px;
+        }
+
+        /* The Global Active Content Border */
+        #app_container {
+            border: var(--border-width) solid var(--accent);
+            width: 100%;
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
-            gap: 1rem;
         }
 
-        /* Display Box - Custom styling to fit theme but look like a screen */
-        .display-box {
-            border: 1px solid white;
-            padding: 2rem 1rem;
-            text-align: center;
-            margin-bottom: 1rem;
+        /* Footer Metadata Row */
+        #trtb_footer {
+            padding-top: 5px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .result-main {
-            font-size: 5rem;
+        /* --- Modular Div Logic --- */
+
+        .trtb_module {
+            width: 100%;
+            margin: 0; 
+            border: var(--border-width) solid var(--accent);
+            border-top: none; 
+            padding: var(--pad-inner);
+            background: var(--bg);
+        }
+
+        #app_container > .trtb_module:first-child {
+            border-top: none; 
+        }
+
+        .trtb_row {
+            display: flex;
+            width: 100%;
+        }
+
+        .trtb_row > .trtb_module {
+            flex: 1;
+            border-left: none; 
+        }
+        .trtb_row > .trtb_module:first-child {
+            border-left: var(--border-width) solid var(--accent);
+        }
+
+        /* --- Typography & Content --- */
+
+        p {
+            text-indent: var(--indent);
+            margin-bottom: 5px;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--fg); 
+            background: transparent;
+            padding: 2px 0;
             font-weight: bold;
-            color: red; /* trtb accent */
-            line-height: 1;
-            margin: 0.5rem 0;
+            display: block;
+            width: 100%;
+            border-bottom: var(--border-width) solid var(--accent);
+            margin-bottom: 5px;
         }
 
-        .result-sub {
+        a {
+            color: var(--fg);
+            text-decoration: overline;
+        }
+
+        a:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        /* --- Interactive Elements --- */
+
+        button {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            padding: 10px;
+            cursor: pointer;
+            width: 100%;
+            text-transform: lowercase;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        #theme_toggle {
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            width: auto;
+        }
+        #theme_toggle:hover {
+            background: transparent;
+            color: var(--accent);
+        }
+
+        /* Custom Checkbox Containers */
+        .checkbox_container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+        
+        input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 15px;
+            height: 15px;
+            border: var(--border-width) solid var(--accent);
+            background: var(--bg);
+            margin-right: 10px;
+            position: relative;
+        }
+
+        input[type="checkbox"]:checked {
+            background: var(--accent);
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+        td, th {
+            border: var(--border-width) solid var(--accent);
+            padding: 5px;
+            text-align: left;
+        }
+
+        /* App Specific Typography */
+        .display_big {
+            font-size: 4rem;
+            color: var(--accent);
+            font-weight: bold;
+            line-height: 1;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .display_sub {
             font-size: 2rem;
-            color: white;
-            opacity: 0.9;
+            color: var(--fg);
+            text-align: center;
+            margin-bottom: 10px;
         }
 
         .label {
-            font-size: 0.8rem;
-            color: #888; /* dim grey for labels */
-            margin-bottom: 0;
+            color: var(--fg);
+            opacity: 0.7;
+            text-align: center;
+            display: block;
+            border-bottom: var(--border-width) solid var(--accent);
+            margin-bottom: 5px;
         }
-
-        /* Roll Button - Make it stand out */
-        button.roll-btn {
-            width: 100%;
-            font-size: 1.5rem;
-            padding: 15px;
-            border-color: red;
-            color: red;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 0;
-        }
-        
-        button.roll-btn:active {
-            background-color: red;
-            color: black;
-        }
-
-        /* Settings Group */
-        .settings-group {
-            display: flex;
-            justify-content: space-between;
-            border: 1px solid white;
-            padding: 10px;
-            margin-top: 1rem;
-        }
-
-        .setting-item {
-            display: flex;
-            align-items: center;
-        }
-        
-        /* Override margins for inputs inside the flex container */
-        .setting-item input {
-            margin: 0 10px 0 0; 
-        }
-
-        /* Table specific tweaks for inside details */
-        .rule-table td {
-            border: 1px solid red; /* Ensure borders match trtb table style */
-        }
-
     </style>
 </head>
 <body>
 
-    <div class="game-container">
-        <h1>the oracle</h1>
+    <!-- A. Top Metadata -->
+    <div id="trtb_header">
+        <span id="page_title">the oracle</span>
+        <span id="date_display"></span>
+    </div>
 
-        <!-- Main Display -->
-        <div class="display-box">
-            <div>
-                <p class="label">outcome (d100)</p>
-                <div id="d100-display" class="result-main">--</div>
-            </div>
-            <hr style="border-color: #333; margin: 1.5rem 0;">
-            <div>
-                <p class="label">nuance (d10)</p>
-                <div id="modifier-display" class="result-sub">--</div>
-            </div>
-        </div>
+    <!-- Script: Header Logic -->
+    <script>
+        (function(){
+            const now = new Date();
+            const y = now.getFullYear().toString().substr(-2);
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            document.getElementById('date_display').textContent = `${y}-${m}-${d}`;
+        })();
+    </script>
 
-        <!-- Main Action -->
-        <button class="roll-btn" onclick="rollDice()">roll</button>
+    <!-- B. Active Content Area -->
+    <div id="app_container">
 
-        <!-- Settings (Using Checkboxes for trtb styling) -->
-        <div class="settings-group">
-            <label class="setting-item">
-                <input type="checkbox" id="shake-toggle" onchange="toggleShake()">
-                shake to roll
-            </label>
-            <label class="setting-item">
-                <input type="checkbox" id="tts-toggle" onchange="toggleTTS()">
-                voice
-            </label>
-        </div>
-
-        <!-- Instructions via Details/Summary -->
-        <details>
-            <summary>how to play</summary>
-            <p><strong>1. outcome (d100)</strong></p>
-            <p>compare the big red number to your target number.</p>
-            <ul>
-                <li>≤ target: success</li>
-                <li>> target: failure</li>
-            </ul>
-
-            <hr>
-
-            <p><strong>2. nuance (±d10)</strong></p>
-            <p>check the smaller white number.</p>
+        <!-- MODULE: DISPLAY -->
+        <div class="trtb_module" id="module_display">
+            <span class="label">outcome (d100)</span>
+            <div id="result_main" class="display_big">--</div>
+            <span class="label">nuance (d10)</span>
+            <div id="result_sub" class="display_sub">--</div>
             
-            <table class="rule-table">
+            <script>
+                // Logic: Exposes a global update function attached to this DOM element
+                // to allow the controller to update it safely.
+                const displayModule = document.getElementById('module_display');
+                
+                displayModule.updateValues = function(d100, mod) {
+                    document.getElementById('result_main').textContent = d100;
+                    
+                    let modText = "";
+                    if (mod > 0) modText = "+" + mod;
+                    else modText = mod;
+                    
+                    document.getElementById('result_sub').textContent = modText;
+                };
+            </script>
+        </div>
+
+        <!-- MODULE: CONTROLS -->
+        <div class="trtb_module" id="module_controls">
+            <button id="btn_roll">initiate roll</button>
+
+            <script>
+                (function(){
+                    const btn = document.getElementById('btn_roll');
+                    const display = document.getElementById('module_display');
+                    const settings = document.getElementById('module_settings'); // accessing sibling for state
+
+                    // Core Game Logic
+                    function performRoll() {
+                        const d100 = Math.floor(Math.random() * 100) + 1;
+                        const d10 = Math.floor(Math.random() * 10) + 1;
+                        const isHeads = Math.random() > 0.5;
+                        const modifier = isHeads ? d10 : -d10;
+
+                        // Update Visuals
+                        if(display && display.updateValues) {
+                            display.updateValues(d100, modifier);
+                        }
+
+                        // Check TTS Setting
+                        if(settings && settings.getTTSState && settings.getTTSState()) {
+                            speak(d100, modifier);
+                        }
+                    }
+
+                    function speak(d100, modifier) {
+                        if ('speechSynthesis' in window) {
+                            window.speechSynthesis.cancel(); 
+                            let modText = modifier < 0 ? "minus " + Math.abs(modifier) : Math.abs(modifier).toString();
+                            const utterance = new SpeechSynthesisUtterance(`${d100}, ${modText}`);
+                            utterance.rate = 1.1;
+                            window.speechSynthesis.speak(utterance);
+                        }
+                    }
+
+                    // Expose roll function for Shake Trigger
+                    btn.parentElement.triggerRoll = performRoll;
+
+                    btn.addEventListener('click', performRoll);
+                })();
+            </script>
+        </div>
+
+        <!-- MODULE: SETTINGS -->
+        <div class="trtb_module" id="module_settings">
+            <h4>configuration</h4>
+            <div class="trtb_row" style="border:none;">
+                <label class="checkbox_container">
+                    <input type="checkbox" id="chk_shake">
+                    shake to roll
+                </label>
+            </div>
+            <div class="trtb_row" style="border:none;">
+                <label class="checkbox_container">
+                    <input type="checkbox" id="chk_tts">
+                    voice output
+                </label>
+            </div>
+
+            <script>
+                (function(){
+                    const container = document.getElementById('module_settings');
+                    const chkShake = document.getElementById('chk_shake');
+                    const chkTTS = document.getElementById('chk_tts');
+                    
+                    // State Accessor for other modules
+                    container.getTTSState = function() {
+                        return chkTTS.checked;
+                    };
+
+                    // Shake Logic
+                    let shakeThreshold = 15;
+                    let lastX, lastY, lastZ;
+                    let lastUpdate = 0;
+                    let shakeCooldown = false;
+
+                    function handleMotion(event) {
+                        if (!chkShake.checked || shakeCooldown) return;
+
+                        const current = event.accelerationIncludingGravity;
+                        if (!current) return;
+
+                        const curTime = new Date().getTime();
+                        if ((curTime - lastUpdate) > 100) {
+                            const diffTime = curTime - lastUpdate;
+                            lastUpdate = curTime;
+
+                            if (!lastX) {
+                                lastX = current.x; lastY = current.y; lastZ = current.z;
+                                return;
+                            }
+
+                            const speed = Math.abs((current.x + current.y + current.z) - (lastX + lastY + lastZ)) / diffTime * 10000;
+
+                            if (speed > shakeThreshold * 100) {
+                                // Trigger Roll in sibling module
+                                const controls = document.getElementById('module_controls');
+                                if(controls && controls.triggerRoll) {
+                                    controls.triggerRoll();
+                                    shakeCooldown = true;
+                                    setTimeout(() => { shakeCooldown = false; }, 1000);
+                                }
+                            }
+
+                            lastX = current.x; lastY = current.y; lastZ = current.z;
+                        }
+                    }
+
+                    chkShake.addEventListener('change', function(){
+                        if(this.checked) {
+                            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                                DeviceMotionEvent.requestPermission()
+                                    .then(response => {
+                                        if (response === 'granted') {
+                                            window.addEventListener('devicemotion', handleMotion, false);
+                                        } else {
+                                            this.checked = false;
+                                            alert('permission denied');
+                                        }
+                                    })
+                                    .catch(console.error);
+                            } else {
+                                window.addEventListener('devicemotion', handleMotion, false);
+                            }
+                        } else {
+                            window.removeEventListener('devicemotion', handleMotion, false);
+                        }
+                    });
+                })();
+            </script>
+        </div>
+
+        <!-- MODULE: HELP -->
+        <div class="trtb_module" id="module_help">
+            <h4>manual</h4>
+            <p><strong>1. outcome</strong>: compare red number to target. (≤ target = success).</p>
+            <p><strong>2. nuance</strong>: white number modifies result.</p>
+            
+            <table>
                 <tbody>
                     <tr>
-                        <td class="em">±8 or higher</td>
-                        <td>...and<br>(bonus / shortfall)</td>
+                        <td>±8 or higher</td>
+                        <td>...and (critical)</td>
                     </tr>
                     <tr>
                         <td>±3 to ±7</td>
                         <td>standard</td>
                     </tr>
                     <tr>
-                        <td class="em">below ±3</td>
-                        <td>...but<br>(complication / silver lining)</td>
+                        <td>below ±3</td>
+                        <td>...but (complication)</td>
                     </tr>
                 </tbody>
             </table>
-        </details>
+        </div>
+
     </div>
 
+    <!-- C. Bottom Metadata -->
+    <div id="trtb_footer">
+        <span>&copy; 2025 thor smith</span>
+        <span>:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <!-- Script: Theme Toggle -->
     <script>
-        // State
-        let useShake = false;
-        let useTTS = false;
-        let shakeThreshold = 15;
-        let lastX, lastY, lastZ;
-        let lastUpdate = 0;
-        let shakeCooldown = false;
-
-        // DOM Elements
-        const d100El = document.getElementById('d100-display');
-        const modEl = document.getElementById('modifier-display');
-
-        // Core Game Logic
-        function rollDice() {
-            // 1. d100 (1-100)
-            const d100 = Math.floor(Math.random() * 100) + 1;
+        (function() {
+            const toggle = document.getElementById('theme_toggle');
+            const root = document.documentElement;
             
-            // 2. d10 (1-10)
-            const d10 = Math.floor(Math.random() * 10) + 1;
-            
-            // 3. Coin (Positive or Negative)
-            const isHeads = Math.random() > 0.5;
-            const modifier = isHeads ? d10 : -d10;
-
-            // Update UI
-            d100El.innerText = d100;
-            modEl.innerText = modifier > 0 ? "+" + modifier : modifier;
-
-            // Handle Voice
-            if (useTTS) {
-                speakResults(d100, modifier);
-            }
-        }
-
-        // Text to Speech Logic
-        function speakResults(d100, modifier) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // Stop previous speech
-
-                let modText = "";
-                if (modifier < 0) {
-                    modText = "minus " + Math.abs(modifier);
-                } else {
-                    modText = Math.abs(modifier).toString();
-                }
-
-                // Create utterance: "75, minus 6"
-                const text = `${d100}, ${modText}`;
-                const utterance = new SpeechSynthesisUtterance(text);
-                
-                // Try to find a decent voice
-                utterance.rate = 1.1;
-                utterance.pitch = 1;
-                
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        // Shake Logic
-        function toggleShake() {
-            const checkbox = document.getElementById('shake-toggle');
-            useShake = checkbox.checked;
-
-            if (useShake) {
-                requestMotionPermission();
-                window.addEventListener('devicemotion', handleMotion, false);
-            } else {
-                window.removeEventListener('devicemotion', handleMotion, false);
-            }
-        }
-
-        function toggleTTS() {
-            const checkbox = document.getElementById('tts-toggle');
-            useTTS = checkbox.checked;
-        }
-
-        function requestMotionPermission() {
-            // iOS 13+ requirement
-            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                DeviceMotionEvent.requestPermission()
-                    .then(response => {
-                        if (response !== 'granted') {
-                            alert('shake permission denied');
-                            document.getElementById('shake-toggle').checked = false;
-                            toggleShake(); // Turn it back off
-                        }
-                    })
-                    .catch(console.error);
-            }
-        }
-
-        function handleMotion(event) {
-            if (!useShake || shakeCooldown) return;
-
-            const current = event.accelerationIncludingGravity;
-            if (!current) return;
-
-            const curTime = new Date().getTime();
-
-            if ((curTime - lastUpdate) > 100) {
-                const diffTime = curTime - lastUpdate;
-                lastUpdate = curTime;
-
-                if (!lastX) {
-                    lastX = current.x;
-                    lastY = current.y;
-                    lastZ = current.z;
-                    return;
-                }
-
-                const deltaX = current.x - lastX;
-                const deltaY = current.y - lastY;
-                const deltaZ = current.z - lastZ;
-
-                const speed = Math.abs(deltaX + deltaY + deltaZ) / diffTime * 10000;
-
-                if (speed > shakeThreshold * 100) {
-                    rollDice();
-                    shakeCooldown = true;
-                    setTimeout(() => { shakeCooldown = false; }, 1000); // 1 second cooldown
-                }
-
-                lastX = current.x;
-                lastY = current.y;
-                lastZ = current.z;
-            }
-        }
+            toggle.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme');
+                const next = current === 'light' ? 'dark' : 'light';
+                root.setAttribute('data-theme', next);
+            });
+        })();
     </script>
 </body>
 </html>
