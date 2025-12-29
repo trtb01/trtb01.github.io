@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stark Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --fg-color: #ffffff;
+            --border: 2px solid var(--fg-color);
+        }
+
+        * {
+            box-sizing: border-box;
+            /* Enforce squared corners everywhere */
+            border-radius: 0 !important; 
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            background-color: var(--bg-color);
+            color: var(--fg-color);
+            font-family: 'Courier New', Courier, monospace; /* Monospace for stark aesthetic */
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* --- Left Sidebar (Path Display) --- */
+        #path-display {
+            width: 250px; /* Fixed width sidebar */
+            height: 100vh;
+            border-right: var(--border);
+            padding: 15px;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            line-height: 1.4;
+        }
+
+        #path-label {
+            font-weight: bold;
+            border-bottom: 1px dashed var(--fg-color);
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        /* --- Main Content Area --- */
+        #main-area {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Top Left Button Area (Overlaid or part of layout) --- */
+        #top-controls {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 15px;
+            z-index: 10;
+            display: flex;
+            gap: 10px;
+            background-color: var(--bg-color); /* Cover art behind it */
+            border-bottom: var(--border);
+            border-right: var(--border);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        button {
+            background-color: var(--bg-color);
+            color: var(--fg-color);
+            border: var(--border);
+            padding: 10px 20px;
+            font-family: inherit;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.1s, color 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--fg-color);
+            color: var(--bg-color);
+        }
+
+        button:active {
+            background-color: #888;
+        }
+
+        #url-input {
+            background: black;
+            border: var(--border);
+            color: white;
+            font-family: inherit;
+            padding: 10px;
+            width: 300px;
+        }
+
+        /* --- Cover Art Display --- */
+        #cover-container {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 80px; /* Make room for bottom bar */
+        }
+
+        #cover-art {
+            max-width: 90%; /* Leaves 5% margin on sides */
+            max-height: 80%;
+            border: var(--border);
+            display: none; /* Hidden by default until art is found */
+            object-fit: contain;
+        }
+
+        #no-cover-text {
+            border: 1px dashed #333;
+            padding: 20px;
+            color: #333;
+            display: block;
+        }
+
+        /* --- Bottom Controls --- */
+        #bottom-controls {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 80px;
+            border-top: var(--border);
+            display: flex;
+        }
+
+        .control-btn {
+            flex-grow: 1;
+            font-size: 1.5rem;
+            border: none;
+            border-right: var(--border);
+            height: 100%;
+        }
+
+        .control-btn:last-child {
+            border-right: none;
+        }
+
+        .active-state {
+            background-color: var(--fg-color) !important;
+            color: var(--bg-color) !important;
+        }
+
+    </style>
+</head>
+<body>
+
+    <audio id="audio-player"></audio>
+
+    <div id="path-display">
+        <div id="path-label">Current Source:</div>
+        <div id="path-text">No file loaded.</div>
+    </div>
+
+    <div id="main-area">
+        
+        <div id="top-controls">
+            <button id="load-file-btn">Load Local File</button>
+            <input type="file" id="file-input" accept=".mp3, .flac, audio/*">
+            
+            <input type="text" id="url-input" placeholder="OR PASTE URL HERE + ENTER">
+        </div>
+
+        <div id="cover-container">
+            <div id="no-cover-text">NO SIGNAL</div>
+            <img id="cover-art" src="" alt="Album Cover">
+        </div>
+
+        <div id="bottom-controls">
+            <button id="play-pause-btn" class="control-btn">PLAY</button>
+            <button id="repeat-btn" class="control-btn">REPEAT: OFF</button>
+        </div>
+
+    </div>
+
+    <script>
+        const audioPlayer = document.getElementById('audio-player');
+        const fileInput = document.getElementById('file-input');
+        const loadFileBtn = document.getElementById('load-file-btn');
+        const urlInput = document.getElementById('url-input');
+        
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const repeatBtn = document.getElementById('repeat-btn');
+        
+        const pathText = document.getElementById('path-text');
+        const coverArt = document.getElementById('cover-art');
+        const noCoverText = document.getElementById('no-cover-text');
+
+        let isRepeating = false;
+        let isPlaying = false;
+
+        // --- Event Listeners ---
+
+        // 1. Top Left Button -> Triggers hidden file input
+        loadFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // 2. File Selected from Local Disk
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const objectUrl = URL.createObjectURL(file);
+                loadTrack(objectUrl, file.name, file); // Pass file object for ID3 tags
+            }
+        });
+
+        // 3. URL Input
+        urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const url = urlInput.value.trim();
+                if (url) {
+                    loadTrack(url, url, null);
+                }
+            }
+        });
+
+        // 4. Play/Pause Button
+        playPauseBtn.addEventListener('click', togglePlay);
+
+        // 5. Repeat Button
+        repeatBtn.addEventListener('click', () => {
+            isRepeating = !isRepeating;
+            audioPlayer.loop = isRepeating;
+            
+            if (isRepeating) {
+                repeatBtn.innerText = "REPEAT: ON";
+                repeatBtn.classList.add('active-state');
+            } else {
+                repeatBtn.innerText = "REPEAT: OFF";
+                repeatBtn.classList.remove('active-state');
+            }
+        });
+
+        // Auto-update Play/Pause button on audio end if not repeating
+        audioPlayer.addEventListener('ended', () => {
+            if (!isRepeating) {
+                isPlaying = false;
+                playPauseBtn.innerText = "PLAY";
+            }
+        });
+
+        // --- Core Functions ---
+
+        function loadTrack(src, name, fileObject) {
+            audioPlayer.src = src;
+            pathText.innerText = name; // Update sidebar
+            
+            // Reset cover
+            coverArt.style.display = 'none';
+            noCoverText.style.display = 'block';
+            noCoverText.innerText = "LOADING DATA...";
+
+            // Attempt to read metadata if it's a local file
+            if (fileObject && window.jsmediatags) {
+                window.jsmediatags.read(fileObject, {
+                    onSuccess: function(tag) {
+                        const tags = tag.tags;
+                        if (tags.picture) {
+                            const { data, format } = tags.picture;
+                            let base64String = "";
+                            for (let i = 0; i < data.length; i++) {
+                                base64String += String.fromCharCode(data[i]);
+                            }
+                            const base64 = "data:" + format + ";base64," + window.btoa(base64String);
+                            
+                            coverArt.src = base64;
+                            coverArt.style.display = 'block';
+                            noCoverText.style.display = 'none';
+                        } else {
+                            noCoverText.innerText = "NO COVER ART FOUND";
+                        }
+                    },
+                    onError: function(error) {
+                        console.log(error);
+                        noCoverText.innerText = "NO COVER ART FOUND";
+                    }
+                });
+            } else {
+                // It's a URL or lib failed, try default behavior or just show path
+                noCoverText.innerText = "WEB SOURCE / NO DATA";
+            }
+
+            // Auto play
+            audioPlayer.play().then(() => {
+                isPlaying = true;
+                playPauseBtn.innerText = "PAUSE";
+            }).catch(e => {
+                console.log("Auto-play prevented:", e);
+                isPlaying = false;
+                playPauseBtn.innerText = "PLAY";
+            });
+        }
+
+        function togglePlay() {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                isPlaying = true;
+                playPauseBtn.innerText = "PAUSE";
+            } else {
+                audioPlayer.pause();
+                isPlaying = false;
+                playPauseBtn.innerText = "PLAY";
+            }
+        }
+    </script>
+</body>
+</html>
