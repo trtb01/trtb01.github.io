@@ -7,7 +7,7 @@
     <style>
         /*
          * TRTB.css (Thor's Radical Technical Brutalism)
-         * Version: 1.0.0
+         * Version: 1.0.1
          * Author: Thor Smith
          * Philosophy: Modular, 2D, High-Contrast, Minimalist.
          */
@@ -24,12 +24,12 @@
             --border-lg: 10px;
 
             /* Spacing */
-            --pad-inner: 5px;   /* 2px or 5px */
-            --indent: 10px;    /* 5px or 10px */
+            --pad-inner: 5px;
+            --indent: 10px;
             
             /* Typography */
             --font-main: monospace;
-            --base-scale: 0.85; /* Smaller than average */
+            --base-scale: 0.85;
         }
 
         /* Theme Switch: Light Mode Overrides */
@@ -43,7 +43,7 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            border-radius: 0 !important; /* Strictly 90-degree corners */
+            border-radius: 0 !important;
             font-family: var(--font-main);
             font-size: calc(1rem * var(--base-scale));
         }
@@ -54,30 +54,14 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding: 40px 20px; /* Space for outside-border metadata */
-            overflow: hidden; /* Prevent body scroll, handle inside app */
+            padding: 40px 20px;
+            overflow: hidden;
         }
 
         /* --- Layout Structure --- */
-
-        /* Metadata outside the border */
-        #trtb_title {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            text-transform: uppercase;
-            font-weight: bold;
-        }
-
-        #trtb_meta_top {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            display: flex;
-            gap: 10px;
-        }
-
-        /* The Global Outer Border */
+        #trtb_title { position: absolute; top: 10px; left: 20px; text-transform: uppercase; font-weight: bold; }
+        #trtb_meta_top { position: absolute; top: 10px; right: 20px; display: flex; gap: 10px; }
+        
         #app_container {
             border: var(--border-lg) solid var(--accent);
             width: 100%;
@@ -88,150 +72,48 @@
             padding: 10px;
         }
 
-        /* Footer Metadata outside border */
-        #trtb_footer {
-            padding-top: 10px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-        }
+        #trtb_footer { padding-top: 10px; width: 100%; display: flex; justify-content: space-between; }
 
         /* --- Modular Div Logic --- */
-
-        /* Vertical stacking by default */
         .trtb_module {
             width: 100%;
-            margin: 0; /* Standardized zero margin between elements */
+            margin: 0 0 20px 0;
             border: var(--border-md) solid var(--accent);
             padding: var(--pad-inner);
             background: var(--bg);
-            margin-bottom: 20px; /* Visual separation for this specific layout */
+            position: relative;
         }
 
-        /* Horizontal section support */
-        .trtb_row {
-            display: flex;
-            width: 100%;
-        }
-
-        .trtb_row > .trtb_module {
-            flex: 1;
-        }
-
-        /* --- Typography & Content --- */
-
-        p {
-            text-indent: var(--indent);
-            margin-bottom: 5px;
-        }
-
-        h1 {
-            background: var(--accent);
-            color: #ffffff; /* Explicit White per spec */
-            padding: 2px 5px;
-            display: inline-block;
-            width: 100%;
-            text-transform: uppercase;
-        }
-
-        h2, h3, h4, h5, h6 {
-            background: var(--accent);
-            color: #000000; /* Explicit Black per spec */
-            padding: 2px 5px;
-            display: inline-block;
-            width: 100%;
-            margin-bottom: 10px;
-        }
-
-        a {
-            color: var(--fg);
-            text-decoration: overline;
-        }
-
-        a:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        /* --- Interactive Elements --- */
-
+        /* --- Components --- */
+        h2 { background: var(--accent); color: #000; padding: 2px 5px; display: inline-block; width: 100%; margin-bottom: 10px; }
+        
         button {
-            background: var(--bg);
-            color: var(--fg);
+            background: var(--bg); color: var(--fg);
             border: var(--border-sm) solid var(--accent);
-            padding: 5px 10px;
-            cursor: pointer;
-            margin: 2px;
-            text-transform: uppercase;
-            font-weight: bold;
+            padding: 5px 10px; cursor: pointer; margin: 2px;
+            text-transform: uppercase; font-weight: bold;
         }
+        button:hover { background: var(--accent); color: var(--bg); }
 
-        button:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        /* Inputs */
-        input[type="text"], input[type="number"], input[type="email"] {
-            background: var(--bg);
-            color: var(--fg);
+        input[type="text"], input[type="file"] {
+            background: var(--bg); color: var(--fg);
             border: var(--border-sm) solid var(--accent);
             outline: var(--border-sm) solid var(--accent);
-            outline-offset: 2px;
-            margin: 10px; /* Room for double outline */
-            padding: 5px;
-            width: calc(100% - 20px);
+            outline-offset: 2px; margin: 10px; padding: 5px; width: calc(100% - 20px);
         }
-
-        input[type="file"] {
-            border: var(--border-sm) solid var(--accent);
-            padding: 5px;
-            width: 100%;
-            margin: 5px 0;
-            cursor: pointer;
-            color: var(--fg);
-        }
-
-        textarea {
-            background: var(--bg);
-            color: var(--fg);
-            border: var(--border-sm) solid var(--accent);
-            width: 100%;
-            padding: 2px;
-        }
-
-        /* --- Custom Scrollbar --- */
-        ::-webkit-scrollbar {
-            width: 10px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: #000;
-            border-left: 2px solid var(--accent);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: #000;
-            border: 2px solid var(--accent);
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: #fff;
-        }
-
-        /* --- Specific Player Styles --- */
-        #viz_canvas {
-            width: 100%;
-            height: 100%;
-            background: var(--bg);
-        }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: #000; border-left: 2px solid var(--accent); }
+        ::-webkit-scrollbar-thumb { background: #000; border: 2px solid var(--accent); }
+        ::-webkit-scrollbar-thumb:hover { background: #fff; }
     </style>
 </head>
 <body>
 
     <div id="trtb_title">TRTB_AUDIO_UNIT</div>
     <div id="trtb_meta_top">
-        <button id="theme_toggle">L/D_MODE</button>
+        <button onclick="const c=document.documentElement.getAttribute('data-theme');document.documentElement.setAttribute('data-theme',c==='light'?'dark':'light');">L/D_MODE</button>
         <span>SYS_RDY</span>
     </div>
 
@@ -241,191 +123,157 @@
             
             <div id="player_header" style="border-bottom: var(--border-md) solid var(--accent); padding: 10px;">
                 <button id="btn_open_loader" style="width: 100%;">[+] LOAD_MEDIA_SOURCE</button>
-                
                 <div id="loader_panel" style="display: none; border-top: var(--border-sm) solid var(--accent); margin-top: 10px; padding-top: 10px;">
-                    <p>SOURCE_SELECT:</p>
+                    <p style="text-indent: 10px; margin-bottom:5px;">SOURCE_SELECT:</p>
                     <input type="file" id="file_input" accept=".mp3,.flac,.wav">
-                    <p>OR_WEB_STREAM:</p>
+                    <p style="text-indent: 10px; margin-bottom:5px;">OR_WEB_STREAM:</p>
                     <input type="text" id="url_input" placeholder="HTTPS://REMOTE_RESOURCE...">
                     <button id="btn_activate_source" style="width: 100%; margin-top: 10px;">>> INITIALIZE_DATA_STREAM</button>
                 </div>
             </div>
 
             <div id="player_body" style="flex-grow: 1; display: flex; overflow: hidden;">
-                
                 <div id="viz_area" style="flex-grow: 1; position: relative; display: flex; align-items: flex-end; justify-content: center;">
-                    <canvas id="viz_canvas"></canvas>
-                    <div style="position: absolute; top: 10px; left: 10px; font-size: 0.7rem; color: var(--accent);">
-                        FREQ_MONITOR::ACTIVE
-                    </div>
+                    <canvas id="viz_canvas" style="width: 100%; height: 100%;"></canvas>
+                    <div style="position: absolute; top: 10px; left: 10px; font-size: 0.7rem; color: var(--accent);">FREQ_MONITOR::ACTIVE</div>
                 </div>
-
                 <div id="title_sidebar" style="width: 50px; border-left: var(--border-md) solid var(--accent); display: flex; align-items: center; justify-content: center; background: var(--bg);">
-                    <h2 id="track_title_display" style="writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 90%; background: transparent; color: var(--fg); padding: 0;">
-                        NO_MEDIA_LOADED
-                    </h2>
+                    <h2 id="track_title_display" style="writing-mode: vertical-rl; text-orientation: mixed; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-height: 90%; background: transparent; color: var(--fg); padding: 0;">NO_MEDIA_LOADED</h2>
                 </div>
             </div>
 
             <div id="player_controls" style="border-top: var(--border-md) solid var(--accent); padding: 15px; display: flex; justify-content: space-between;">
                 <button id="btn_play_pause" style="flex-grow: 2; height: 50px; font-size: 1.2rem;">[PLAY]</button>
-                <div style="width: 10px;"></div> <button id="btn_repeat" style="flex-grow: 1; height: 50px;">RPT:OFF</button>
+                <div style="width: 10px;"></div>
+                <button id="btn_repeat" style="flex-grow: 1; height: 50px;">RPT:OFF</button>
             </div>
 
             <audio id="audio_core" crossorigin="anonymous"></audio>
 
-        </div>
+            <script>
+                (function() {
+                    // Scope identifiers to this block to ensure portability
+                    const audio = document.getElementById('audio_core');
+                    const btnLoader = document.getElementById('btn_open_loader');
+                    const panel = document.getElementById('loader_panel');
+                    const fInput = document.getElementById('file_input');
+                    const uInput = document.getElementById('url_input');
+                    const btnActivate = document.getElementById('btn_activate_source');
+                    const btnPlay = document.getElementById('btn_play_pause');
+                    const btnRepeat = document.getElementById('btn_repeat');
+                    const titleDisp = document.getElementById('track_title_display');
+                    const canvas = document.getElementById('viz_canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    let audioCtx, analyzer, srcNode, isInit = false;
 
-    </div>
+                    // UI Handlers
+                    btnLoader.onclick = () => {
+                        const isHidden = panel.style.display === 'none';
+                        panel.style.display = isHidden ? 'block' : 'none';
+                        btnLoader.innerText = isHidden ? '[-] CLOSE_PANEL' : '[+] LOAD_MEDIA_SOURCE';
+                    };
+
+                    btnActivate.onclick = () => {
+                        if (fInput.files.length) {
+                            const file = fInput.files[0];
+                            audio.src = URL.createObjectURL(file);
+                            titleDisp.innerText = file.name.toUpperCase();
+                        } else if (uInput.value.trim()) {
+                            audio.src = uInput.value.trim();
+                            titleDisp.innerText = "WEB_STREAM_DATA";
+                        } else { return; }
+
+                        initAudio();
+                        audio.play().catch(e=>console.log(e));
+                        panel.style.display = 'none';
+                        btnLoader.innerText = '[+] LOAD_MEDIA_SOURCE';
+                        updatePlayBtn();
+                    };
+
+                    btnPlay.onclick = () => {
+                        if(!isInit) initAudio();
+                        audio.paused ? audio.play() : audio.pause();
+                        updatePlayBtn();
+                    };
+
+                    btnRepeat.onclick = () => {
+                        audio.loop = !audio.loop;
+                        btnRepeat.innerText = audio.loop ? "RPT:ON" : "RPT:OFF";
+                        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+                        const bg = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+                        
+                        // Strict style swapping
+                        if(audio.loop) {
+                            btnRepeat.style.backgroundColor = "var(--accent)";
+                            btnRepeat.style.color = "var(--bg)";
+                        } else {
+                            btnRepeat.style.backgroundColor = "var(--bg)";
+                            btnRepeat.style.color = "var(--fg)";
+                        }
+                    };
+
+                    // Events
+                    audio.onplay = updatePlayBtn;
+                    audio.onpause = updatePlayBtn;
+                    
+                    function updatePlayBtn() { 
+                        btnPlay.innerText = audio.paused ? "[PLAY]" : "[PAUSE]"; 
+                    }
+
+                    // Visualization
+                    function initAudio() {
+                        if(isInit) return;
+                        try {
+                            const AudCtx = window.AudioContext || window.webkitAudioContext;
+                            audioCtx = new AudCtx();
+                            analyzer = audioCtx.createAnalyser();
+                            srcNode = audioCtx.createMediaElementSource(audio);
+                            srcNode.connect(analyzer);
+                            analyzer.connect(audioCtx.destination);
+                            analyzer.fftSize = 64; 
+                            isInit = true;
+                            render();
+                        } catch(e) { console.log(e); }
+                    }
+
+                    function render() {
+                        requestAnimationFrame(render);
+                        // Dynamic resizing based on parent container
+                        canvas.width = canvas.parentElement.clientWidth;
+                        canvas.height = canvas.parentElement.clientHeight;
+                        
+                        // Clear
+                        const style = getComputedStyle(document.body);
+                        ctx.fillStyle = style.getPropertyValue('--bg');
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                        if(!isInit) return;
+
+                        const buffer = analyzer.frequencyBinCount;
+                        const data = new Uint8Array(buffer);
+                        analyzer.getByteFrequencyData(data);
+                        
+                        const barW = (canvas.width / buffer) * 2;
+                        let x = 0;
+                        
+                        ctx.fillStyle = style.getPropertyValue('--accent');
+                        
+                        for(let i=0; i < buffer; i++) {
+                            const h = (data[i] / 255) * canvas.height;
+                            ctx.fillRect(x, canvas.height - h, barW, h);
+                            x += barW + 2;
+                        }
+                    }
+                })();
+            </script>
+        </div>
+        </div>
 
     <div id="trtb_footer">
         <span>MODE: LOCAL_EXECUTION</span>
         <span>&copy; 2025 Thor Smith</span>
     </div>
 
-    <script>
-        /* TRTB LOGIC BRIDGE 
-           Strict isolation of component logic.
-        */
-
-        // --- GLOBAL: Theme Handling ---
-        const themeToggle = document.getElementById('theme_toggle');
-        themeToggle.addEventListener('click', () => {
-            const current = document.documentElement.getAttribute('data-theme');
-            document.documentElement.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
-        });
-
-        // --- COMPONENT: MUSIC PLAYER ---
-        (function() {
-            // Elements
-            const audio = document.getElementById('audio_core');
-            const btnOpenLoader = document.getElementById('btn_open_loader');
-            const loaderPanel = document.getElementById('loader_panel');
-            const fileInput = document.getElementById('file_input');
-            const urlInput = document.getElementById('url_input');
-            const btnActivate = document.getElementById('btn_activate_source');
-            const btnPlayPause = document.getElementById('btn_play_pause');
-            const btnRepeat = document.getElementById('btn_repeat');
-            const titleDisplay = document.getElementById('track_title_display');
-            const vizCanvas = document.getElementById('viz_canvas');
-            const ctx = vizCanvas.getContext('2d');
-
-            // State
-            let audioContext;
-            let analyzer;
-            let sourceNode;
-            let isContextInit = false;
-
-            // 1. UI Toggles
-            btnOpenLoader.addEventListener('click', () => {
-                loaderPanel.style.display = loaderPanel.style.display === 'none' ? 'block' : 'none';
-                btnOpenLoader.innerText = loaderPanel.style.display === 'none' ? '[+] LOAD_MEDIA_SOURCE' : '[-] CLOSE_PANEL';
-            });
-
-            // 2. Load Logic
-            btnActivate.addEventListener('click', () => {
-                // Determine Source
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    const objectUrl = URL.createObjectURL(file);
-                    audio.src = objectUrl;
-                    titleDisplay.innerText = file.name.toUpperCase();
-                } else if (urlInput.value.trim() !== "") {
-                    audio.src = urlInput.value.trim();
-                    titleDisplay.innerText = "WEB_STREAM_DATA";
-                } else {
-                    titleDisplay.innerText = "ERR_NO_SOURCE";
-                    return;
-                }
-
-                // Initialize Audio Context (needed for viz)
-                initAudioContext();
-                
-                // Play and Close Panel
-                audio.play().then(() => {
-                    updatePlayButton();
-                }).catch(e => console.error("Playback fail", e));
-                
-                loaderPanel.style.display = 'none';
-                btnOpenLoader.innerText = '[+] LOAD_MEDIA_SOURCE';
-            });
-
-            // 3. Playback Controls
-            btnPlayPause.addEventListener('click', () => {
-                if (audio.paused) {
-                    initAudioContext(); // Ensure context is ready
-                    audio.play();
-                } else {
-                    audio.pause();
-                }
-                updatePlayButton();
-            });
-
-            btnRepeat.addEventListener('click', () => {
-                audio.loop = !audio.loop;
-                btnRepeat.innerText = audio.loop ? "RPT:ON" : "RPT:OFF";
-                btnRepeat.style.background = audio.loop ? "var(--accent)" : "var(--bg)";
-                btnRepeat.style.color = audio.loop ? "var(--bg)" : "var(--fg)";
-            });
-
-            audio.addEventListener('play', updatePlayButton);
-            audio.addEventListener('pause', updatePlayButton);
-            
-            function updatePlayButton() {
-                btnPlayPause.innerText = audio.paused ? "[PLAY]" : "[PAUSE]";
-            }
-
-            // 4. Visualization Logic (Web Audio API)
-            function initAudioContext() {
-                if (isContextInit) return;
-                
-                try {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    analyzer = audioContext.createAnalyser();
-                    sourceNode = audioContext.createMediaElementSource(audio);
-                    
-                    sourceNode.connect(analyzer);
-                    analyzer.connect(audioContext.destination);
-                    
-                    analyzer.fftSize = 64; // Low res for "brutalist" look
-                    
-                    isContextInit = true;
-                    renderFrame();
-                } catch (e) {
-                    console.log("Audio Context Err: " + e);
-                }
-            }
-
-            function renderFrame() {
-                requestAnimationFrame(renderFrame);
-                
-                // Resize handling
-                vizCanvas.width = vizCanvas.parentElement.clientWidth;
-                vizCanvas.height = vizCanvas.parentElement.clientHeight;
-
-                const bufferLength = analyzer.frequencyBinCount;
-                const dataArray = new Uint8Array(bufferLength);
-                analyzer.getByteFrequencyData(dataArray);
-
-                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--bg');
-                ctx.fillRect(0, 0, vizCanvas.width, vizCanvas.height);
-
-                const barWidth = (vizCanvas.width / bufferLength) * 2.5;
-                let barHeight;
-                let x = 0;
-
-                ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--accent');
-
-                for (let i = 0; i < bufferLength; i++) {
-                    barHeight = dataArray[i] / 1.5; // Scale down slightly
-                    
-                    // Draw strict rectangles
-                    ctx.fillRect(x, vizCanvas.height - barHeight, barWidth, barHeight);
-                    x += barWidth + 2; // 2px gap
-                }
-            }
-
-        })();
-    </script>
 </body>
 </html>
