@@ -3,164 +3,134 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZERO_READER_FINAL</title>
+    <title>ZERO_READER_STRICT</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
     <style>
-        /* --- CSS VARIABLES & RESET --- */
+        /* --- CSS VARIABLES --- */
         :root {
             --c-bg: #000000;
             --c-text: #FFFFFF;
             --c-accent: #FF0000;
             --f-mono: 'Courier New', Courier, monospace;
-            --f-size: 14px; /* Slightly larger for readability */
-            --border-w: 2px;
-            --spacing: 10px;
+            --f-size: 15px; /* Fixed size for calculation */
             --header-h: 40px;
             --footer-h: 30px;
-            --trans-speed: 0.3s;
+            --border: 2px solid var(--c-accent);
         }
+        
         body.light-theme { --c-bg: #FFFFFF; --c-text: #000000; }
-        * { box-sizing: border-box; border-radius: 0px; }
+
+        /* --- RESET & GEOMETRY --- */
+        * { box-sizing: border-box; border-radius: 0px !important; }
+        
         body, html {
-            margin: 0; padding: 0; height: 100%; width: 100%;
-            background-color: var(--c-bg); color: var(--c-text);
-            font-family: var(--f-mono); font-size: var(--f-size);
-            overflow: hidden; /* Critical for pagination */
+            margin: 0; padding: 0;
+            height: 100vh; width: 100vw;
+            background-color: var(--c-bg);
+            color: var(--c-text);
+            font-family: var(--f-mono);
+            font-size: var(--f-size);
+            overflow: hidden; /* Prevent body scroll */
         }
 
-        /* --- UI ELEMENTS --- */
-        button, input, textarea {
-            background: var(--c-bg); color: var(--c-text);
-            border: var(--border-w) solid var(--c-accent);
-            font-family: var(--f-mono); padding: 5px;
-            cursor: pointer; outline: none;
-        }
-        button:hover { background: var(--c-accent); color: var(--c-bg); }
-
-        /* --- LAYOUT --- */
+        /* --- LAYOUT GRID --- */
         #app {
-            display: grid; grid-template-rows: var(--header-h) 1fr var(--footer-h);
-            height: 100vh; width: 100vw; position: relative;
+            display: grid;
+            grid-template-rows: var(--header-h) 1fr var(--footer-h);
+            height: 100%; width: 100%;
         }
 
         /* --- HEADER --- */
         header {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 0 var(--spacing); border-bottom: var(--border-w) solid var(--c-accent);
-            background-color: var(--c-bg); 
-            z-index: 200; /* Higher than click zones */
-            position: relative;
+            padding: 0 10px; border-bottom: var(--border);
+            z-index: 10; background: var(--c-bg);
         }
         #book-title {
-            text-transform: uppercase; font-weight: bold; white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis; max-width: 50%;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            max-width: 200px; font-weight: bold;
         }
-        .btn-header { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; padding: 0; position: relative; z-index: 201; }
-        .btn-circle { border-radius: 50% !important; }
+        button {
+            background: var(--c-bg); color: var(--c-text);
+            border: var(--border); font-family: var(--f-mono);
+            cursor: pointer; padding: 4px 8px;
+        }
+        button:hover { background: var(--c-accent); color: var(--c-bg); }
+        .btn-circle { border-radius: 50% !important; width: 26px; height: 26px; padding: 0; }
 
-        /* --- PANELS --- */
-        .panel {
-            position: absolute; background-color: var(--c-bg);
-            border: var(--border-w) solid var(--c-accent);
-            transition: transform var(--trans-speed) ease-in-out;
-            z-index: 150; display: flex; flex-direction: column; padding: var(--spacing);
-        }
-        
-        /* Utility */
-        #panel-utility {
-            top: var(--header-h); left: 0; width: 100%; height: auto;
-            border-left: none; border-right: none;
-            transform: translateY(-150%); padding-bottom: 20px;
-        }
-        #panel-utility.open { transform: translateY(0); }
-        .utility-row { margin-bottom: 10px; display: flex; gap: 10px; align-items: center; }
-
-        /* Nav */
-        #panel-nav {
-            top: 0; bottom: 0; left: 0; width: 250px;
-            border-top: none; border-bottom: none;
-            transform: translateX(-100%); z-index: 300; padding-top: 50px;
-        }
-        #panel-nav.open { transform: translateX(0); }
-        #chapter-list { list-style: none; padding: 0; margin: 0; }
-        #chapter-list li {
-            padding: 8px 0; border-bottom: 1px dashed var(--c-accent);
-            cursor: pointer; font-size: 11px; white-space: nowrap;
-            overflow: hidden; text-overflow: ellipsis;
-        }
-        #chapter-list li:hover { color: var(--c-accent); }
-
-        /* Annotation */
-        #panel-annotation {
-            bottom: var(--footer-h); left: 0; width: 100%; height: 160px;
-            border-left: none; border-right: none;
-            transform: translateY(120%);
-            z-index: 300;
-        }
-        #panel-annotation.open { transform: translateY(0); }
-        .annotation-controls { display: flex; gap: 10px; margin-top: 5px; }
-        textarea { width: 100%; height: 80px; resize: none; }
-
-        /* --- CONTENT & PAGINATION --- */
-        #content-wrapper {
+        /* --- MAIN STAGE (Center the Page) --- */
+        #stage {
             position: relative;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* Hide scrollbars, we use translation or column logic */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            width: 100%; height: 100%;
         }
 
-        #content-display {
+        /* --- THE STRICT PAGE CONTAINER --- */
+        #page-view {
+            /* Width/Height set by JS based on Char Count */
+            border: var(--border); /* The Red Outline requested */
+            overflow: hidden; /* Mask other pages */
+            position: relative;
+            background: var(--c-bg);
+        }
+
+        /* --- SCROLLING CONTENT LAYER --- */
+        #content-scroll {
             height: 100%;
-            width: 100%;
-            padding: 20px; /* Margins inside the page */
-            
-            /* CSS Columns for Horizontal Pagination */
-            column-width: 100vw; /* Attempt to make one column per screen width */
-            column-gap: 40px;    /* Gap between 'pages' */
+            /* Column logic applied via JS for precision */
+            column-gap: 0px; 
             column-fill: auto;
-            
-            /* Positioning to slide the columns */
             position: absolute;
             top: 0; left: 0;
             
-            /* Text Formatting */
-            line-height: 1.6;
+            /* Typography */
+            line-height: 1.5;
             text-align: justify;
-            word-wrap: break-word;
         }
-        
-        /* Specific Formatting */
-        #content-display h1, #content-display h2 { break-after: avoid; border-bottom: 1px solid var(--c-accent); }
-        #content-display p { margin-bottom: 1em; text-indent: 1.5em; }
-        #content-display img { max-width: 100%; height: auto; display: block; margin: 10px auto; }
-        
-        /* EPUB Specific Overrides: EPUB.js uses its own iframe, so we treat it differently */
-        .epub-container { width: 100%; height: 100%; }
 
-        /* --- CLICK ZONES --- */
+        /* Content Styling */
+        #content-scroll p { margin-bottom: 1em; text-indent: 1em; }
+        #content-scroll h1, h2 { border-bottom: 1px solid red; break-after: avoid; }
+        
+        /* Highlight Span */
+        .highlight { border-top: 2px solid red; color: red; }
+
+        /* --- CLICK ZONES (Invisible Navigation) --- */
         .click-zone {
-            position: absolute; top: var(--header-h); bottom: var(--footer-h);
-            width: 40%; z-index: 90; cursor: pointer;
-            /* background: rgba(255,0,0,0.1); Debugging visual */
+            position: absolute; top: 0; bottom: 0; width: 100px; z-index: 5;
+            cursor: pointer;
         }
         #zone-left { left: 0; }
         #zone-right { right: 0; }
 
         /* --- FOOTER --- */
         footer {
-            border-top: var(--border-w) solid var(--c-accent); display: flex;
-            align-items: center; justify-content: space-between;
-            padding: 0 var(--spacing); font-size: 10px; 
-            z-index: 200; background: var(--c-bg);
-            position: relative;
+            border-top: var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 10px; font-size: 12px;
+            z-index: 10; background: var(--c-bg);
         }
-        #btn-notes-toggle { border: none; background: transparent; color: var(--c-accent); font-weight: bold; z-index: 201; position: relative; }
+
+        /* --- UTILITY PANELS (Hidden by default) --- */
+        .panel {
+            position: absolute; background: var(--c-bg); border: var(--border);
+            padding: 10px; z-index: 20; display: none;
+        }
+        .panel.open { display: flex; flex-direction: column; gap: 10px; }
         
-        /* ANNOTATION HIGHLIGHT */
-        .note-highlight { border-top: 2px solid var(--c-accent); color: var(--c-accent); font-weight: bold; }
+        #panel-util { top: 40px; left: 0; width: 100%; border-left:0; border-right:0; }
+        #panel-nav { top: 0; left: 0; bottom: 0; width: 250px; padding-top: 50px; }
+        #panel-note { bottom: 30px; left: 0; width: 100%; height: 150px; }
+        textarea { width: 100%; height: 80px; background: var(--c-bg); color: var(--c-text); border: var(--border); }
+
+        /* Measurement element */
+        #measure-char { visibility: hidden; position: absolute; white-space: nowrap; }
 
     </style>
 </head>
@@ -168,309 +138,189 @@
 
     <div id="app">
         <header>
-            <button id="btn-utility" class="btn-header btn-square">S</button>
-            <span id="book-title">ZERO READER</span>
-            <button id="btn-nav" class="btn-header btn-circle">N</button>
+            <button onclick="toggle('panel-util')">SET</button>
+            <span id="book-title">NO BOOK</span>
+            <button class="btn-circle" onclick="toggle('panel-nav')">N</button>
         </header>
 
-        <div id="panel-utility" class="panel">
-            <div class="utility-row">
-                <label>FILE:</label>
-                <input type="file" id="file-input">
-            </div>
-            <div class="utility-row">
-                <label>THEME:</label>
-                <button id="btn-theme-black">BLK</button>
-                <button id="btn-theme-white">WHT</button>
-            </div>
-            <div class="utility-row" style="margin-top:10px; border-top: 1px solid red; padding-top:10px;">
-                <label>DATA:</label>
-                <button id="btn-export-json">EXPORT</button>
-                <label>IMPORT:</label>
-                <input type="file" id="import-json" style="width: 100px;">
-            </div>
-        </div>
+        <div id="stage">
+            <div id="zone-left" class="click-zone" onclick="turn(-1)"></div>
+            <div id="zone-right" class="click-zone" onclick="turn(1)"></div>
 
-        <div id="panel-nav" class="panel">
-            <div style="margin-bottom:10px; border-bottom: 2px solid red; font-weight:bold;">CONTENTS</div>
-            <ul id="chapter-list"></ul>
-        </div>
-
-        <div id="content-wrapper">
-            <div id="zone-left" class="click-zone" title="Previous Page"></div>
-            <div id="zone-right" class="click-zone" title="Next Page"></div>
-            
-            <main id="content-display"></main>
-        </div>
-
-        <div id="panel-annotation" class="panel">
-            <label id="note-label">NEW NOTE</label>
-            <textarea id="note-input" placeholder="Select text..."></textarea>
-            <div class="annotation-controls">
-                <button id="btn-save-note">SAVE</button>
-                <button id="btn-del-note">CLEAR FILE</button>
+            <div id="page-view">
+                <div id="content-scroll"></div>
             </div>
         </div>
 
         <footer>
-            <span id="progress-text">0-0/0</span>
-            <button id="btn-notes-toggle">NOTES</button>
+            <span id="page-num">0/0</span>
+            <button onclick="toggle('panel-note')">NOTE</button>
         </footer>
+
+        <div id="panel-util" class="panel">
+            <input type="file" id="file-in">
+            <div>
+                <button onclick="setTheme('dark')">BLK</button>
+                <button onclick="setTheme('light')">WHT</button>
+            </div>
+        </div>
+        
+        <div id="panel-nav" class="panel">
+            <strong>CHAPTERS</strong>
+            <div id="toc-list"></div>
+        </div>
+
+        <div id="panel-note" class="panel">
+            <label>NOTE:</label>
+            <textarea id="note-txt"></textarea>
+            <button onclick="saveNote()">SAVE</button>
+        </div>
     </div>
+
+    <span id="measure-char">X</span>
 
     <script>
         /* --- STATE --- */
         let state = {
             rawText: "",
-            fileType: "",
-            fileName: "",
-            epubBook: null,
-            epubRendition: null,
-            currentPage: 0,
-            totalChars: 0
+            ftype: "",
+            pageIndex: 0,
+            totalPages: 0,
+            
+            // Geometry
+            charW: 0,
+            viewW: 0, 
+            viewH: 0
         };
 
-        const DB = {
-            get: (k) => JSON.parse(localStorage.getItem('zr_' + k) || '[]'),
-            set: (k, v) => localStorage.setItem('zr_' + k, JSON.stringify(v)),
-            del: (k) => localStorage.removeItem('zr_' + k)
+        const dom = {
+            view: document.getElementById('page-view'),
+            content: document.getElementById('content-scroll'),
+            measure: document.getElementById('measure-char'),
+            stage: document.getElementById('stage'),
+            pgNum: document.getElementById('page-num')
         };
 
-        /* --- DOM ELEMENTS --- */
-        const els = {
-            content: document.getElementById('content-display'),
-            wrapper: document.getElementById('content-wrapper'),
-            title: document.getElementById('book-title'),
-            fileIn: document.getElementById('file-input'),
-            progress: document.getElementById('progress-text'),
-            zoneL: document.getElementById('zone-left'),
-            zoneR: document.getElementById('zone-right')
-        };
-        const panels = {
-            util: document.getElementById('panel-utility'),
-            nav: document.getElementById('panel-nav'),
-            note: document.getElementById('panel-annotation')
-        };
+        /* --- GEOMETRY ENGINE --- */
+        function calculateGeometry() {
+            // 1. Measure 1 Char Width
+            dom.measure.textContent = "X";
+            const rect = dom.measure.getBoundingClientRect();
+            state.charW = rect.width;
 
-        /* --- PAGINATION LOGIC (CSS COLUMNS) --- */
-        function updatePagination() {
-            if(state.fileType === 'epub') return; // Epub handles own pagination
+            // 2. Measure Available Stage Space
+            const stageRect = dom.stage.getBoundingClientRect();
+            const availW = stageRect.width - 40; // 20px margin each side
+            const availH = stageRect.height - 40; // 20px margin top/bot
+
+            // 3. Calculate Exact Characters that fit
+            const charsAcross = Math.floor(availW / state.charW);
             
-            // We shift the 'left' property of the content div to show the correct column
-            // A column is roughly 100vw + gap (40px)
-            const viewWidth = els.wrapper.clientWidth; 
-            const gap = 40; 
-            const shift = -1 * state.currentPage * (viewWidth + gap);
+            // 4. Set Viewport to EXACT pixel multiple of chars
+            state.viewW = charsAcross * state.charW;
+            state.viewH = availH;
+
+            // 5. Apply Dimensions to the "Specific Div"
+            dom.view.style.width = state.viewW + "px";
+            dom.view.style.height = state.viewH + "px";
             
-            els.content.style.left = shift + 'px';
-            
-            // Calculate Progress (Heuristic)
-            calculateProgress();
+            // 6. Apply Column Logic to Inner Content
+            // IMPORTANT: column-width must match viewW exactly. Gap must be 0.
+            dom.content.style.columnWidth = state.viewW + "px";
+            dom.content.style.columnGap = "0px";
+            dom.content.style.width = "auto"; // Let it expand infinitely right
+            dom.content.style.height = state.viewH + "px";
+
+            updatePagePosition();
         }
 
-        function nextPage() {
-            if(state.fileType === 'epub') { state.epubRendition.next(); return; }
+        /* --- PAGINATION --- */
+        function updatePagePosition() {
+            // Translate the long scroll by exactly one view width per page
+            const offset = -(state.pageIndex * state.viewW);
+            dom.content.style.transform = `translateX(${offset}px)`;
             
-            // Check boundaries
-            const maxScroll = els.content.scrollWidth;
-            const viewWidth = els.wrapper.clientWidth;
-            const currentScroll = state.currentPage * (viewWidth + 40);
+            // Calculate Total Pages
+            // We measure the full scroll width of the content
+            const totalScroll = dom.content.scrollWidth;
+            state.totalPages = Math.ceil(totalScroll / state.viewW);
             
-            if (currentScroll + viewWidth < maxScroll) {
-                state.currentPage++;
-                updatePagination();
+            dom.pgNum.textContent = `PAGE ${state.pageIndex + 1} / ${state.totalPages || 1}`;
+        }
+
+        function turn(dir) {
+            const next = state.pageIndex + dir;
+            if(next >= 0 && next < state.totalPages) {
+                state.pageIndex = next;
+                updatePagePosition();
             }
         }
 
-        function prevPage() {
-            if(state.fileType === 'epub') { state.epubRendition.prev(); return; }
+        // Handle Window Resize
+        window.onresize = () => {
+            calculateGeometry();
+            // Re-render text to reflow columns
+            if(state.rawText) render(); 
+        };
+
+        /* --- FILE IO --- */
+        document.getElementById('file-in').addEventListener('change', e => {
+            const f = e.target.files[0];
+            if(!f) return;
             
-            if (state.currentPage > 0) {
-                state.currentPage--;
-                updatePagination();
+            document.getElementById('book-title').textContent = f.name;
+            state.pageIndex = 0;
+            const ext = f.name.split('.').pop();
+
+            if(ext === 'epub') {
+                alert("EPUB not supported in 'Strict Geometry' mode yet. Please convert to TXT/MD for best results.");
+                return;
             }
-        }
 
-        /* --- PROGRESS CALCULATION --- */
-        function calculateProgress() {
-            if(state.fileType === 'epub') return; // Epub has internal location system
-
-            // We need to find the first and last character visible.
-            // Using caretRangeFromPoint on the top-left and bottom-right of the visible area.
-            
-            // Coordinates relative to viewport
-            const x = 50; // padding offset
-            const yTop = 50; // header offset
-            const yBot = window.innerHeight - 50; // footer offset
-            
-            const rangeStart = getCaretSafe(x, yTop);
-            const rangeEnd = getCaretSafe(els.wrapper.clientWidth - 50, yBot);
-
-            if(rangeStart && rangeEnd) {
-                // Find offset in total text. 
-                // Note: accurate absolute char index is hard with HTML structure.
-                // We will use a rough estimation or textContent length of the range
-                // For this strict requirement, we display the offsets found.
-                
-                const start = rangeStart.startOffset; // Local to node
-                // To get global offset is very expensive (walking all nodes).
-                // We will simplify: Show Page Number / Total Pages estimate
-                // Or if strictly complying to "FirstVisibleChar-LastVisibleChar":
-                
-                // Simplified strict output:
-                const total = els.content.textContent.length;
-                // We estimate based on scroll percentage since exact DOM mapping is heavy
-                const scrollW = els.content.scrollWidth;
-                const viewW = els.wrapper.clientWidth + 40;
-                const progressRatio = state.currentPage / (scrollW / viewW);
-                
-                const approxStart = Math.floor(progressRatio * total);
-                const approxEnd = Math.floor((progressRatio + (viewW/scrollW)) * total);
-                
-                els.progress.textContent = `${approxStart}-${Math.min(approxEnd, total)}/${total}`;
-            } else {
-                els.progress.textContent = `PAGE ${state.currentPage + 1}`;
-            }
-        }
-
-        function getCaretSafe(x, y) {
-            if (document.caretRangeFromPoint) return document.caretRangeFromPoint(x, y);
-            if (document.caretPositionFromPoint) return document.caretPositionFromPoint(x, y);
-            return null;
-        }
-
-        /* --- INPUTS --- */
-        // Keyboard
-        document.addEventListener('keydown', (e) => {
-            if(['TEXTAREA', 'INPUT'].includes(document.activeElement.tagName)) return;
-            if(e.key === 'ArrowRight' || e.key === 'd') nextPage();
-            if(e.key === 'ArrowLeft' || e.key === 'a') prevPage();
+            const r = new FileReader();
+            r.onload = (evt) => {
+                state.rawText = evt.target.result;
+                state.ftype = ext;
+                render();
+                toggle('panel-util');
+            };
+            r.readAsText(f);
         });
 
-        // Click Zones
-        els.zoneL.addEventListener('click', prevPage);
-        els.zoneR.addEventListener('click', nextPage);
-
-        /* --- FILE PROCESSING --- */
-        els.fileIn.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
+        function render() {
+            calculateGeometry(); // Ensure sizing is fresh
             
-            state.fileName = file.name;
-            state.fileType = file.name.split('.').pop().toLowerCase();
-            els.title.textContent = state.fileName.toUpperCase();
-            state.currentPage = 0;
-            els.content.style.left = '0px';
-
-            // Clean up
-            if(state.epubBook) { state.epubBook.destroy(); state.epubBook = null; }
-            els.content.innerHTML = '';
-            els.content.removeAttribute('style'); // Reset epub overrides
-
-            if(state.fileType === 'epub') {
-                loadEpub(file);
-            } else {
-                const reader = new FileReader();
-                reader.onload = (evt) => {
-                    state.rawText = evt.target.result;
-                    state.totalChars = state.rawText.length;
-                    renderTextContent();
-                    closeAllPanels();
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        function renderTextContent() {
-            // Re-apply column styles
-            els.content.style.position = 'absolute';
-            els.content.style.columnWidth = '100vw';
-            els.content.style.columnGap = '40px';
-            els.content.style.height = '100%';
-            els.content.style.width = '100%';
-            
-            // Inject Notes
-            const notes = DB.get(state.fileName);
             let html = state.rawText;
+            if(state.ftype === 'md') html = marked.parse(html);
+            else html = html.replace(/\n/g, '<br>');
+
+            dom.content.innerHTML = html;
             
-            if(state.fileType === 'md') {
-                // Markdown
-                html = marked.parse(html);
-                // Note injection in MD is complex post-parse, simplified here:
-                els.content.innerHTML = html;
-            } else {
-                // TXT: inject spans
-                // Sort reversed to handle offsets
-                notes.sort((a,b) => b.idx - a.idx).forEach(n => {
-                    const t = html;
-                    html = t.slice(0, n.idx) + `<span class="note-highlight" title="${n.txt}">${t[n.idx]}</span>` + t.slice(n.idx+1);
-                });
-                els.content.innerHTML = html.replace(/\n/g, '<br>'); // Simple line breaks
-            }
-            
-            updatePagination();
+            // Wait for DOM to flow text into columns, then calc pages
+            setTimeout(updatePagePosition, 100);
         }
 
-        function loadEpub(file) {
-            if (window.FileReader) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    state.epubBook = ePub(e.target.result);
-                    state.epubRendition = state.epubBook.renderTo("content-display", {
-                        width: "100%", height: "100%"
-                    });
-                    state.epubRendition.display();
-                    
-                    // Epub Events
-                    state.epubRendition.on('relocated', function(location){
-                        els.progress.textContent = `${location.start.displayed.page}/${location.start.displayed.total}`;
-                    });
-                };
-                reader.readAsArrayBuffer(file);
-            }
+        /* --- UI UTILS --- */
+        function toggle(id) {
+            const el = document.getElementById(id);
+            const open = el.classList.contains('open');
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('open'));
+            if(!open) el.classList.add('open');
         }
 
-        /* --- ANNOTATION SYSTEM (TXT ONLY) --- */
-        let pendingIdx = null;
-        document.addEventListener('mouseup', () => {
-            if(state.fileType === 'epub') return;
-            const sel = window.getSelection();
-            if(!sel.rangeCount) return;
-            
-            const txt = sel.toString();
-            if(txt && els.content.contains(sel.anchorNode)) {
-                // Find Index heuristic
-                pendingIdx = state.rawText.indexOf(txt); 
-                document.getElementById('note-input').value = '';
-                togglePanel(panels.note);
-            }
+        function setTheme(t) {
+            if(t==='light') document.body.classList.add('light-theme');
+            else document.body.classList.remove('light-theme');
+        }
+        
+        // Keyboard Support
+        document.addEventListener('keydown', e => {
+            if(e.key === 'ArrowRight') turn(1);
+            if(e.key === 'ArrowLeft') turn(-1);
         });
 
-        document.getElementById('btn-save-note').onclick = () => {
-            if(pendingIdx !== null) {
-                const notes = DB.get(state.fileName);
-                notes.push({ idx: pendingIdx, txt: document.getElementById('note-input').value });
-                DB.set(state.fileName, notes);
-                renderTextContent();
-                closeAllPanels();
-            }
-        };
-
-        /* --- UTILS --- */
-        function togglePanel(p) {
-            const open = p.classList.contains('open');
-            closeAllPanels();
-            if(!open) p.classList.add('open');
-        }
-        function closeAllPanels() { Object.values(panels).forEach(p => p.classList.remove('open')); }
-        
-        document.getElementById('btn-utility').onclick = (e) => { e.stopPropagation(); togglePanel(panels.util); };
-        document.getElementById('btn-nav').onclick = (e) => { e.stopPropagation(); togglePanel(panels.nav); };
-        document.getElementById('btn-notes-toggle').onclick = (e) => { e.stopPropagation(); togglePanel(panels.note); };
-        
-        // Theme
-        document.getElementById('btn-theme-black').onclick = () => document.body.classList.remove('light-theme');
-        document.getElementById('btn-theme-white').onclick = () => document.body.classList.add('light-theme');
+        // Initial Geometry Check
+        calculateGeometry();
 
     </script>
 </body>
