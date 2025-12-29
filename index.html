@@ -5,199 +5,340 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>index</title>
     
-    <link rel="stylesheet" href="trtb.css">
-
     <style>
-        /* global lowercase enforcement */
+        /* * TRTB.css (Thor's Radical Technical Brutalism)
+         * Version: 1.0.0
+         * Integrated for Single-File Portability
+         */
+
+        :root {
+            /* Color Palette */
+            --bg: #000000;
+            --fg: #ffffff;
+            --accent: #ff0000;
+
+            /* Borders & Outlines */
+            --border-sm: 2px;
+            --border-md: 5px;
+            --border-lg: 10px;
+
+            /* Spacing */
+            --pad-inner: 10px;
+            --indent: 10px;
+            
+            /* Typography */
+            --font-main: monospace;
+            --base-scale: 0.85; 
+        }
+
+        /* Theme Switch: Light Mode Overrides */
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --fg: #000000;
+        }
+
+        /* Global Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border-radius: 0 !important; /* Strictly 90-degree corners */
+            font-family: var(--font-main);
+            font-size: calc(1rem * var(--base-scale));
+        }
+
         body {
+            background-color: var(--bg);
+            color: var(--fg);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 40px 20px;
+            text-transform: lowercase; /* Preserving your original lowercase preference */
+        }
+
+        /* --- Layout Structure --- */
+
+        /* Metadata outside the border */
+        #trtb_title {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            font-weight: bold;
+        }
+
+        #trtb_meta_top {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* The Global Outer Border */
+        #app_container {
+            border: var(--border-lg) solid var(--accent);
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            /* Max-width constraint for readability on large screens, though 100% is valid TRTB */
+            max-width: 100%; 
+        }
+
+        /* Footer Metadata outside border */
+        #trtb_footer {
+            padding-top: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+        }
+
+        /* --- Modular Div Logic --- */
+
+        .trtb_module {
+            width: 100%;
+            margin: 0;
+            border-bottom: var(--border-md) solid var(--accent); /* Stack look */
+            padding: var(--pad-inner);
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Remove bottom border from last module to flush with container */
+        .trtb_module:last-child {
+            border-bottom: none;
+        }
+
+        /* Internal Grid for Links */
+        .link_grid {
+            display: grid;
+            grid-template-columns: 30% 70%;
+            gap: 10px;
+            margin-top: 10px;
+            border-top: var(--border-sm) solid var(--accent);
+            padding-top: 5px;
+        }
+
+        .link_item {
+            padding: 2px 0;
+        }
+
+        /* Mobile Adjustments for Grid */
+        @media (max-width: 600px) {
+            .link_grid {
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+            }
+            .link_item.desc {
+                margin-bottom: 10px;
+                color: #888;
+                padding-left: 10px;
+                border-left: 2px solid var(--accent);
+            }
+        }
+
+        /* --- Typography & Content --- */
+
+        h1, h2 {
+            background: var(--accent);
+            color: var(--bg); /* Inverted for headers */
+            padding: 2px 5px;
+            display: inline-block;
+            width: 100%;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        /* Light mode text color fix for headers */
+        [data-theme="light"] h1, [data-theme="light"] h2 {
+            color: #ffffff; 
+        }
+
+        a {
+            color: var(--fg);
+            text-decoration: overline;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        a:hover {
+            background: var(--accent);
+            color: var(--bg) !important; /* Force black text on red bg */
+            text-decoration: none;
+        }
+
+        /* --- Components --- */
+
+        button {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-sm) solid var(--accent);
+            padding: 2px 10px;
+            cursor: pointer;
             text-transform: lowercase;
         }
 
-        /* animation canvas style */
-        #node-animation {
-            display: block;
+        button:hover {
+            background: var(--accent);
+            color: var(--bg) !important;
+        }
+
+        canvas {
             width: 100%;
             height: 250px;
-            background-color: black;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid #ccc;
+            background-color: #000000;
+            border: var(--border-sm) solid var(--accent);
+            display: block;
         }
 
-        /* table styling */
-        table {
-            width: 100%;
-            border-collapse: collapse; /* ensures borders touch */
-            margin-top: 1rem;
-            table-layout: fixed; /* helps with mobile spacing */
-        }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg); border-left: 2px solid var(--accent); }
+        ::-webkit-scrollbar-thumb { background: var(--bg); border: 2px solid var(--accent); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--fg); }
 
-        td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
-            word-wrap: break-word;
-        }
-
-        /* subheader specific styling */
-        .category-header td {
-            background-color: black;     /* "background of the cell is black" */
-            color: red;                  /* "red highlight" text */
-            border: 2px solid white;     /* "border... should be white" */
-            font-weight: bold;
-            text-align: center;
-            padding: 15px;
-            letter-spacing: 2px;
-        }
-
-        /* column widths for desktop */
-        .col-name { width: 30%; font-family: monospace; }
-        .col-desc { width: 70%; }
-
-        /* links styling */
-        a {
-            text-decoration: underline;
-            font-weight: bold;
-        }
-
-        /* mobile responsiveness */
-        @media (max-width: 600px) {
-            table, tbody, tr, td {
-                display: block;
-                width: 100%;
-            }
-            
-            /* hide standard table headers if they existed */
-            thead { display: none; }
-
-            .col-name {
-                width: 100%;
-                padding-bottom: 2px;
-                font-size: 1.1em;
-                border-bottom: none;
-            }
-
-            .col-desc {
-                width: 100%;
-                padding-top: 0;
-                color: #555;
-                font-size: 0.9em;
-                border-bottom: 1px solid #ccc;
-                margin-bottom: 10px;
-            }
-
-            .category-header td {
-                margin-top: 20px;
-                margin-bottom: 5px;
-            }
-        }
     </style>
 </head>
 <body>
 
-    <h1>my website</h1>
+    <!-- META DATA (Outside Border) -->
+    <div id="trtb_title">index // my website</div>
+    <div id="trtb_meta_top">
+        <span id="clock_display">00:00:00</span>
+        <button id="theme_toggle">toggle_theme</button>
+    </div>
 
-    <figure style="margin: 0; padding: 0;">
-        <canvas id="node-animation"></canvas>
-    </figure>
+    <!-- MAIN APP CONTAINER (Global Red Border) -->
+    <div id="app_container">
 
-    <h2>index</h2>
-    
-    <table>
-        <tbody>
-            <tr class="category-header"><td colspan="2">main</td></tr>
-            <tr>
-                <td class="col-name"><a href="trtb1.html">trtb1.html</a></td>
-                <td class="col-desc">introduction and primary info.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="trtb2.html">trtb2.html</a></td>
-                <td class="col-desc">secondary information page.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="goodnews.html">GOODnews.html</a></td>
-                <td class="col-desc">GOODnews.html</td>
-            </tr>
+        <!-- MODULE 1: VISUALIZER -->
+        <div id="module_visualizer" class="trtb_module">
+            <h2>:: node_network ::</h2>
+            <canvas id="node_canvas"></canvas>
+        </div>
 
-            <tr class="category-header"><td colspan="2">html tools</td></tr>
-            <tr>
-                <td class="col-name"><a href="hands.html">hands.html</a></td>
-                <td class="col-desc">hand tracking/detection demo.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="game-test.html">game-test.html</a></td>
-                <td class="col-desc"trash game controller tester, missable, and trash.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="face.html">face.html</a></td>
-                <td class="col-desc">facial recognition/tracking demo.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="encry.html">encry.html</a></td>
-                <td class="col-desc">simple text encryption tool (download to use securely)</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="encry-md.html">encry-md.html</a></td>
-                <td class="col-desc">markdown editor, with encryption support (download to use securely)</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="jpegcomp.html">jpegcomp.html</a></td>
-                <td class="col-desc">simple jpeg image compression tool.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="b64-comp.html">b64-comp.html</a></td>
-                <td class="col-desc">base-64 encode tool, with image compression and encryption support.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="jpegcomp.html">b64-imgview</a></td>
-                <td class="col-desc">simple base-64 image viewer</td>
-            </tr>
+        <!-- MODULE 2: MAIN LINKS -->
+        <div id="module_main" class="trtb_module">
+            <h2>:: main ::</h2>
+            
+            <div class="link_grid">
+                <div class="link_item"><a href="trtb1.html">trtb1.html</a></div>
+                <div class="link_item desc">introduction and primary info.</div>
 
-            <tr class="category-header"><td colspan="2">experiments and games</td></tr>
-            <tr>
-                <td class="col-name"><a href="roulette.html">roulette.html</a></td>
-                <td class="col-desc">single-player local-only roulette table simulator.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="oracle.html">oracle.html</a></td>
-                <td class="col-desc">ultralightweight sttrpg oracle.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="soda.html">soda.html</a></td>
-                <td class="col-desc">russian roulette with soda.</td>
-            </tr>
-            <tr>
-                <td class="col-name"><a href="voidscream.html">voidscream.html</a></td>
-                <td class="col-desc">my blog.</td>
-            </tr>
-        </tbody>
-    </table>
+                <div class="link_item"><a href="trtb2.html">trtb2.html</a></div>
+                <div class="link_item desc">secondary information page.</div>
 
-    <br>
-    <hr>
-    <p style="text-indent: 0; text-align: center; opacity: 0.7;">
-        (c) thor smith 2025
-    </p>
+                <div class="link_item"><a href="goodnews.html">goodnews.html</a></div>
+                <div class="link_item desc">goodnews.html</div>
+            </div>
+        </div>
 
+        <!-- MODULE 3: TOOLS -->
+        <div id="module_tools" class="trtb_module">
+            <h2>:: html tools ::</h2>
+            
+            <div class="link_grid">
+                <div class="link_item"><a href="hands.html">hands.html</a></div>
+                <div class="link_item desc">hand tracking/detection demo.</div>
 
+                <div class="link_item"><a href="game-test.html">game-test.html</a></div>
+                <div class="link_item desc">trash game controller tester, missable.</div>
+
+                <div class="link_item"><a href="face.html">face.html</a></div>
+                <div class="link_item desc">facial recognition/tracking demo.</div>
+
+                <div class="link_item"><a href="encry.html">encry.html</a></div>
+                <div class="link_item desc">simple text encryption tool (secure dl).</div>
+
+                <div class="link_item"><a href="encry-md.html">encry-md.html</a></div>
+                <div class="link_item desc">markdown editor w/ encryption support.</div>
+
+                <div class="link_item"><a href="jpegcomp.html">jpegcomp.html</a></div>
+                <div class="link_item desc">simple jpeg image compression tool.</div>
+
+                <div class="link_item"><a href="b64-comp.html">b64-comp.html</a></div>
+                <div class="link_item desc">base-64 encode, compress, encrypt tool.</div>
+
+                <div class="link_item"><a href="jpegcomp.html">b64-imgview</a></div>
+                <div class="link_item desc">simple base-64 image viewer.</div>
+            </div>
+        </div>
+
+        <!-- MODULE 4: EXPERIMENTS -->
+        <div id="module_experiments" class="trtb_module">
+            <h2>:: experiments & games ::</h2>
+            
+            <div class="link_grid">
+                <div class="link_item"><a href="roulette.html">roulette.html</a></div>
+                <div class="link_item desc">local-only roulette table simulator.</div>
+
+                <div class="link_item"><a href="oracle.html">oracle.html</a></div>
+                <div class="link_item desc">ultralightweight sttrpg oracle.</div>
+
+                <div class="link_item"><a href="soda.html">soda.html</a></div>
+                <div class="link_item desc">russian roulette with soda.</div>
+
+                <div class="link_item"><a href="voidscream.html">voidscream.html</a></div>
+                <div class="link_item desc">my blog.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FOOTER (Outside Border) -->
+    <div id="trtb_footer">
+        <span>v2.0.0_trtb</span>
+        <span>&copy; 2025 thor smith</span>
+    </div>
+
+    <!-- LOGIC BRIDGE -->
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const canvas = document.getElementById('node-animation');
-            const ctx = canvas.getContext('2d');
+        // --- 1. Theme Logic ---
+        const themeBtn = document.getElementById('theme_toggle');
+        const body = document.body;
 
-            // set initial canvas size
-            canvas.width = canvas.offsetWidth;
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = body.getAttribute('data-theme');
+            if (currentTheme === 'light') {
+                body.removeAttribute('data-theme');
+            } else {
+                body.setAttribute('data-theme', 'light');
+            }
+        });
+
+        // --- 2. Clock Logic ---
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('clock_display').innerText = 
+                now.toLocaleTimeString('en-US', { hour12: false });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 3. Animation Logic (Canvas) ---
+        // Encapsulated to prevent global scope pollution
+        (function initCanvas() {
+            const canvas = document.getElementById('node_canvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Initial resize
+            canvas.width = canvas.parentElement.offsetWidth - 24; // adjusting for padding/border
             canvas.height = 250;
 
-            // generate a random number of points (5 to 10)
             const numPoints = Math.floor(Math.random() * 6) + 5;
             let points = [];
 
-            // helper to get random velocity
             function randomVelocity() {
-                return (Math.random() - 0.5) * 0.5; // slow movement
+                return (Math.random() - 0.5) * 0.5; 
             }
 
-            // create each point
+            // Init Points
             for (let i = 0; i < numPoints; i++) {
                 points.push({
                     x: Math.random() * canvas.width,
@@ -208,11 +349,11 @@
             }
 
             function draw() {
-                // clear the canvas
+                // Clear (use transparent to show CSS bg, or fill specific color)
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-                // draw white wireframes
-                ctx.strokeStyle = 'white';
+                
+                // Draw Wireframes (White per original spec)
+                ctx.strokeStyle = '#ffffff'; 
                 ctx.lineWidth = 0.5;
                 for (let i = 0; i < points.length; i++) {
                     for (let j = i + 1; j < points.length; j++) {
@@ -223,11 +364,11 @@
                     }
                 }
 
-                // draw red nodes
-                ctx.fillStyle = 'red';
+                // Draw Nodes (Red per TRTB spec)
+                ctx.fillStyle = '#ff0000';
                 for (let i = 0; i < points.length; i++) {
                     ctx.beginPath();
-                    ctx.arc(points[i].x, points[i].y, 3, 0, Math.PI * 2); // 3px radius
+                    ctx.arc(points[i].x, points[i].y, 3, 0, Math.PI * 2);
                     ctx.fill();
                 }
             }
@@ -238,34 +379,32 @@
                     p.x += p.vx;
                     p.y += p.vy;
 
-                    // bounce off the walls
+                    // Bounce
                     if (p.x <= 0 || p.x >= canvas.width) p.vx *= -1;
                     if (p.y <= 0 || p.y >= canvas.height) p.vy *= -1;
                 }
             }
 
-            // main animation loop
             function animate() {
                 update();
                 draw();
                 requestAnimationFrame(animate);
             }
 
-            // adjust canvas on window resize
+            // Handle Resize
             window.addEventListener('resize', () => {
-                canvas.width = canvas.offsetWidth;
+                canvas.width = canvas.parentElement.offsetWidth - 24;
                 canvas.height = 250;
-                // ensure points stay in bounds
+                // keep points in bounds
                 for (let p of points) {
                     if (p.x > canvas.width) p.x = canvas.width;
                     if (p.y > canvas.height) p.y = canvas.height;
                 }
             });
 
-            // start the animation
             animate();
-        });
+        })();
     </script>
-
 </body>
 </html>
+
