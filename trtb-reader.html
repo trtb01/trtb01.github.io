@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Red/Black Ebook Reader</title>
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+
+    <style>
+        :root {
+            /* Palette */
+            --bg-color: #000000;
+            --fg-color: #FFFFFF;
+            --accent-color: #FF0000;
+            
+            /* Typography */
+            --font-stack: monospace;
+            --font-size: 14px;
+            --line-height: 1.4;
+            
+            /* Layout */
+            --margin-side: 20px;
+            --margin-top: 20px;
+            --gap-width: 40px; /* Gap between columns/pages */
+        }
+
+        /* --- Global Reset --- */
+        * {
+            box-sizing: border-box;
+            border-radius: 0 !important;
+            -webkit-tap-highlight-color: transparent;
+            scrollbar-width: none; /* Hide scrollbars */
+        }
+        *::-webkit-scrollbar { display: none; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--fg-color);
+            font-family: var(--font-stack);
+            font-size: var(--font-size);
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* No body scroll */
+            height: 100vh;
+            width: 100vw;
+            user-select: none; /* Prevent accidental text selection while tapping */
+        }
+
+        /* --- Grid Layout --- */
+        #app {
+            display: grid;
+            grid-template-rows: 40px 1fr 25px; /* Header | Content | Footer */
+            height: 100%;
+            width: 100%;
+        }
+
+        /* --- Header --- */
+        #header-bar {
+            background: var(--bg-color);
+            border-bottom: 2px solid var(--accent-color);
+            display: grid;
+            grid-template-columns: 40px 1fr 40px; /* Button | Title | Button */
+            align-items: center;
+            z-index: 50;
+        }
+
+        #current-book-title {
+            color: var(--accent-color);
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 10px;
+        }
+
+        /* --- Footer --- */
+        #footer-bar {
+            background: var(--bg-color);
+            border-top: 2px solid var(--accent-color);
+            color: var(--accent-color);
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+
+        /* --- Main Content (Pagination Engine) --- */
+        #reader-container {
+            position: relative;
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Hide scrollbars, we scroll programmatically */
+        }
+
+        #content-render {
+            height: 100%;
+            /* CSS Columns for Pagination logic */
+            column-fill: auto;
+            column-gap: var(--gap-width);
+            column-width: 100vw; /* Forces 1 column per screen width */
+            
+            padding: var(--margin-top) var(--margin-side);
+            
+            /* Text Alignment */
+            text-align: justify;
+        }
+
+        /* --- Typography & Elements --- */
+        h1, h2, h3, h4, h5, h6 {
+            background-color: var(--accent-color);
+            color: #000000;
+            padding: 2px 5px;
+            margin: 10px 0;
+            font-weight: bold;
+            break-after: avoid; /* Keep headers with text */
+        }
+
+        p {
+            margin-bottom: 1em;
+            text-indent: 2ch;
+            line-height: var(--line-height);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            border: 2px solid var(--accent-color);
+        }
+
+        .annotated-char {
+            text-decoration: overline;
+            text-decoration-color: var(--accent-color);
+            text-decoration-thickness: 2px;
+            cursor: pointer;
+        }
+
+        /* --- Click Zones (Invisible) --- */
+        .click-zone {
+            position: absolute;
+            top: 40px; 
+            bottom: 25px;
+            z-index: 40; /* Above text, below panels */
+            /* background: rgba(255, 0, 0, 0.1); Debugging */
+        }
+        #zone-left { left: 0; width: 50%; }
+        #zone-right { right: 0; width: 50%; }
+
+        /* --- Buttons & Inputs --- */
+        button {
+            background: var(--bg-color);
+            color: var(--fg-color);
+            border: 2px solid var(--accent-color);
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 24px; width: 24px;
+            margin: auto;
+        }
+        button:hover { background: var(--accent-color); color: #000; }
+        
+        #btn-utility-toggle { border-radius: 0; } /* Square */
+        #btn-nav-toggle { border-radius: 50% !important; } /* Circle */
+
+        input, select, textarea {
+            background: var(--bg-color);
+            color: var(--fg-color);
+            border: 2px solid var(--accent-color);
+            font-family: monospace;
+            font-size: 12px;
+            padding: 4px;
+        }
+
+        /* --- Panels --- */
+        .panel {
+            position: absolute;
+            background: var(--bg-color);
+            border: 2px solid var(--accent-color);
+            z-index: 100;
+            transition: transform 0.2s ease;
+        }
+
+        #utility-panel {
+            top: 40px; left: 0; right: 0;
+            max-height: 60vh;
+            transform: translateY(-150%);
+            padding: 20px;
+            border-bottom: 2px solid var(--accent-color);
+            overflow-y: auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 15px;
+        }
+        #utility-panel.open { transform: translateY(0); }
+
+        #nav-panel {
+            top: 40px; bottom: 0; left: 0;
+            width: 85%; max-width: 300px;
+            transform: translateX(-100%);
+            border-right: 2px solid var(--accent-color);
+            display: flex; flex-direction: column;
+        }
+        #nav-panel.open { transform: translateX(0); }
+
+        #annotation-panel {
+            bottom: 0; left: 0; right: 0;
+            height: 160px;
+            transform: translateY(100%);
+            border-top: 2px solid var(--accent-color);
+            padding: 10px;
+            display: flex; flex-direction: column;
+        }
+        #annotation-panel.open { transform: translateY(0); }
+
+        /* --- Helper Classes --- */
+        .hidden { display: none !important; }
+        .setting-group label { display: block; color: var(--accent-color); font-weight: bold; margin-bottom: 5px; }
+
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        
+        <!-- Header -->
+        <div id="header-bar">
+            <button id="btn-utility-toggle" title="Settings">≣</button>
+            <div id="current-book-title">Reader Ready</div>
+            <button id="btn-nav-toggle" title="Chapters">➜</button>
+        </div>
+
+        <!-- Content -->
+        <div id="reader-container">
+            <!-- Click Zones for Navigation -->
+            <div id="zone-left" class="click-zone" onclick="prevPage()"></div>
+            <div id="zone-right" class="click-zone" onclick="nextPage()"></div>
+
+            <!-- Text Render Area -->
+            <div id="content-render">
+                <div style="padding-top: 50px;">
+                    <p>Load an ebook (.txt, .md, .epub) from the top-left menu.</p>
+                    <p><strong>Controls:</strong></p>
+                    <ul>
+                        <li>Tap Left / A / W / Left Arrow : Previous Page</li>
+                        <li>Tap Right / D / Right Arrow : Next Page</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div id="footer-bar">
+            <span id="char-counter">[0]-[0]/[0]</span>
+        </div>
+
+    </div>
+
+    <!-- === PANELS === -->
+
+    <!-- Settings -->
+    <div id="utility-panel" class="panel">
+        <div class="setting-group">
+            <label>Load File</label>
+            <input type="file" id="file-input">
+        </div>
+        <div class="setting-group">
+            <label>Theme</label>
+            <div style="display:flex; gap:10px;">
+                <button onclick="setTheme('black')" style="width:100%">Black</button>
+                <button onclick="setTheme('white')" style="width:100%">White</button>
+            </div>
+        </div>
+        <div class="setting-group">
+            <label>Font</label>
+            <select id="font-select" onchange="updateStyles()" style="width:100%;">
+                <option value="monospace">Monospace</option>
+                <option value="serif">Serif</option>
+                <option value="sans-serif">Sans Serif</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <label>Margins (px)</label>
+            <input type="number" id="input-margin" value="20" onchange="updateStyles()" style="width:100%">
+        </div>
+        <div class="setting-group">
+            <label>Annotations</label>
+            <div style="display:flex; gap:10px;">
+                <button onclick="exportAnnotations()" style="width:100%">Export</button>
+                <button onclick="document.getElementById('import-anno').click()" style="width:100%">Import</button>
+            </div>
+            <input type="file" id="import-anno" style="display:none" onchange="importAnnotations(this)">
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div id="nav-panel" class="panel">
+        <h3 style="margin:0; padding:10px;">Chapters</h3>
+        <ul id="chapter-list" style="list-style:none; padding:0; margin:0; overflow-y:auto; flex:1;"></ul>
+        <div style="padding:10px; border-top:1px solid var(--accent-color); cursor:pointer;" onclick="toggleAnnoList()">
+            <strong style="color:var(--accent-color)">▼ Annotations List</strong>
+        </div>
+        <ul id="annotation-list" class="hidden" style="list-style:none; padding:0; margin:0; overflow-y:auto; height:150px; border-top:1px solid var(--accent-color);"></ul>
+    </div>
+
+    <!-- Annotation Input -->
+    <div id="annotation-panel" class="panel">
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <strong>NOTE</strong>
+            <button onclick="closeAnnoPanel()">X</button>
+        </div>
+        <textarea id="anno-text" style="flex:1; margin-bottom:5px; resize:none;"></textarea>
+        <div style="display:flex; gap:10px;">
+            <button onclick="saveAnnotation()" style="flex:1;">SAVE</button>
+            <button onclick="deleteAnnotation()" style="flex:1;">DELETE</button>
+        </div>
+    </div>
+
+    <script>
+        // --- State ---
+        const state = {
+            currentFile: null,
+            format: null,
+            content: '', // Raw text content
+            totalChars: 0,
+            bookId: 'default',
+            pageWidth: 0,
+            
+            // Annotation temporary state
+            activeAnnoId: null,
+            selectionCharIndex: null,
+            
+            // EPUB Object
+            epubBook: null,
+            epubRendition: null
+        };
+
+        const els = {
+            reader: document.getElementById('reader-container'),
+            content: document.getElementById('content-render'),
+            title: document.getElementById('current-book-title'),
+            footer: document.getElementById('char-counter'),
+            utility: document.getElementById('utility-panel'),
+            nav: document.getElementById('nav-panel'),
+            annoPanel: document.getElementById('annotation-panel'),
+            annoText: document.getElementById('anno-text'),
+            chapterList: document.getElementById('chapter-list'),
+            annoList: document.getElementById('annotation-list')
+        };
+
+        // --- Initialization ---
+        window.onload = () => {
+            updateStyles();
+            window.addEventListener('resize', handleResize);
+            document.addEventListener('keydown', handleKey);
+            // Handle raw clicks for selection/annotations vs page turns
+            // Note: Click zones handle page turns, but we need to pass clicks through if text is selected?
+            // Actually, separating them via z-index is cleaner. 
+            // Zones are z-40. Text is z-0. 
+            // If user wants to select text, they need to long-press or we need `pointer-events: none` on zones 
+            // but then click wont work.
+            // Compromise: Zones capture clicks. To select text, we might need a "Selection Mode" toggle or rely on logic.
+            // For this specific request, "Clicking either half" implies easy navigation is priority.
+            // We will forward selection logic if selection exists.
+        };
+
+        function handleResize() {
+            if(state.format !== 'epub') {
+                updateFooterStats();
+            }
+        }
+
+        // --- Navigation Logic ---
+        function prevPage() {
+            if(state.format === 'epub' && state.epubRendition) {
+                state.epubRendition.prev();
+                return;
+            }
+            // Logic for HTML/Text
+            els.reader.scrollBy({ left: -window.innerWidth, behavior: 'smooth' });
+            setTimeout(updateFooterStats, 300);
+        }
+
+        function nextPage() {
+            if(state.format === 'epub' && state.epubRendition) {
+                state.epubRendition.next();
+                return;
+            }
+            // Logic for HTML/Text
+            els.reader.scrollBy({ left: window.innerWidth, behavior: 'smooth' });
+            setTimeout(updateFooterStats, 300);
+        }
+
+        function handleKey(e) {
+            // If typing in textarea, ignore
+            if(e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+
+            switch(e.key) {
+                case 'ArrowLeft':
+                case 'PageUp':
+                case 'a':
+                case 'A':
+                case 'w': // User requested
+                case 'W':
+                    prevPage();
+                    break;
+                case 'ArrowRight':
+                case 'PageDown':
+                case 'd':
+                case 'D':
+                    nextPage();
+                    break;
+            }
+        }
+
+        // --- Style & Theme ---
+        function setTheme(type) {
+            const root = document.documentElement.style;
+            if(type === 'black') {
+                root.setProperty('--bg-color', '#000000');
+                root.setProperty('--fg-color', '#FFFFFF');
+            } else {
+                root.setProperty('--bg-color', '#FFFFFF');
+                root.setProperty('--fg-color', '#000000');
+            }
+        }
+
+        function updateStyles() {
+            const root = document.documentElement.style;
+            root.setProperty('--font-stack', document.getElementById('font-select').value);
+            const margin = document.getElementById('input-margin').value;
+            root.setProperty('--margin-side', margin + 'px');
+            
+            // Recalculate column gap to match visual preference
+            root.setProperty('--gap-width', (parseInt(margin)*2) + 'px');
+            
+            setTimeout(updateFooterStats, 100);
+        }
+
+        // --- File Loading ---
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            els.utility.classList.remove('open');
+            state.bookId = file.name;
+            els.title.innerText = file.name;
+            els.content.scrollTop = 0;
+            els.content.scrollLeft = 0;
+            
+            const isEpub = file.name.toLowerCase().endsWith('.epub');
+            const isMd = file.name.toLowerCase().endsWith('.md');
+            
+            const reader = new FileReader();
+
+            if(isEpub) {
+                reader.onload = (ev) => loadEpub(ev.target.result);
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.onload = (ev) => loadText(ev.target.result, isMd);
+                reader.readAsText(file);
+            }
+        });
+
+        // --- Text/Markdown Renderer ---
+        function loadText(text, isMd) {
+            state.format = isMd ? 'md' : 'txt';
+            state.content = text;
+            state.totalChars = text.length;
+
+            let html = '';
+            if(isMd && window.marked) {
+                html = marked.parse(text);
+            } else {
+                html = `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+            }
+
+            els.content.innerHTML = html;
+            els.content.style.columnWidth = '100vw'; // Ensure pagination triggers
+            
+            // Build TOC based on Headers
+            buildTOC();
+            
+            // Annotations
+            setTimeout(() => {
+                applyAnnotationsDOM();
+                updateFooterStats();
+            }, 200);
+        }
+
+        // --- EPUB Renderer ---
+        function loadEpub(data) {
+            state.format = 'epub';
+            els.content.innerHTML = ''; // Clear for iframe
+            els.content.style.columnWidth = 'auto'; // Disable CSS columns for EPUB
+
+            state.epubBook = ePub(data);
+            state.epubRendition = state.epubBook.renderTo("content-render", {
+                width: "100%",
+                height: "100%",
+                allowScriptedContent: false
+            });
+
+            state.epubRendition.display();
+
+            state.epubBook.ready.then(() => {
+                // Approximate location calc
+                // state.epubBook.locations.generate(1000); 
+                // Generating locations takes time, skipping for speed in this demo
+            });
+
+            // TOC
+            state.epubBook.loaded.navigation.then(toc => {
+                els.chapterList.innerHTML = '';
+                toc.forEach(chapter => {
+                    const li = document.createElement('li');
+                    li.textContent = chapter.label.trim();
+                    li.style.padding = '5px';
+                    li.style.borderBottom = '1px solid var(--accent-color)';
+                    li.onclick = () => {
+                        state.epubRendition.display(chapter.href);
+                        els.nav.classList.remove('open');
+                    };
+                    els.chapterList.appendChild(li);
+                });
+            });
+
+            // Hook into relocation for footer update
+            state.epubRendition.on('relocated', (location) => {
+                // EPUB counting is hard. We show Page/Percentage
+                const start = location.start.location; // Virtual location
+                const end = location.end.location;
+                // Since we can't get exact "Character count" easily without parsing whole book,
+                // We display basic info
+                els.footer.innerText = `[EPUB View]`;
+            });
+            
+            // Apply Red/Black Theme to iframe
+            state.epubRendition.themes.default({
+                'body': { 'color': getComputedStyle(document.body).getPropertyValue('--fg-color'), 'background': 'transparent' },
+                'p': { 'font-family': 'monospace' },
+                'a': { 'color': 'red' }
+            });
+        }
+
+      
