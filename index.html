@@ -7,23 +7,20 @@
     
     <style>
         /* * TRTB.css (Thor's Radical Technical Brutalism)
-         * Version: 1.0.0
-         * Integrated for Single-File Portability
+         * Version: 2.0.0
+         * Author: Thor Smith
          */
-
         :root {
             /* Color Palette */
             --bg: #000000;
             --fg: #ffffff;
             --accent: #ff0000;
 
-            /* Borders & Outlines */
-            --border-sm: 2px;
-            --border-md: 5px;
-            --border-lg: 10px;
+            /* Borders - UNIFORM 2PX */
+            --border-width: 2px;
 
             /* Spacing */
-            --pad-inner: 10px;
+            --pad-inner: 5px;
             --indent: 10px;
             
             /* Typography */
@@ -45,6 +42,7 @@
             border-radius: 0 !important; /* Strictly 90-degree corners */
             font-family: var(--font-main);
             font-size: calc(1rem * var(--base-scale));
+            text-transform: lowercase; /* ENFORCED LOWERCASE */
         }
 
         body {
@@ -53,358 +51,283 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding: 40px 20px;
-            text-transform: lowercase; /* Preserving your original lowercase preference */
+            padding: 40px 20px; 
         }
 
-        /* --- Layout Structure --- */
-
-        /* Metadata outside the border */
-        #trtb_title {
-            position: absolute;
-            top: 10px;
-            left: 20px;
-            font-weight: bold;
-        }
-
-        #trtb_meta_top {
-            position: absolute;
-            top: 10px;
-            right: 20px;
+        /* --- Mandatory Layout Structure --- */
+        #trtb_header {
             display: flex;
-            gap: 10px;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 0 2px;
         }
 
-        /* The Global Outer Border */
         #app_container {
-            border: var(--border-lg) solid var(--accent);
+            border: var(--border-width) solid var(--accent);
             width: 100%;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            /* Max-width constraint for readability on large screens, though 100% is valid TRTB */
-            max-width: 100%; 
         }
 
-        /* Footer Metadata outside border */
         #trtb_footer {
-            padding-top: 10px;
+            padding-top: 5px;
             width: 100%;
             display: flex;
             justify-content: space-between;
-            font-size: 0.8em;
+            align-items: center;
         }
 
         /* --- Modular Div Logic --- */
-
         .trtb_module {
             width: 100%;
-            margin: 0;
-            border-bottom: var(--border-md) solid var(--accent); /* Stack look */
+            margin: 0; 
+            border-bottom: var(--border-width) solid var(--accent); /* Stack borders */
             padding: var(--pad-inner);
             background: var(--bg);
-            display: flex;
-            flex-direction: column;
         }
 
-        /* Remove bottom border from last module to flush with container */
-        .trtb_module:last-child {
-            border-bottom: none;
-        }
-
-        /* Internal Grid for Links */
-        .link_grid {
-            display: grid;
-            grid-template-columns: 30% 70%;
-            gap: 10px;
-            margin-top: 10px;
-            border-top: var(--border-sm) solid var(--accent);
-            padding-top: 5px;
-        }
-
-        .link_item {
-            padding: 2px 0;
-        }
-
-        /* Mobile Adjustments for Grid */
-        @media (max-width: 600px) {
-            .link_grid {
-                display: flex;
-                flex-direction: column;
-                gap: 0;
-            }
-            .link_item.desc {
-                margin-bottom: 10px;
-                color: #888;
-                padding-left: 10px;
-                border-left: 2px solid var(--accent);
-            }
+        #app_container .trtb_module:last-child {
+            border-bottom: none; /* Remove bottom border for last item */
         }
 
         /* --- Typography & Content --- */
+        p { text-indent: var(--indent); margin-bottom: 5px; }
 
-        h1, h2 {
-            background: var(--accent);
-            color: var(--bg); /* Inverted for headers */
-            padding: 2px 5px;
-            display: inline-block;
-            width: 100%;
+        h3 {
+            color: var(--fg); 
+            background: transparent;
+            padding: 2px 0;
             font-weight: bold;
+            display: block;
+            width: 100%;
+            border-bottom: var(--border-width) solid var(--accent);
             margin-bottom: 5px;
         }
-        
-        /* Light mode text color fix for headers */
-        [data-theme="light"] h1, [data-theme="light"] h2 {
-            color: #ffffff; 
-        }
 
-        a {
-            color: var(--fg);
-            text-decoration: overline;
+        a { color: var(--fg); text-decoration: overline; }
+        a:hover { background: var(--accent); color: var(--bg); }
+
+        /* --- Link Row Layout (Replaces Table) --- */
+        .link_row {
+            display: flex;
+            width: 100%;
+            padding: 2px 0;
+        }
+        .col_name {
+            width: 30%;
             font-weight: bold;
-            display: inline-block;
+            padding-right: 10px;
+        }
+        .col_desc {
+            width: 70%;
+            opacity: 0.9;
         }
 
-        a:hover {
-            background: var(--accent);
-            color: var(--bg) !important; /* Force black text on red bg */
-            text-decoration: none;
+        /* Mobile Adjust */
+        @media (max-width: 600px) {
+            .link_row { flex-direction: column; margin-bottom: 10px; }
+            .col_name, .col_desc { width: 100%; }
+            .col_desc { text-indent: var(--indent); color: #888; }
         }
 
-        /* --- Components --- */
-
+        /* --- Interactive Elements --- */
         button {
             background: var(--bg);
             color: var(--fg);
-            border: var(--border-sm) solid var(--accent);
-            padding: 2px 10px;
+            border: var(--border-width) solid var(--accent);
+            padding: 4px 10px;
             cursor: pointer;
             text-transform: lowercase;
         }
+        button:hover { background: var(--accent); color: var(--bg); }
 
-        button:hover {
-            background: var(--accent);
-            color: var(--bg) !important;
+        #theme_toggle {
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
         }
-
-        canvas {
-            width: 100%;
-            height: 250px;
-            background-color: #000000;
-            border: var(--border-sm) solid var(--accent);
-            display: block;
-        }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 10px; }
-        ::-webkit-scrollbar-track { background: var(--bg); border-left: 2px solid var(--accent); }
-        ::-webkit-scrollbar-thumb { background: var(--bg); border: 2px solid var(--accent); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--fg); }
-
+        #theme_toggle:hover { color: var(--accent); }
     </style>
 </head>
 <body>
 
-    <!-- META DATA (Outside Border) -->
-    <div id="trtb_title">index // my website</div>
-    <div id="trtb_meta_top">
-        <span id="clock_display">00:00:00</span>
-        <button id="theme_toggle">toggle_theme</button>
+    <div id="trtb_header">
+        <span>index</span>
+        <span>25-12-29</span>
     </div>
 
-    <!-- MAIN APP CONTAINER (Global Red Border) -->
     <div id="app_container">
 
-        <!-- MODULE 1: VISUALIZER -->
-        <div id="module_visualizer" class="trtb_module">
-            <h2>:: node_network ::</h2>
-            <canvas id="node_canvas"></canvas>
-        </div>
+        <div id="mod_visualizer" class="trtb_module" style="padding: 0; height: 250px; overflow: hidden; position: relative;">
+            <canvas id="canvas_nodes" style="display: block; width: 100%; height: 100%;"></canvas>
+            <script>
+                (function() {
+                    const canvas = document.getElementById('canvas_nodes');
+                    if (!canvas) return;
+                    
+                    const ctx = canvas.getContext('2d');
+                    let width, height;
 
-        <!-- MODULE 2: MAIN LINKS -->
-        <div id="module_main" class="trtb_module">
-            <h2>:: main ::</h2>
-            
-            <div class="link_grid">
-                <div class="link_item"><a href="trtb1.html">trtb1.html</a></div>
-                <div class="link_item desc">introduction and primary info.</div>
+                    // Get color from CSS variables
+                    const getVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-                <div class="link_item"><a href="trtb2.html">trtb2.html</a></div>
-                <div class="link_item desc">secondary information page.</div>
+                    // Resize handler
+                    const resize = () => {
+                        const rect = canvas.parentElement.getBoundingClientRect();
+                        canvas.width = rect.width;
+                        canvas.height = rect.height;
+                        width = canvas.width;
+                        height = canvas.height;
+                    };
+                    window.addEventListener('resize', resize);
+                    resize();
 
-                <div class="link_item"><a href="goodnews.html">goodnews.html</a></div>
-                <div class="link_item desc">goodnews.html</div>
-            </div>
-        </div>
+                    // Nodes logic
+                    const numPoints = Math.floor(Math.random() * 6) + 5;
+                    let points = [];
 
-        <!-- MODULE 3: TOOLS -->
-        <div id="module_tools" class="trtb_module">
-            <h2>:: html tools ::</h2>
-            
-            <div class="link_grid">
-                <div class="link_item"><a href="hands.html">hands.html</a></div>
-                <div class="link_item desc">hand tracking/detection demo.</div>
-
-                <div class="link_item"><a href="game-test.html">game-test.html</a></div>
-                <div class="link_item desc">trash game controller tester, missable.</div>
-
-                <div class="link_item"><a href="face.html">face.html</a></div>
-                <div class="link_item desc">facial recognition/tracking demo.</div>
-
-                <div class="link_item"><a href="encry.html">encry.html</a></div>
-                <div class="link_item desc">simple text encryption tool (secure dl).</div>
-
-                <div class="link_item"><a href="encry-md.html">encry-md.html</a></div>
-                <div class="link_item desc">markdown editor w/ encryption support.</div>
-
-                <div class="link_item"><a href="jpegcomp.html">jpegcomp.html</a></div>
-                <div class="link_item desc">simple jpeg image compression tool.</div>
-
-                <div class="link_item"><a href="b64-comp.html">b64-comp.html</a></div>
-                <div class="link_item desc">base-64 encode, compress, encrypt tool.</div>
-
-                <div class="link_item"><a href="jpegcomp.html">b64-imgview</a></div>
-                <div class="link_item desc">simple base-64 image viewer.</div>
-            </div>
-        </div>
-
-        <!-- MODULE 4: EXPERIMENTS -->
-        <div id="module_experiments" class="trtb_module">
-            <h2>:: experiments & games ::</h2>
-            
-            <div class="link_grid">
-                <div class="link_item"><a href="roulette.html">roulette.html</a></div>
-                <div class="link_item desc">local-only roulette table simulator.</div>
-
-                <div class="link_item"><a href="oracle.html">oracle.html</a></div>
-                <div class="link_item desc">ultralightweight sttrpg oracle.</div>
-
-                <div class="link_item"><a href="soda.html">soda.html</a></div>
-                <div class="link_item desc">russian roulette with soda.</div>
-
-                <div class="link_item"><a href="voidscream.html">voidscream.html</a></div>
-                <div class="link_item desc">my blog.</div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- FOOTER (Outside Border) -->
-    <div id="trtb_footer">
-        <span>v2.0.0_trtb</span>
-        <span>&copy; 2025 thor smith</span>
-    </div>
-
-    <!-- LOGIC BRIDGE -->
-    <script>
-        // --- 1. Theme Logic ---
-        const themeBtn = document.getElementById('theme_toggle');
-        const body = document.body;
-
-        themeBtn.addEventListener('click', () => {
-            const currentTheme = body.getAttribute('data-theme');
-            if (currentTheme === 'light') {
-                body.removeAttribute('data-theme');
-            } else {
-                body.setAttribute('data-theme', 'light');
-            }
-        });
-
-        // --- 2. Clock Logic ---
-        function updateClock() {
-            const now = new Date();
-            document.getElementById('clock_display').innerText = 
-                now.toLocaleTimeString('en-US', { hour12: false });
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-
-        // --- 3. Animation Logic (Canvas) ---
-        // Encapsulated to prevent global scope pollution
-        (function initCanvas() {
-            const canvas = document.getElementById('node_canvas');
-            if (!canvas) return;
-            
-            const ctx = canvas.getContext('2d');
-            
-            // Initial resize
-            canvas.width = canvas.parentElement.offsetWidth - 24; // adjusting for padding/border
-            canvas.height = 250;
-
-            const numPoints = Math.floor(Math.random() * 6) + 5;
-            let points = [];
-
-            function randomVelocity() {
-                return (Math.random() - 0.5) * 0.5; 
-            }
-
-            // Init Points
-            for (let i = 0; i < numPoints; i++) {
-                points.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height,
-                    vx: randomVelocity(),
-                    vy: randomVelocity()
-                });
-            }
-
-            function draw() {
-                // Clear (use transparent to show CSS bg, or fill specific color)
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw Wireframes (White per original spec)
-                ctx.strokeStyle = '#ffffff'; 
-                ctx.lineWidth = 0.5;
-                for (let i = 0; i < points.length; i++) {
-                    for (let j = i + 1; j < points.length; j++) {
-                        ctx.beginPath();
-                        ctx.moveTo(points[i].x, points[i].y);
-                        ctx.lineTo(points[j].x, points[j].y);
-                        ctx.stroke();
+                    for (let i = 0; i < numPoints; i++) {
+                        points.push({
+                            x: Math.random() * width,
+                            y: Math.random() * height,
+                            vx: (Math.random() - 0.5) * 0.5,
+                            vy: (Math.random() - 0.5) * 0.5
+                        });
                     }
-                }
 
-                // Draw Nodes (Red per TRTB spec)
-                ctx.fillStyle = '#ff0000';
-                for (let i = 0; i < points.length; i++) {
-                    ctx.beginPath();
-                    ctx.arc(points[i].x, points[i].y, 3, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            }
+                    function animate() {
+                        const fg = getVar('--fg');
+                        const accent = getVar('--accent');
 
-            function update() {
-                for (let i = 0; i < points.length; i++) {
-                    let p = points[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
+                        ctx.clearRect(0, 0, width, height);
 
-                    // Bounce
-                    if (p.x <= 0 || p.x >= canvas.width) p.vx *= -1;
-                    if (p.y <= 0 || p.y >= canvas.height) p.vy *= -1;
-                }
-            }
+                        // Draw Lines
+                        ctx.strokeStyle = fg;
+                        ctx.lineWidth = 0.5;
+                        for (let i = 0; i < points.length; i++) {
+                            for (let j = i + 1; j < points.length; j++) {
+                                ctx.beginPath();
+                                ctx.moveTo(points[i].x, points[i].y);
+                                ctx.lineTo(points[j].x, points[j].y);
+                                ctx.stroke();
+                            }
+                        }
 
-            function animate() {
-                update();
-                draw();
-                requestAnimationFrame(animate);
-            }
+                        // Draw Nodes
+                        ctx.fillStyle = accent;
+                        for (let i = 0; i < points.length; i++) {
+                            let p = points[i];
+                            p.x += p.vx;
+                            p.y += p.vy;
 
-            // Handle Resize
-            window.addEventListener('resize', () => {
-                canvas.width = canvas.parentElement.offsetWidth - 24;
-                canvas.height = 250;
-                // keep points in bounds
-                for (let p of points) {
-                    if (p.x > canvas.width) p.x = canvas.width;
-                    if (p.y > canvas.height) p.y = canvas.height;
-                }
-            });
+                            // Bounce
+                            if (p.x <= 0 || p.x >= width) p.vx *= -1;
+                            if (p.y <= 0 || p.y >= height) p.vy *= -1;
 
-            animate();
-        })();
-    </script>
+                            ctx.beginPath();
+                            ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        requestAnimationFrame(animate);
+                    }
+                    animate();
+                })();
+            </script>
+        </div>
+
+        <div id="mod_main" class="trtb_module">
+            <h3>main</h3>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb1.html">trtb1.html</a></div>
+                <div class="col_desc">introduction and primary info.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb2.html">trtb2.html</a></div>
+                <div class="col_desc">secondary information page.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="goodnews.html">goodnews.html</a></div>
+                <div class="col_desc">goodnews.html</div>
+            </div>
+        </div>
+
+        <div id="mod_tools" class="trtb_module">
+            <h3>html tools</h3>
+            <div class="link_row">
+                <div class="col_name"><a href="hands.html">hands.html</a></div>
+                <div class="col_desc">hand tracking/detection demo.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="game-test.html">game-test.html</a></div>
+                <div class="col_desc">trash game controller tester.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="face.html">face.html</a></div>
+                <div class="col_desc">facial recognition/tracking demo.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="encry.html">encry.html</a></div>
+                <div class="col_desc">simple text encryption tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="encry-md.html">encry-md.html</a></div>
+                <div class="col_desc">markdown editor with encryption.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="jpegcomp.html">jpegcomp.html</a></div>
+                <div class="col_desc">simple jpeg compression tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="b64-comp.html">b64-comp.html</a></div>
+                <div class="col_desc">base-64 encode tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="b64-imgview.html">b64-imgview</a></div>
+                <div class="col_desc">simple base-64 image viewer.</div>
+            </div>
+        </div>
+
+        <div id="mod_experiments" class="trtb_module">
+            <h3>experiments and games</h3>
+            <div class="link_row">
+                <div class="col_name"><a href="roulette.html">roulette.html</a></div>
+                <div class="col_desc">local roulette table simulator.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="oracle.html">oracle.html</a></div>
+                <div class="col_desc">ultralightweight ttrpg oracle.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="soda.html">soda.html</a></div>
+                <div class="col_desc">russian roulette with soda.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="voidscream.html">voidscream.html</a></div>
+                <div class="col_desc">my blog.</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="trtb_footer">
+        <span>&copy; 2025 thor smith</span>
+        <span>:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+        <script>
+            // Encapsulated toggle logic
+            (function(){
+                const btn = document.getElementById('theme_toggle');
+                const root = document.documentElement;
+                btn.addEventListener('click', () => {
+                    const current = root.getAttribute('data-theme');
+                    root.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+                });
+            })();
+        </script>
+    </div>
+
 </body>
 </html>
-
