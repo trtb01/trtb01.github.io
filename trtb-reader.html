@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Red/Black Ebook Reader</title>
+    <title>Red/Black Reader</title>
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.5/jszip.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/epubjs/dist/epub.min.js"></script>
@@ -11,28 +11,24 @@
 
     <style>
         :root {
-            /* Palette */
             --bg-color: #000000;
             --fg-color: #FFFFFF;
             --accent-color: #FF0000;
-            
-            /* Typography */
             --font-stack: monospace;
             --font-size: 14px;
             --line-height: 1.4;
-            
-            /* Layout */
             --margin-side: 20px;
             --margin-top: 20px;
-            --gap-width: 40px; /* Gap between columns/pages */
+            --gap-width: 40px; 
         }
 
-        /* --- Global Reset --- */
+        /* --- Reset --- */
         * {
             box-sizing: border-box;
             border-radius: 0 !important;
             -webkit-tap-highlight-color: transparent;
-            scrollbar-width: none; /* Hide scrollbars */
+            scrollbar-width: none;
+            outline: none;
         }
         *::-webkit-scrollbar { display: none; }
 
@@ -41,30 +37,29 @@
             color: var(--fg-color);
             font-family: var(--font-stack);
             font-size: var(--font-size);
-            margin: 0;
-            padding: 0;
-            overflow: hidden; /* No body scroll */
-            height: 100vh;
-            width: 100vw;
-            user-select: none; /* Prevent accidental text selection while tapping */
+            margin: 0; padding: 0;
+            overflow: hidden;
+            height: 100vh; width: 100vw;
+            user-select: none; /* Important for page turning taps */
         }
 
-        /* --- Grid Layout --- */
+        /* --- Layout --- */
         #app {
             display: grid;
-            grid-template-rows: 40px 1fr 25px; /* Header | Content | Footer */
-            height: 100%;
-            width: 100%;
+            grid-template-rows: 45px 1fr 30px; /* Header | Content | Footer */
+            height: 100%; width: 100%;
         }
 
-        /* --- Header --- */
+        /* --- Header (Fixed Z-Index Issue) --- */
         #header-bar {
             background: var(--bg-color);
             border-bottom: 2px solid var(--accent-color);
             display: grid;
-            grid-template-columns: 40px 1fr 40px; /* Button | Title | Button */
+            grid-template-columns: 50px 1fr 50px; /* Larger touch targets */
             align-items: center;
-            z-index: 50;
+            /* CRITICAL FIX FOR FIREFOX ANDROID: */
+            position: relative; 
+            z-index: 1000; 
         }
 
         #current-book-title {
@@ -74,7 +69,8 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            padding: 0 10px;
+            padding: 0 5px;
+            font-size: 12px;
         }
 
         /* --- Footer --- */
@@ -82,114 +78,83 @@
             background: var(--bg-color);
             border-top: 2px solid var(--accent-color);
             color: var(--accent-color);
-            font-size: 10px;
+            font-size: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 50;
+            position: relative;
+            z-index: 1000;
         }
 
-        /* --- Main Content (Pagination Engine) --- */
+        /* --- Content Area --- */
         #reader-container {
             position: relative;
-            height: 100%;
-            width: 100%;
-            overflow: hidden; /* Hide scrollbars, we scroll programmatically */
+            height: 100%; width: 100%;
+            overflow: hidden;
         }
 
         #content-render {
             height: 100%;
-            /* CSS Columns for Pagination logic */
             column-fill: auto;
             column-gap: var(--gap-width);
-            column-width: 100vw; /* Forces 1 column per screen width */
-            
+            column-width: 100vw; 
             padding: var(--margin-top) var(--margin-side);
-            
-            /* Text Alignment */
             text-align: justify;
         }
 
-        /* --- Typography & Elements --- */
-        h1, h2, h3, h4, h5, h6 {
+        /* --- Elements --- */
+        h1, h2, h3 {
             background-color: var(--accent-color);
-            color: #000000;
+            color: #000;
             padding: 2px 5px;
-            margin: 10px 0;
-            font-weight: bold;
-            break-after: avoid; /* Keep headers with text */
+            break-after: avoid;
         }
+        p { margin-bottom: 1em; text-indent: 2ch; line-height: var(--line-height); }
+        img { max-width: 100%; height: auto; border: 2px solid var(--accent-color); }
+        .annotated-char { text-decoration: overline; text-decoration-color: var(--accent-color); cursor: pointer; }
 
-        p {
-            margin-bottom: 1em;
-            text-indent: 2ch;
-            line-height: var(--line-height);
-        }
-
-        img {
-            max-width: 100%;
-            height: auto;
-            border: 2px solid var(--accent-color);
-        }
-
-        .annotated-char {
-            text-decoration: overline;
-            text-decoration-color: var(--accent-color);
-            text-decoration-thickness: 2px;
-            cursor: pointer;
-        }
-
-        /* --- Click Zones (Invisible) --- */
+        /* --- Click Zones (Underneath Header) --- */
         .click-zone {
             position: absolute;
-            top: 40px; 
-            bottom: 25px;
-            z-index: 40; /* Above text, below panels */
-            /* background: rgba(255, 0, 0, 0.1); Debugging */
+            top: 0; bottom: 0;
+            z-index: 50; /* Lower than header (1000) */
         }
-        #zone-left { left: 0; width: 50%; }
-        #zone-right { right: 0; width: 50%; }
+        #zone-left { left: 0; width: 40%; }
+        #zone-right { right: 0; width: 40%; }
+        /* Center zone (20%) left open for selecting text if needed */
 
-        /* --- Buttons & Inputs --- */
+        /* --- Buttons --- */
         button {
             background: var(--bg-color);
             color: var(--fg-color);
             border: 2px solid var(--accent-color);
             cursor: pointer;
             font-family: monospace;
-            font-size: 12px;
+            font-size: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 24px; width: 24px;
+            height: 30px; width: 30px;
             margin: auto;
+            touch-action: manipulation; /* Improves touch response */
         }
-        button:hover { background: var(--accent-color); color: #000; }
+        button:active, button:hover { background: var(--accent-color); color: #000; }
         
-        #btn-utility-toggle { border-radius: 0; } /* Square */
-        #btn-nav-toggle { border-radius: 50% !important; } /* Circle */
-
-        input, select, textarea {
-            background: var(--bg-color);
-            color: var(--fg-color);
-            border: 2px solid var(--accent-color);
-            font-family: monospace;
-            font-size: 12px;
-            padding: 4px;
-        }
+        #btn-utility-toggle { border-radius: 0; }
+        #btn-nav-toggle { border-radius: 50% !important; }
 
         /* --- Panels --- */
         .panel {
             position: absolute;
             background: var(--bg-color);
             border: 2px solid var(--accent-color);
-            z-index: 100;
-            transition: transform 0.2s ease;
+            z-index: 2000; /* Highest priority */
+            transition: transform 0.2s ease-out;
         }
 
         #utility-panel {
-            top: 40px; left: 0; right: 0;
-            max-height: 60vh;
+            top: 45px; left: 0; right: 0;
+            max-height: 70vh;
             transform: translateY(-150%);
             padding: 20px;
             border-bottom: 2px solid var(--accent-color);
@@ -201,7 +166,7 @@
         #utility-panel.open { transform: translateY(0); }
 
         #nav-panel {
-            top: 40px; bottom: 0; left: 0;
+            top: 45px; bottom: 0; left: 0;
             width: 85%; max-width: 300px;
             transform: translateX(-100%);
             border-right: 2px solid var(--accent-color);
@@ -211,7 +176,7 @@
 
         #annotation-panel {
             bottom: 0; left: 0; right: 0;
-            height: 160px;
+            height: 180px;
             transform: translateY(100%);
             border-top: 2px solid var(--accent-color);
             padding: 10px;
@@ -219,52 +184,51 @@
         }
         #annotation-panel.open { transform: translateY(0); }
 
-        /* --- Helper Classes --- */
-        .hidden { display: none !important; }
+        /* --- Inputs --- */
+        input, select, textarea {
+            background: var(--bg-color); color: var(--fg-color);
+            border: 2px solid var(--accent-color);
+            font-family: monospace; padding: 5px;
+        }
         .setting-group label { display: block; color: var(--accent-color); font-weight: bold; margin-bottom: 5px; }
+        .hidden { display: none !important; }
 
     </style>
 </head>
 <body>
 
     <div id="app">
-        
         <!-- Header -->
         <div id="header-bar">
-            <button id="btn-utility-toggle" title="Settings">≣</button>
+            <!-- Added id for JS event listener binding -->
+            <button id="btn-utility-toggle" aria-label="Settings">≣</button>
             <div id="current-book-title">Reader Ready</div>
-            <button id="btn-nav-toggle" title="Chapters">➜</button>
+            <button id="btn-nav-toggle" aria-label="Chapters">➜</button>
         </div>
 
         <!-- Content -->
         <div id="reader-container">
-            <!-- Click Zones for Navigation -->
-            <div id="zone-left" class="click-zone" onclick="prevPage()"></div>
-            <div id="zone-right" class="click-zone" onclick="nextPage()"></div>
+            <!-- Click Zones -->
+            <div id="zone-left" class="click-zone"></div>
+            <div id="zone-right" class="click-zone"></div>
 
-            <!-- Text Render Area -->
             <div id="content-render">
                 <div style="padding-top: 50px;">
-                    <p>Load an ebook (.txt, .md, .epub) from the top-left menu.</p>
-                    <p><strong>Controls:</strong></p>
-                    <ul>
-                        <li>Tap Left / A / W / Left Arrow : Previous Page</li>
-                        <li>Tap Right / D / Right Arrow : Next Page</li>
-                    </ul>
+                    <p><strong>Instructions:</strong></p>
+                    <p>1. Open the top-left menu (Square button) to load a file.</p>
+                    <p>2. Tap the left/right sides of the screen to turn pages.</p>
+                    <p>3. Supported: .txt, .md, .epub</p>
                 </div>
             </div>
         </div>
 
         <!-- Footer -->
         <div id="footer-bar">
-            <span id="char-counter">[0]-[0]/[0]</span>
+            <span id="char-counter">---</span>
         </div>
-
     </div>
 
-    <!-- === PANELS === -->
-
-    <!-- Settings -->
+    <!-- Panels -->
     <div id="utility-panel" class="panel">
         <div class="setting-group">
             <label>Load File</label>
@@ -286,10 +250,6 @@
             </select>
         </div>
         <div class="setting-group">
-            <label>Margins (px)</label>
-            <input type="number" id="input-margin" value="20" onchange="updateStyles()" style="width:100%">
-        </div>
-        <div class="setting-group">
             <label>Annotations</label>
             <div style="display:flex; gap:10px;">
                 <button onclick="exportAnnotations()" style="width:100%">Export</button>
@@ -299,7 +259,6 @@
         </div>
     </div>
 
-    <!-- Navigation -->
     <div id="nav-panel" class="panel">
         <h3 style="margin:0; padding:10px;">Chapters</h3>
         <ul id="chapter-list" style="list-style:none; padding:0; margin:0; overflow-y:auto; flex:1;"></ul>
@@ -309,7 +268,6 @@
         <ul id="annotation-list" class="hidden" style="list-style:none; padding:0; margin:0; overflow-y:auto; height:150px; border-top:1px solid var(--accent-color);"></ul>
     </div>
 
-    <!-- Annotation Input -->
     <div id="annotation-panel" class="panel">
         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
             <strong>NOTE</strong>
@@ -323,20 +281,11 @@
     </div>
 
     <script>
-        // --- State ---
         const state = {
-            currentFile: null,
             format: null,
-            content: '', // Raw text content
+            content: '',
             totalChars: 0,
             bookId: 'default',
-            pageWidth: 0,
-            
-            // Annotation temporary state
-            activeAnnoId: null,
-            selectionCharIndex: null,
-            
-            // EPUB Object
             epubBook: null,
             epubRendition: null
         };
@@ -351,75 +300,224 @@
             annoPanel: document.getElementById('annotation-panel'),
             annoText: document.getElementById('anno-text'),
             chapterList: document.getElementById('chapter-list'),
-            annoList: document.getElementById('annotation-list')
+            annoList: document.getElementById('annotation-list'),
+            btnUtility: document.getElementById('btn-utility-toggle'),
+            btnNav: document.getElementById('btn-nav-toggle'),
+            zoneLeft: document.getElementById('zone-left'),
+            zoneRight: document.getElementById('zone-right')
         };
 
-        // --- Initialization ---
         window.onload = () => {
-            updateStyles();
-            window.addEventListener('resize', handleResize);
+            // Attach Event Listeners explicitly
+            els.btnUtility.addEventListener('click', toggleUtility);
+            els.btnNav.addEventListener('click', toggleNav);
+            
+            // Touch/Click for Zones
+            els.zoneLeft.addEventListener('click', prevPage);
+            els.zoneRight.addEventListener('click', nextPage);
+
             document.addEventListener('keydown', handleKey);
-            // Handle raw clicks for selection/annotations vs page turns
-            // Note: Click zones handle page turns, but we need to pass clicks through if text is selected?
-            // Actually, separating them via z-index is cleaner. 
-            // Zones are z-40. Text is z-0. 
-            // If user wants to select text, they need to long-press or we need `pointer-events: none` on zones 
-            // but then click wont work.
-            // Compromise: Zones capture clicks. To select text, we might need a "Selection Mode" toggle or rely on logic.
-            // For this specific request, "Clicking either half" implies easy navigation is priority.
-            // We will forward selection logic if selection exists.
+            window.addEventListener('resize', () => { if(state.format !== 'epub') updateFooterStats(); });
+            
+            updateStyles();
         };
 
-        function handleResize() {
-            if(state.format !== 'epub') {
-                updateFooterStats();
+        // --- Toggles ---
+        function toggleUtility(e) {
+            e.stopPropagation();
+            els.utility.classList.toggle('open');
+            els.nav.classList.remove('open');
+        }
+
+        function toggleNav(e) {
+            e.stopPropagation();
+            els.nav.classList.toggle('open');
+            els.utility.classList.remove('open');
+        }
+
+        function closeAnnoPanel() { els.annoPanel.classList.remove('open'); }
+        function toggleAnnoList() { els.annoList.classList.toggle('hidden'); }
+
+        // --- Navigation ---
+        function prevPage(e) {
+            if(e) e.stopPropagation();
+            if(state.format === 'epub' && state.epubRendition) {
+                state.epubRendition.prev(); 
+            } else {
+                els.reader.scrollBy({ left: -window.innerWidth, behavior: 'smooth' });
+                setTimeout(updateFooterStats, 300);
             }
         }
 
-        // --- Navigation Logic ---
-        function prevPage() {
+        function nextPage(e) {
+            if(e) e.stopPropagation();
             if(state.format === 'epub' && state.epubRendition) {
-                state.epubRendition.prev();
-                return;
+                state.epubRendition.next(); 
+            } else {
+                els.reader.scrollBy({ left: window.innerWidth, behavior: 'smooth' });
+                setTimeout(updateFooterStats, 300);
             }
-            // Logic for HTML/Text
-            els.reader.scrollBy({ left: -window.innerWidth, behavior: 'smooth' });
-            setTimeout(updateFooterStats, 300);
-        }
-
-        function nextPage() {
-            if(state.format === 'epub' && state.epubRendition) {
-                state.epubRendition.next();
-                return;
-            }
-            // Logic for HTML/Text
-            els.reader.scrollBy({ left: window.innerWidth, behavior: 'smooth' });
-            setTimeout(updateFooterStats, 300);
         }
 
         function handleKey(e) {
-            // If typing in textarea, ignore
             if(e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
-
             switch(e.key) {
-                case 'ArrowLeft':
-                case 'PageUp':
-                case 'a':
-                case 'A':
-                case 'w': // User requested
-                case 'W':
-                    prevPage();
-                    break;
-                case 'ArrowRight':
-                case 'PageDown':
-                case 'd':
-                case 'D':
-                    nextPage();
-                    break;
+                case 'ArrowLeft': case 'PageUp': case 'a': case 'A': case 'w': case 'W': prevPage(); break;
+                case 'ArrowRight': case 'PageDown': case 'd': case 'D': nextPage(); break;
             }
         }
 
-        // --- Style & Theme ---
+        // --- File Loading ---
+        document.getElementById('file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+
+            els.utility.classList.remove('open');
+            state.bookId = file.name;
+            els.title.innerText = file.name;
+            els.content.scrollTop = 0; 
+            els.content.scrollLeft = 0;
+
+            const reader = new FileReader();
+            if(file.name.toLowerCase().endsWith('.epub')) {
+                reader.onload = (ev) => loadEpub(ev.target.result);
+                reader.readAsArrayBuffer(file);
+            } else {
+                reader.onload = (ev) => loadText(ev.target.result, file.name.toLowerCase().endsWith('.md'));
+                reader.readAsText(file);
+            }
+        });
+
+        // --- Text/MD Render ---
+        function loadText(text, isMd) {
+            state.format = isMd ? 'md' : 'txt';
+            state.content = text;
+            state.totalChars = text.length;
+
+            let html = isMd && window.marked ? marked.parse(text) : 
+                `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
+
+            els.content.innerHTML = html;
+            els.content.style.columnWidth = '100vw'; // Enable CSS columns
+            
+            // Build TOC
+            els.chapterList.innerHTML = '';
+            els.content.querySelectorAll('h1, h2, h3').forEach(h => {
+                const li = document.createElement('li');
+                li.textContent = h.textContent;
+                li.style.padding = '8px';
+                li.style.borderBottom = '1px solid var(--accent-color)';
+                li.onclick = () => {
+                    h.scrollIntoView();
+                    els.nav.classList.remove('open');
+                    setTimeout(updateFooterStats, 300);
+                };
+                els.chapterList.appendChild(li);
+            });
+
+            setTimeout(updateFooterStats, 200);
+        }
+
+        // --- EPUB Render ---
+        function loadEpub(data) {
+            state.format = 'epub';
+            els.content.innerHTML = '';
+            els.content.style.columnWidth = 'auto'; // Disable CSS columns for EPUB
+
+            state.epubBook = ePub(data);
+            state.epubRendition = state.epubBook.renderTo("content-render", {
+                width: "100%", height: "100%", allowScriptedContent: false
+            });
+
+            state.epubRendition.display();
+
+            state.epubBook.loaded.navigation.then(toc => {
+                els.chapterList.innerHTML = '';
+                toc.forEach(chapter => {
+                    const li = document.createElement('li');
+                    li.textContent = chapter.label.trim();
+                    li.style.padding = '8px';
+                    li.style.borderBottom = '1px solid var(--accent-color)';
+                    li.onclick = () => {
+                        state.epubRendition.display(chapter.href);
+                        els.nav.classList.remove('open');
+                    };
+                    els.chapterList.appendChild(li);
+                });
+            });
+
+            state.epubRendition.themes.default({
+                'body': { 'color': getComputedStyle(document.body).getPropertyValue('--fg-color'), 'background': 'transparent' },
+                'p': { 'font-family': 'monospace' }
+            });
+            
+            // EPUB Footer Logic
+            state.epubRendition.on('relocated', (location) => {
+                 els.footer.innerText = `Page: ${location.start.displayed.page} / ${location.start.displayed.total}`;
+            });
+        }
+
+        // --- Character Counting (Firefox & Chrome) ---
+        function updateFooterStats() {
+            if(state.format === 'epub') return;
+
+            const xLeft = 50; 
+            const xRight = window.innerWidth - 50;
+            const yMid = window.innerHeight / 2;
+
+            const startOffset = getGlobalCharCount(xLeft, yMid);
+            const endOffset = getGlobalCharCount(xRight, yMid);
+
+            els.footer.innerText = `[${startOffset}]-[${endOffset}]/[${state.totalChars}]`;
+        }
+
+        function getGlobalCharCount(x, y) {
+            let node, offset;
+            
+            if (document.caretPositionFromPoint) {
+                // Firefox Standard
+                const pos = document.caretPositionFromPoint(x, y);
+                if (!pos) return 0;
+                node = pos.offsetNode;
+                offset = pos.offset;
+            } else if (document.caretRangeFromPoint) {
+                // WebKit Standard
+                const range = document.caretRangeFromPoint(x, y);
+                if (!range) return 0;
+                node = range.startContainer;
+                offset = range.startOffset;
+            } else {
+                return 0;
+            }
+
+            // Ensure we are in a text node
+            if (node.nodeType !== Node.TEXT_NODE) return 0;
+
+            // Traverse backwards to sum up all previous characters
+            let total = offset;
+            let curr = node;
+            
+            // This is a simplified traversal. For large books, we'd cache this.
+            // We walk up the tree and count previous siblings
+            
+            // 1. Walk Previous Siblings
+            while (curr.previousSibling) {
+                curr = curr.previousSibling;
+                total += curr.textContent.length;
+            }
+            // 2. Walk up to parent
+            while (curr.parentNode && curr.parentNode !== els.content) {
+                curr = curr.parentNode;
+                while (curr.previousSibling) {
+                    curr = curr.previousSibling;
+                    total += curr.textContent.length;
+                }
+            }
+
+            return total;
+        }
+
+        // --- Styles ---
         function setTheme(type) {
             const root = document.documentElement.style;
             if(type === 'black') {
@@ -431,122 +529,4 @@
             }
         }
 
-        function updateStyles() {
-            const root = document.documentElement.style;
-            root.setProperty('--font-stack', document.getElementById('font-select').value);
-            const margin = document.getElementById('input-margin').value;
-            root.setProperty('--margin-side', margin + 'px');
-            
-            // Recalculate column gap to match visual preference
-            root.setProperty('--gap-width', (parseInt(margin)*2) + 'px');
-            
-            setTimeout(updateFooterStats, 100);
-        }
-
-        // --- File Loading ---
-        document.getElementById('file-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if(!file) return;
-
-            els.utility.classList.remove('open');
-            state.bookId = file.name;
-            els.title.innerText = file.name;
-            els.content.scrollTop = 0;
-            els.content.scrollLeft = 0;
-            
-            const isEpub = file.name.toLowerCase().endsWith('.epub');
-            const isMd = file.name.toLowerCase().endsWith('.md');
-            
-            const reader = new FileReader();
-
-            if(isEpub) {
-                reader.onload = (ev) => loadEpub(ev.target.result);
-                reader.readAsArrayBuffer(file);
-            } else {
-                reader.onload = (ev) => loadText(ev.target.result, isMd);
-                reader.readAsText(file);
-            }
-        });
-
-        // --- Text/Markdown Renderer ---
-        function loadText(text, isMd) {
-            state.format = isMd ? 'md' : 'txt';
-            state.content = text;
-            state.totalChars = text.length;
-
-            let html = '';
-            if(isMd && window.marked) {
-                html = marked.parse(text);
-            } else {
-                html = `<p>${text.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`;
-            }
-
-            els.content.innerHTML = html;
-            els.content.style.columnWidth = '100vw'; // Ensure pagination triggers
-            
-            // Build TOC based on Headers
-            buildTOC();
-            
-            // Annotations
-            setTimeout(() => {
-                applyAnnotationsDOM();
-                updateFooterStats();
-            }, 200);
-        }
-
-        // --- EPUB Renderer ---
-        function loadEpub(data) {
-            state.format = 'epub';
-            els.content.innerHTML = ''; // Clear for iframe
-            els.content.style.columnWidth = 'auto'; // Disable CSS columns for EPUB
-
-            state.epubBook = ePub(data);
-            state.epubRendition = state.epubBook.renderTo("content-render", {
-                width: "100%",
-                height: "100%",
-                allowScriptedContent: false
-            });
-
-            state.epubRendition.display();
-
-            state.epubBook.ready.then(() => {
-                // Approximate location calc
-                // state.epubBook.locations.generate(1000); 
-                // Generating locations takes time, skipping for speed in this demo
-            });
-
-            // TOC
-            state.epubBook.loaded.navigation.then(toc => {
-                els.chapterList.innerHTML = '';
-                toc.forEach(chapter => {
-                    const li = document.createElement('li');
-                    li.textContent = chapter.label.trim();
-                    li.style.padding = '5px';
-                    li.style.borderBottom = '1px solid var(--accent-color)';
-                    li.onclick = () => {
-                        state.epubRendition.display(chapter.href);
-                        els.nav.classList.remove('open');
-                    };
-                    els.chapterList.appendChild(li);
-                });
-            });
-
-            // Hook into relocation for footer update
-            state.epubRendition.on('relocated', (location) => {
-                // EPUB counting is hard. We show Page/Percentage
-                const start = location.start.location; // Virtual location
-                const end = location.end.location;
-                // Since we can't get exact "Character count" easily without parsing whole book,
-                // We display basic info
-                els.footer.innerText = `[EPUB View]`;
-            });
-            
-            // Apply Red/Black Theme to iframe
-            state.epubRendition.themes.default({
-                'body': { 'color': getComputedStyle(document.body).getPropertyValue('--fg-color'), 'background': 'transparent' },
-                'p': { 'font-family': 'monospace' },
-                'a': { 'color': 'red' }
-            });
-        }
-
-      
+       
