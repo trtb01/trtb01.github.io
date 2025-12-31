@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRTB Calc</title>
+    <style>
+        /*
+         * TRTB.css (Thor's Radical Technical Brutalism)
+         * Version: 2.0.0
+         * Author: Thor Smith (Implemented by Assistant)
+         * Philosophy: Modular, 2D, High-Contrast, Self-Contained.
+         */
+
+        :root {
+            /* Color Palette */
+            --bg: #000000;
+            --fg: #ffffff;
+            --accent: #ff0000;
+
+            /* Borders - UNIFORM 2PX */
+            --border-width: 2px;
+
+            /* Spacing */
+            --pad-inner: 5px;
+            --indent: 10px;
+            
+            /* Typography */
+            --font-main: monospace;
+            --base-scale: 0.85; 
+        }
+
+        /* Theme Switch: Light Mode Overrides */
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --fg: #000000;
+        }
+
+        /* Global Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border-radius: 0 !important; /* Strictly 90-degree corners */
+            font-family: var(--font-main);
+            font-size: calc(1rem * var(--base-scale));
+            text-transform: lowercase; /* ENFORCED LOWERCASE */
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px 10px; /* Adjusted for mobile friendliness */
+        }
+
+        /* --- Mandatory Layout Structure --- */
+
+        /* Top Metadata Row */
+        #trtb_header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 0 2px; /* Align visually with border */
+        }
+
+        /* The Global Active Content Border */
+        #app_container {
+            border: var(--border-width) solid var(--accent);
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Contains content */
+        }
+
+        /* Footer Metadata Row */
+        #trtb_footer {
+            padding-top: 5px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- Modular Div Logic --- */
+
+        /* Vertical stacking by default */
+        .trtb_module {
+            width: 100%;
+            margin: 0; 
+            border: var(--border-width) solid var(--accent);
+            border-top: none; /* Prevent double borders when stacked */
+            padding: var(--pad-inner);
+            background: var(--bg);
+        }
+
+        /* Ensure the first module has a top border if needed, 
+           though usually contained in app_container */
+        #app_container > .trtb_module:first-child {
+            border-top: none; 
+        }
+
+        /* Horizontal section support */
+        .trtb_row {
+            display: flex;
+            width: 100%;
+        }
+
+        .trtb_row > .trtb_module {
+            flex: 1;
+            border-left: none; /* Prevent double borders */
+        }
+        .trtb_row > .trtb_module:first-child {
+            border-left: var(--border-width) solid var(--accent);
+        }
+
+        /* --- Typography & Content --- */
+
+        p {
+            text-indent: var(--indent);
+            margin-bottom: 5px;
+        }
+
+        /* Headers: Clean, no background theming */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--fg); 
+            background: transparent;
+            padding: 2px 0;
+            font-weight: bold;
+            display: block;
+            width: 100%;
+            border-bottom: var(--border-width) solid var(--accent);
+            margin-bottom: 5px;
+        }
+
+        a {
+            color: var(--fg);
+            text-decoration: overline;
+        }
+
+        a:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        /* --- Interactive Elements --- */
+
+        button {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            padding: 4px 10px;
+            cursor: pointer;
+            margin: 2px;
+            text-transform: lowercase;
+        }
+
+        button:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        /* The Toggle Button specific style */
+        #theme_toggle {
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+        #theme_toggle:hover {
+            background: transparent;
+            color: var(--accent);
+        }
+
+        /* Inputs */
+        input[type="text"], input[type="number"], input[type="email"] {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            outline: none;
+            margin: 5px; 
+            padding: 4px;
+        }
+
+        textarea {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            width: 100%;
+            padding: 4px;
+        }
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+            border-left: var(--border-width) solid var(--accent);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #000;
+            border: var(--border-width) solid var(--accent);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #fff;
+        }
+
+        /* --- APP SPECIFIC STYLES --- */
+        
+        /* The double outline input requested by user */
+        #calc_input_field {
+            width: 98%;
+            margin: 1%;
+            /* TRTB default is red border, but user requested white double outline.
+               We use var(--fg) to ensure it works in Light/Dark mode (White in dark, Black in light) */
+            border: 2px solid var(--fg);
+            outline: 2px solid var(--fg);
+            outline-offset: 4px; /* Distinct double separation */
+            font-size: 1.2rem;
+            padding: 10px;
+        }
+
+        /* The active input container */
+        #calc_input_container {
+            padding: 15px 5px;
+            border-bottom: var(--border-width) solid var(--accent);
+        }
+
+        /* The latest result in RED */
+        #calc_result_display {
+            color: var(--accent);
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px;
+            text-align: right;
+            border-bottom: var(--border-width) solid var(--accent);
+            min-height: 50px;
+        }
+
+        /* History List */
+        #calc_history_list {
+            padding: 0;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+        
+        .history_item {
+            padding: 5px 10px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            color: #888;
+        }
+        
+        .history_item span.h_query {
+            color: var(--fg);
+        }
+        
+        /* Mobile adjustment */
+        @media (max-width: 600px) {
+            #trtb_header, #trtb_footer {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP METADATA -->
+    <div id="trtb_header">
+        <span id="header_title">trtb calculator</span>
+        <span id="header_date">25-01-01</span>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app_container">
+        
+        <!-- MODULE: CALCULATOR INTERFACE -->
+        <div id="calculator_module" class="trtb_module" style="border:none; padding:0; height:100%; display:flex; flex-direction:column;">
+            
+            <!-- 1. INPUT AREA (Top aligned) -->
+            <div id="calc_input_container">
+                <input type="text" id="calc_input_field" placeholder="enter calculation..." autocomplete="off" autofocus>
+            </div>
+
+            <!-- 2. LATEST RESULT (Red) -->
+            <div id="calc_result_display">ready_</div>
+
+            <!-- 3. HISTORY (Adds from top) -->
+            <div id="calc_history_list">
+                <!-- History items injected here -->
+            </div>
+
+            <script>
+                (function() {
+                    const input = document.getElementById('calc_input_field');
+                    const display = document.getElementById('calc_result_display');
+                    const history = document.getElementById('calc_history_list');
+
+                    // Math context proxy for scientific functions
+                    const M = Math;
+                    
+                    // Allow degrees conversion? strict math uses radians. 
+                    // keeping standard JS Math (radians) for "Scientific" accuracy.
+                    
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            const query = input.value.trim();
+                            if (!query) return;
+
+                            let result;
+                            try {
+                                // Safe-ish eval using Function with Math context
+                                // Replaces generic math calls with Math. prefix if not present
+                                // This is a rough parser for convenience
+                                let safeQuery = query
+                                    .replace(/sin/g, 'Math.sin')
+                                    .replace(/cos/g, 'Math.cos')
+                                    .replace(/tan/g, 'Math.tan')
+                                    .replace(/sqrt/g, 'Math.sqrt')
+                                    .replace(/log/g, 'Math.log')
+                                    .replace(/pi/gi, 'Math.PI')
+                                    .replace(/e/gi, 'Math.E')
+                                    .replace(/\^/g, '**'); // Power operator support
+
+                                result = eval(safeQuery);
+                                
+                                // Format decimals
+                                if (typeof result === 'number' && !Number.isInteger(result)) {
+                                    result = parseFloat(result.toFixed(8)); // Clean up floating point trash
+                                }
+                            } catch (err) {
+                                result = "err: " + err.message;
+                            }
+
+                            // Update Display (Red Text)
+                            display.innerText = result;
+
+                            // Add to History (Top of list)
+                            const item = document.createElement('div');
+                            item.className = 'history_item';
+                            item.innerHTML = `<span class="h_query">${query}</span> <span>${result}</span>`;
+                            
+                            // Insert after the beginning (top)
+                            if (history.firstChild) {
+                                history.insertBefore(item, history.firstChild);
+                            } else {
+                                history.appendChild(item);
+                            }
+
+                            // Clear input
+                            input.value = '';
+                        }
+                    });
+
+                    // Auto-focus input on click anywhere (efficiency)
+                    document.getElementById('calculator_module').addEventListener('click', (e) => {
+                        if (e.target !== input) input.focus();
+                    });
+                })();
+            </script>
+        </div>
+
+    </div>
+
+    <!-- BOTTOM METADATA -->
+    <div id="trtb_footer">
+        <span id="footer_copyright">© 2025 thor smith</span>
+        <span id="footer_brand">:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <!-- FOOTER / GLOBAL LOGIC -->
+    <script>
+        // Header Date Logic
+        (function() {
+            const dateEl = document.getElementById('header_date');
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            dateEl.innerText = `${yy}-${mm}-${dd}`;
+        })();
+
+        // Theme Toggle Logic
+        (function() {
+            const btn = document.getElementById('theme_toggle');
+            const body = document.body;
+            let light = false;
+            
+            btn.addEventListener('click', () => {
+                light = !light;
+                if (light) {
+                    body.setAttribute('data-theme', 'light');
+                } else {
+                    body.removeAttribute('data-theme');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
