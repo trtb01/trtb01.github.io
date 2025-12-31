@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>index</title>
+    <title>trtb01.github.io/index.html</title>
     
     <style>
         /* * TRTB.css (Thor's Radical Technical Brutalism)
-         * Version: 2.0.0
+         * Version: 2.3.0 (Double Line Tabs)
          * Author: Thor Smith
          */
         :root {
@@ -52,6 +52,7 @@
             flex-direction: column;
             min-height: 100vh;
             padding: 40px 20px; 
+            overflow-y: scroll; /* Force scrollbar to avoid jump */
         }
 
         /* --- Mandatory Layout Structure --- */
@@ -109,12 +110,19 @@
         a { color: var(--fg); text-decoration: overline; }
         a:hover { background: var(--accent); color: var(--bg); }
 
-        /* --- Link Row Layout (Replaces Table) --- */
+        /* --- Link Row Layout --- */
         .link_row {
             display: flex;
             width: 100%;
-            padding: 2px 0;
+            padding: 5px 0; /* Slightly more padding for clarity with lines */
+            border-bottom: var(--border-width) solid var(--accent);
         }
+        
+        /* Remove border from the last link in a list */
+        .link_row:last-child {
+            border-bottom: none;
+        }
+
         .col_name {
             width: 30%;
             font-weight: bold;
@@ -127,7 +135,7 @@
 
         /* Mobile Adjust */
         @media (max-width: 600px) {
-            .link_row { flex-direction: column; margin-bottom: 10px; }
+            .link_row { flex-direction: column; margin-bottom: 0; }
             .col_name, .col_desc { width: 100%; }
             .col_desc { text-indent: var(--indent); color: #888; }
         }
@@ -150,33 +158,107 @@
             cursor: pointer;
         }
         #theme_toggle:hover { color: var(--accent); }
+
+        /* --- Tab Specific Styles --- */
+        #tab_container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+            /* Background is Black (bg) to create black lines via the gaps */
+            background: var(--bg); 
+            border-bottom: var(--border-width) solid var(--accent);
+            /* 2px gap for columns (vertical lines), 0px for rows (handled by border) */
+            gap: 0 2px; 
+            padding: 0;
+        }
+
+        .tab_btn {
+            background: var(--accent);
+            color: #000000; /* Inactive: Black */
+            border: none; 
+            text-align: center;
+            padding: 8px 5px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 0;
+            width: 100%;
+            box-sizing: border-box; /* Include border in height */
+        }
+
+        /* Top Row Styles: Double Horizontal Line */
+        .tab_btn:nth-child(-n+4) {
+            /* 6px double border: 2px black, 2px red (transparent bg), 2px black */
+            border-bottom: 6px double var(--bg);
+        }
+
+        /* Bottom Row Styles: Balance Height */
+        .tab_btn:nth-child(n+5) {
+            /* Solid red border to match height of top row without visual line */
+            border-bottom: 6px solid var(--accent);
+        }
+
+        .tab_btn:hover {
+            background: #cc0000; /* Slight darken on hover */
+            color: #ffffff;
+        }
+
+        .tab_btn.active {
+            color: #ffffff; /* Active: White */
+            text-decoration: none; /* No underline */
+        }
+
+        /* Style for the filler div to match tabs but not be clickable */
+        .tab_filler {
+            background: var(--accent);
+            border-bottom: 6px solid var(--accent);
+            cursor: default;
+        }
+
+        #content_display {
+            padding: 0;
+        }
+
+        .tab_pane {
+            display: none;
+            padding: var(--pad-inner);
+            animation: flicker 0.1s linear;
+        }
+
+        .tab_pane.active {
+            display: block;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
     </style>
 </head>
 <body>
 
     <div id="trtb_header">
-        <span>index</span>
-        <span>25-12-29</span>
+        <span>trtb01.github.io/index.html</span>
+        <span>25-12-31</span>
     </div>
 
     <div id="app_container">
 
-        <div id="mod_visualizer" class="trtb_module" style="padding: 0; height: 250px; overflow: hidden; position: relative;">
+        <!-- Visualizer Module: 40vh height -->
+        <div id="mod_visualizer" class="trtb_module" style="padding: 0; height: 40vh; overflow: hidden; position: relative;">
             <canvas id="canvas_nodes" style="display: block; width: 100%; height: 100%;"></canvas>
             <script>
                 (function() {
+                    const parent = document.getElementById('mod_visualizer');
                     const canvas = document.getElementById('canvas_nodes');
-                    if (!canvas) return;
+                    if (!canvas || !parent) return;
                     
                     const ctx = canvas.getContext('2d');
                     let width, height;
 
-                    // Get color from CSS variables
                     const getVar = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 
-                    // Resize handler
                     const resize = () => {
-                        const rect = canvas.parentElement.getBoundingClientRect();
+                        const rect = parent.getBoundingClientRect();
                         canvas.width = rect.width;
                         canvas.height = rect.height;
                         width = canvas.width;
@@ -185,7 +267,6 @@
                     window.addEventListener('resize', resize);
                     resize();
 
-                    // Nodes logic
                     const numPoints = Math.floor(Math.random() * 6) + 5;
                     let points = [];
 
@@ -201,10 +282,8 @@
                     function animate() {
                         const fg = getVar('--fg');
                         const accent = getVar('--accent');
-
                         ctx.clearRect(0, 0, width, height);
 
-                        // Draw Lines
                         ctx.strokeStyle = fg;
                         ctx.lineWidth = 0.5;
                         for (let i = 0; i < points.length; i++) {
@@ -216,17 +295,13 @@
                             }
                         }
 
-                        // Draw Nodes
                         ctx.fillStyle = accent;
                         for (let i = 0; i < points.length; i++) {
                             let p = points[i];
                             p.x += p.vx;
                             p.y += p.vy;
-
-                            // Bounce
                             if (p.x <= 0 || p.x >= width) p.vx *= -1;
                             if (p.y <= 0 || p.y >= height) p.vy *= -1;
-
                             ctx.beginPath();
                             ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
                             ctx.fill();
@@ -238,82 +313,181 @@
             </script>
         </div>
 
-        <div id="mod_main" class="trtb_module">
-            <h3>main</h3>
-            <div class="link_row">
-                <div class="col_name"><a href="trtb1.html">trtb1.html</a></div>
-                <div class="col_desc">introduction and primary info.</div>
+        <!-- Tab System Module -->
+        <div id="mod_tabs" class="trtb_module" style="padding: 0; display: flex; flex-direction: column; flex-grow: 1;">
+            
+            <!-- Tab Headers: Grid Layout -->
+            <div id="tab_container">
+                <button class="tab_btn active" data-target="tab_main">main</button>
+                <button class="tab_btn" data-target="tab_trtb">trtb-suite</button>
+                <button class="tab_btn" data-target="tab_pages">pages</button>
+                <button class="tab_btn" data-target="tab_b64">b64-suite</button>
+                <button class="tab_btn" data-target="tab_encry">encry-suite</button>
+                <button class="tab_btn" data-target="tab_tools">tools</button>
+                <button class="tab_btn" data-target="tab_exps">exps</button>
+                <!-- Filler div to complete grid visually -->
+                <div class="tab_filler"></div>
             </div>
-            <div class="link_row">
-                <div class="col_name"><a href="trtb2.html">trtb2.html</a></div>
-                <div class="col_desc">secondary information page.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="goodnews.html">goodnews.html</a></div>
-                <div class="col_desc">goodnews.html</div>
-            </div>
-        </div>
 
-        <div id="mod_tools" class="trtb_module">
-            <h3>html tools</h3>
-            <div class="link_row">
-                <div class="col_name"><a href="hands.html">hands.html</a></div>
-                <div class="col_desc">hand tracking/detection demo.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="game-test.html">game-test.html</a></div>
-                <div class="col_desc">trash game controller tester.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="face.html">face.html</a></div>
-                <div class="col_desc">facial recognition/tracking demo.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="encry.html">encry.html</a></div>
-                <div class="col_desc">simple text encryption tool.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="encry-md.html">encry-md.html</a></div>
-                <div class="col_desc">markdown editor with encryption.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="jpegcomp.html">jpegcomp.html</a></div>
-                <div class="col_desc">simple jpeg compression tool.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="b64-comp.html">b64-comp.html</a></div>
-                <div class="col_desc">base-64 encode tool.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="b64-imgview.html">b64-imgview</a></div>
-                <div class="col_desc">simple base-64 image viewer.</div>
-            </div>
-        </div>
+            <!-- Tab Content Display -->
+            <div id="content_display">
+                
+                <!-- Main Tab -->
+                <div id="tab_main" class="tab_pane active">
+                    <h3>main index</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="trtb1.html">trtb1.html</a></div>
+                        <div class="col_desc">introduction and primary info.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="trtb2.html">trtb2.html</a></div>
+                        <div class="col_desc">secondary information page.</div>
+                    </div>
+                </div>
 
-        <div id="mod_experiments" class="trtb_module">
-            <h3>experiments and games</h3>
-            <div class="link_row">
-                <div class="col_name"><a href="roulette.html">roulette.html</a></div>
-                <div class="col_desc">local roulette table simulator.</div>
+                <!-- TRTB Suite -->
+                <div id="tab_trtb" class="tab_pane">
+                    <h3>trtb suite</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="trtb-calc.html">trtb-calc.html</a></div>
+                        <div class="col_desc">calculator.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="trtb-dap.html">trtb-dap.html</a></div>
+                        <div class="col_desc">audio player.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="trtb-dice.html">trtb-dice.html</a></div>
+                        <div class="col_desc">dice roller.</div>
+                    </div>
+                </div>
+
+                <!-- Pages & Things -->
+                <div id="tab_pages" class="tab_pane">
+                    <h3>pages and things</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="ace-steam.html">ace-steam.html</a></div>
+                        <div class="col_desc">steam page links.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="gllry.html">gllry.html</a></div>
+                        <div class="col_desc">image gallery.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="voidscream.html">voidscream.html</a></div>
+                        <div class="col_desc">my blog.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="goodnews.html">goodnews.html</a></div>
+                        <div class="col_desc">good news archive.</div>
+                    </div>
+                </div>
+
+                <!-- Base64 Suite -->
+                <div id="tab_b64" class="tab_pane">
+                    <h3>b64 suite</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="b64-comp.html">b64-comp.html</a></div>
+                        <div class="col_desc">base-64 encode tool.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="b64-imgview.html">b64-imgview.html</a></div>
+                        <div class="col_desc">base-64 image viewer.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="b64.html">b64.html</a></div>
+                        <div class="col_desc">base-64 utility.</div>
+                    </div>
+                </div>
+
+                <!-- Encryption Suite -->
+                <div id="tab_encry" class="tab_pane">
+                    <h3>encry suite</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="encry-html.html">encry-html.html</a></div>
+                        <div class="col_desc">html encryptor.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="encry-md.html">encry-md.html</a></div>
+                        <div class="col_desc">markdown editor with encryption.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="encry-phrasegen.html">encry-phrasegen.html</a></div>
+                        <div class="col_desc">passphrase generator.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="encry.html">encry.html</a></div>
+                        <div class="col_desc">simple text encryption tool.</div>
+                    </div>
+                </div>
+
+                <!-- Legacy Tools (Orphans) -->
+                <div id="tab_tools" class="tab_pane">
+                    <h3>html tools</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="hands.html">hands.html</a></div>
+                        <div class="col_desc">hand tracking/detection demo.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="game-test.html">game-test.html</a></div>
+                        <div class="col_desc">trash game controller tester.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="face.html">face.html</a></div>
+                        <div class="col_desc">facial recognition/tracking demo.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="jpegcomp.html">jpegcomp.html</a></div>
+                        <div class="col_desc">simple jpeg compression tool.</div>
+                    </div>
+                </div>
+
+                <!-- Legacy Experiments (Orphans) -->
+                <div id="tab_exps" class="tab_pane">
+                    <h3>experiments</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="roulette.html">roulette.html</a></div>
+                        <div class="col_desc">local roulette table simulator.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="oracle.html">oracle.html</a></div>
+                        <div class="col_desc">ultralightweight ttrpg oracle.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="soda.html">soda.html</a></div>
+                        <div class="col_desc">russian roulette with soda.</div>
+                    </div>
+                </div>
+
             </div>
-            <div class="link_row">
-                <div class="col_name"><a href="oracle.html">oracle.html</a></div>
-                <div class="col_desc">ultralightweight ttrpg oracle.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="soda.html">soda.html</a></div>
-                <div class="col_desc">russian roulette with soda.</div>
-            </div>
-            <div class="link_row">
-                <div class="col_name"><a href="voidscream.html">voidscream.html</a></div>
-                <div class="col_desc">my blog.</div>
-            </div>
+
+            <!-- Internal Logic for Tabs -->
+            <script>
+                (function() {
+                    const btns = document.querySelectorAll('.tab_btn');
+                    const panes = document.querySelectorAll('.tab_pane');
+
+                    btns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            // Deactivate all
+                            btns.forEach(b => b.classList.remove('active'));
+                            panes.forEach(p => p.classList.remove('active'));
+
+                            // Activate clicked
+                            btn.classList.add('active');
+                            const targetId = btn.getAttribute('data-target');
+                            const targetPane = document.getElementById(targetId);
+                            if (targetPane) targetPane.classList.add('active');
+                        });
+                    });
+                })();
+            </script>
         </div>
 
     </div>
 
     <div id="trtb_footer">
-        <span>&copy; 2025 thor smith</span>
+        <span>&copy; 2025, 2026 thor smith</span>
         <span>:: trtb software ::</span>
         <button id="theme_toggle">[b/w]</button>
         <script>
