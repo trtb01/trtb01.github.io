@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRTB Dice</title>
+    <style>
+        /*
+         * TRTB.css (Thor's Radical Technical Brutalism)
+         * Version: 2.2.0 (Multi-Roll Update)
+         * Philosophy: Modular, 2D, High-Contrast, Self-Contained.
+         */
+
+        :root {
+            /* Color Palette */
+            --bg: #000000;
+            --fg: #ffffff;
+            --accent: #ff0000;
+            --dim: #666666;
+
+            /* Borders - UNIFORM 2PX */
+            --border-width: 2px;
+
+            /* Spacing */
+            --pad-inner: 5px;
+            --indent: 10px;
+            
+            /* Typography */
+            --font-main: monospace;
+            --base-scale: 0.85; 
+        }
+
+        /* Theme Switch: Light Mode Overrides */
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --fg: #000000;
+            --dim: #aaaaaa;
+        }
+
+        /* Global Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border-radius: 0 !important; /* Strictly 90-degree corners */
+            font-family: var(--font-main);
+            font-size: calc(1rem * var(--base-scale));
+            text-transform: lowercase; /* ENFORCED LOWERCASE */
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 20px 10px; 
+        }
+
+        /* --- Mandatory Layout Structure --- */
+
+        /* Top Metadata Row */
+        #trtb_header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 0 2px;
+        }
+
+        /* The Global Active Content Border */
+        #app_container {
+            border: var(--border-width) solid var(--accent);
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; 
+        }
+
+        /* Footer Metadata Row */
+        #trtb_footer {
+            padding-top: 5px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* --- Modular Div Logic --- */
+
+        .trtb_module {
+            width: 100%;
+            margin: 0; 
+            border: var(--border-width) solid var(--accent);
+            border-top: none; 
+            padding: var(--pad-inner);
+            background: var(--bg);
+        }
+
+        #app_container > .trtb_module:first-child {
+            border-top: none; 
+        }
+
+        /* --- Typography & Content --- */
+
+        a {
+            color: var(--fg);
+            text-decoration: overline;
+        }
+
+        a:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        button {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            padding: 4px 10px;
+            cursor: pointer;
+            margin: 2px;
+            text-transform: lowercase;
+        }
+
+        button:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        #theme_toggle {
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+        #theme_toggle:hover {
+            background: transparent;
+            color: var(--accent);
+        }
+
+        input[type="text"] {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            outline: none;
+            margin: 5px; 
+            padding: 4px;
+        }
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+            border-left: var(--border-width) solid var(--accent);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg);
+            border: var(--border-width) solid var(--accent);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--fg);
+        }
+
+        /* --- APP SPECIFIC STYLES --- */
+        
+        /* The double outline input requested by user */
+        #dice_input_field {
+            width: 98%;
+            margin: 1%;
+            /* TRTB default is red border, but user requested white double outline. */
+            border: 2px solid var(--fg);
+            outline: 2px solid var(--fg);
+            outline-offset: 4px; /* Distinct double separation */
+            font-size: 1.2rem;
+            padding: 10px;
+        }
+
+        /* The active input container */
+        #dice_input_container {
+            padding: 15px 5px;
+            border-bottom: var(--border-width) solid var(--accent);
+        }
+
+        /* The latest result in RED */
+        #dice_result_display {
+            color: var(--accent);
+            font-size: 1.5rem;
+            font-weight: bold;
+            padding: 10px;
+            text-align: right;
+            border-bottom: var(--border-width) solid var(--accent);
+            min-height: 50px;
+            display:flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        #dice_result_sub {
+            font-size: 0.8rem;
+            color: var(--dim);
+            font-weight: normal;
+            margin-top: 5px;
+        }
+
+        /* History List */
+        #dice_history_list {
+            padding: 0;
+            overflow-y: auto;
+            max-height: 60vh;
+        }
+        
+        .history_item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            color: var(--fg);
+        }
+
+        .h_top_row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+        
+        .h_breakdown {
+            font-size: 0.8rem;
+            color: var(--dim);
+            margin-top: 4px;
+            word-break: break-all;
+        }
+
+        .separator {
+            color: var(--dim);
+            margin: 0 5px;
+        }
+
+        /* Mobile adjustment */
+        @media (max-width: 600px) {
+            #trtb_header, #trtb_footer {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP METADATA -->
+    <div id="trtb_header">
+        <span id="header_title">trtb dice</span>
+        <span id="header_date">25-01-01</span>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app_container">
+        
+        <!-- MODULE: DICE INTERFACE -->
+        <div id="dice_module" class="trtb_module" style="border:none; padding:0; height:100%; display:flex; flex-direction:column;">
+            
+            <!-- 1. INPUT AREA -->
+            <div id="dice_input_container">
+                <input type="text" id="dice_input_field" placeholder="enter dice (e.g. d%, d10)..." autocomplete="off" autofocus>
+            </div>
+
+            <!-- 2. LATEST RESULT -->
+            <div id="dice_result_display">
+                <span id="main_result">ready_</span>
+                <span id="dice_result_sub"></span>
+            </div>
+
+            <!-- 3. HISTORY -->
+            <div id="dice_history_list">
+                <!-- History items injected here -->
+            </div>
+
+            <script>
+                (function() {
+                    const input = document.getElementById('dice_input_field');
+                    const displayMain = document.getElementById('main_result');
+                    const displaySub = document.getElementById('dice_result_sub');
+                    const history = document.getElementById('dice_history_list');
+
+                    let lastQuery = ""; // Stores the last successful query for quick recall
+
+                    /* --- DICE PARSER ENGINE --- */
+                    
+                    function rollDie(sides) {
+                        return Math.floor(Math.random() * sides) + 1;
+                    }
+
+                    // Main parser function
+                    function parseAndRoll(query) {
+                        let log = []; // Stores breakdown strings
+                        
+                        const diceRegex = /(\d*)d(f|%|\d+)(!)?((?:k|kh|kl)\d+)?/gi;
+
+                        const processedQuery = query.replace(diceRegex, (match, countStr, sidesStr, explodeStr, keepStr) => {
+                            let count = countStr === "" ? 1 : parseInt(countStr);
+                            let sides = 0;
+                            let isFate = false;
+                            
+                            if (sidesStr.toLowerCase() === 'f') {
+                                sides = 3; 
+                                isFate = true;
+                            } else if (sidesStr === '%') {
+                                sides = 100;
+                            } else {
+                                sides = parseInt(sidesStr);
+                            }
+
+                            if (count > 500) count = 500; 
+
+                            let rolls = [];
+                            
+                            for (let i = 0; i < count; i++) {
+                                let r = rollDie(sides);
+                                rolls.push(r);
+                                
+                                if (explodeStr === '!' && !isFate && r === sides) {
+                                    let explodeLimit = 50; 
+                                    let currentR = r;
+                                    while (currentR === sides && explodeLimit > 0) {
+                                        currentR = rollDie(sides);
+                                        rolls.push(currentR);
+                                        explodeLimit--;
+                                    }
+                                }
+                            }
+
+                            if (isFate) {
+                                rolls = rolls.map(r => r - 2);
+                            }
+
+                            let finalRolls = [...rolls]; 
+                            let droppedIndices = new Set(); 
+
+                            if (keepStr) {
+                                let type = keepStr.match(/[a-z]+/i)[0].toLowerCase();
+                                let num = parseInt(keepStr.match(/\d+/)[0]);
+                                let mapped = rolls.map((val, idx) => ({val, idx}));
+                                
+                                if (type === 'k' || type === 'kh') {
+                                    mapped.sort((a, b) => b.val - a.val);
+                                } else if (type === 'kl') {
+                                    mapped.sort((a, b) => a.val - b.val);
+                                }
+
+                                for (let i = num; i < mapped.length; i++) {
+                                    droppedIndices.add(mapped[i].idx);
+                                }
+                            }
+
+                            let sum = 0;
+                            let rollLog = [];
+                            
+                            rolls.forEach((val, idx) => {
+                                if (droppedIndices.has(idx)) {
+                                    rollLog.push(`<span style="text-decoration:line-through; opacity:0.5">${val}</span>`);
+                                } else {
+                                    sum += val;
+                                    rollLog.push(val);
+                                }
+                            });
+
+                            log.push(`${match}: [${rollLog.join(', ')}]`);
+
+                            return `(${sum})`; 
+                        });
+
+                        return {
+                            processedQuery: processedQuery,
+                            log: log
+                        };
+                    }
+
+                    // --- EVENT LISTENER ---
+
+                    input.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            const rawQuery = input.value.trim();
+                            
+                            // 1. RECALL LOGIC
+                            if (!rawQuery) {
+                                if (lastQuery) {
+                                    input.value = lastQuery;
+                                    e.preventDefault(); 
+                                }
+                                return;
+                            }
+
+                            // 2. SPLIT & PROCESS LOGIC
+                            const subQueries = rawQuery.split(',');
+                            let resultsArr = [];
+                            let breakdownsArr = [];
+
+                            for (let subQ of subQueries) {
+                                let q = subQ.trim();
+                                if(!q) continue;
+
+                                try {
+                                    const diceData = parseAndRoll(q);
+                                    
+                                    // Math Evaluation
+                                    let mathString = diceData.processedQuery.replace(/[^-()\d/*+.]/g, ''); 
+                                    let finalResult = eval(mathString);
+
+                                    if (typeof finalResult === 'number' && !Number.isInteger(finalResult)) {
+                                        finalResult = parseFloat(finalResult.toFixed(2));
+                                    }
+
+                                    resultsArr.push(finalResult);
+                                    
+                                    // Use dice log or fallback to math equation for breakdown
+                                    let logStr = diceData.log.length > 0 ? diceData.log.join('; ') : q;
+                                    breakdownsArr.push(logStr);
+
+                                } catch (err) {
+                                    resultsArr.push("err");
+                                    breakdownsArr.push("invalid");
+                                }
+                            }
+
+                            // Join logic for display
+                            const finalResultDisplay = resultsArr.join(' <span class="separator">|</span> ');
+                            const finalBreakdownDisplay = breakdownsArr.join(' <span class="separator">||</span> ');
+
+                            lastQuery = rawQuery;
+
+                            // Update Display
+                            displayMain.innerHTML = finalResultDisplay;
+                            displaySub.innerHTML = finalBreakdownDisplay;
+
+                            // Add to History
+                            const item = document.createElement('div');
+                            item.className = 'history_item';
+                            item.innerHTML = `
+                                <div class="h_top_row">
+                                    <span>${rawQuery}</span>
+                                    <span style="color:var(--accent)">${finalResultDisplay}</span>
+                                </div>
+                                <div class="h_breakdown">${finalBreakdownDisplay}</div>
+                            `;
+                            
+                            if (history.firstChild) {
+                                history.insertBefore(item, history.firstChild);
+                            } else {
+                                history.appendChild(item);
+                            }
+
+                            input.value = '';
+                        }
+                    });
+
+                    // Auto-focus
+                    document.getElementById('dice_module').addEventListener('click', (e) => {
+                        if (e.target !== input && !e.target.closest('.history_item')) input.focus();
+                    });
+                })();
+            </script>
+        </div>
+
+    </div>
+
+    <!-- BOTTOM METADATA -->
+    <div id="trtb_footer">
+        <span id="footer_copyright">© 2025 thor smith</span>
+        <span id="footer_brand">:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <!-- GLOBAL LOGIC -->
+    <script>
+        // Header Date Logic
+        (function() {
+            const dateEl = document.getElementById('header_date');
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            dateEl.innerText = `${yy}-${mm}-${dd}`;
+        })();
+
+        // Theme Toggle Logic
+        (function() {
+            const btn = document.getElementById('theme_toggle');
+            const body = document.body;
+            let light = false;
+            
+            btn.addEventListener('click', () => {
+                light = !light;
+                if (light) {
+                    body.setAttribute('data-theme', 'light');
+                } else {
+                    body.removeAttribute('data-theme');
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
