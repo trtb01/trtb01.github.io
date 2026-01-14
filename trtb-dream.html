@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>trtb_metronome</title>
+    <style>
+        /*
+         * TRTB.css (Thor's Radical Technical Brutalism)
+         * Version: 2.0.0
+         * Author: Thor Smith
+         * Philosophy: Modular, 2D, High-Contrast, Self-Contained.
+         */
+
+        :root {
+            /* Color Palette */
+            --bg: #000000;
+            --fg: #ffffff;
+            --accent: #ff0000;
+
+            /* Borders - UNIFORM 2PX */
+            --border-width: 2px;
+
+            /* Spacing */
+            --pad-inner: 5px;
+            --indent: 10px;
+            
+            /* Typography */
+            --font-main: monospace;
+            --base-scale: 0.85; 
+        }
+
+        /* Theme Switch: Light Mode Overrides */
+        [data-theme="light"] {
+            --bg: #ffffff;
+            --fg: #000000;
+        }
+
+        /* Global Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            border-radius: 0 !important; /* Strictly 90-degree corners */
+            font-family: var(--font-main);
+            font-size: calc(1rem * var(--base-scale));
+            text-transform: lowercase; /* ENFORCED LOWERCASE */
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--fg);
+            display: flex;
+            flex-direction: column;
+            height: 100vh; /* Fixed height for app-like feel */
+            padding: 20px 10px; 
+            overflow: hidden; /* Prevent body scroll, handle inside app */
+        }
+
+        /* --- Mandatory Layout Structure --- */
+
+        /* Top Metadata Row */
+        #trtb_header {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 5px;
+            padding: 0 2px;
+            flex-shrink: 0;
+        }
+
+        /* The Global Active Content Border */
+        #app_container {
+            border: var(--border-width) solid var(--accent);
+            width: 100%;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative; /* Context for absolute positioning */
+            overflow: hidden;
+        }
+
+        /* Footer Metadata Row */
+        #trtb_footer {
+            padding-top: 5px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* --- Modular Div Logic --- */
+        .trtb_module {
+            width: 100%;
+            margin: 0; 
+            border: var(--border-width) solid var(--accent);
+            border-top: none; 
+            padding: var(--pad-inner);
+            background: var(--bg);
+        }
+
+        /* --- Typography & Elements --- */
+        p { text-indent: var(--indent); margin-bottom: 5px; }
+        
+        a { color: var(--fg); text-decoration: overline; }
+        a:hover { background: var(--accent); color: var(--bg); }
+
+        button {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            padding: 4px 10px;
+            cursor: pointer;
+            margin: 2px;
+            text-transform: lowercase;
+            font-weight: bold;
+        }
+        button:hover { background: var(--accent); color: var(--bg); }
+
+        /* The Toggle Button specific style */
+        #theme_toggle { background: transparent; border: none; padding: 0; cursor: pointer; }
+        #theme_toggle:hover { background: transparent; color: var(--accent); }
+
+        /* Inputs */
+        input[type="text"], input[type="number"] {
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            outline: none;
+            margin: 2px; 
+            padding: 4px;
+            width: 100%;
+        }
+
+        /* --- App Specific Styles --- */
+
+        /* Top Bar inside App Container */
+        #app_controls {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            z-index: 10;
+        }
+
+        #tray_toggle {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            z-index: 20; /* Ensure clickable */
+        }
+
+        /* Main Display Area */
+        #dream_display {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* The Big Button */
+        #dream_btn {
+            width: 200px;
+            height: 200px;
+            font-size: 1.5rem;
+            transition: all 0.1s steps(1);
+        }
+
+        /* State: Stopped */
+        #dream_btn.stopped {
+            background-color: var(--accent);
+            color: #000; /* Force black text on red bg */
+            border: var(--border-width) solid #000; /* Inner border simulation */
+            outline: var(--border-width) solid var(--accent); /* Outer border */
+            outline-offset: 4px; 
+        }
+
+        /* State: Running */
+        #dream_btn.running {
+            background-color: transparent;
+            color: var(--accent);
+            border: var(--border-width) solid var(--accent);
+            outline: none;
+        }
+
+        /* Sliding Tray */
+        #settings_tray {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: var(--bg);
+            border-top: var(--border-width) solid var(--accent);
+            transform: translateY(100%); /* Hidden by default */
+            transition: transform 0.3s steps(5); /* Mechanical slide */
+            display: flex;
+            flex-direction: column;
+            z-index: 15;
+            max-height: 80%;
+            overflow-y: auto;
+            padding-bottom: 20px;
+        }
+
+        #settings_tray.open {
+            transform: translateY(0);
+        }
+
+        /* Grid for inputs */
+        .setting_row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            border-bottom: 1px solid var(--accent);
+            padding: 5px;
+        }
+        .setting_label {
+            width: 40%;
+            font-size: 0.8rem;
+        }
+        .setting_input {
+            width: 60%;
+        }
+
+        /* Visual Metronome Feedback on Inputs */
+        @keyframes border-flash {
+            0% { border-color: var(--fg); }
+            50% { border-color: var(--accent); }
+            100% { border-color: var(--fg); }
+        }
+        .flash_white {
+            border-color: #ffffff !important;
+        }
+
+        /* Range Sliders tailored to TRTB */
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px;
+            width: 16px;
+            background: var(--accent);
+            border: 1px solid var(--bg);
+            cursor: pointer;
+            margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 2px;
+            background: var(--accent);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header id="trtb_header">
+        <span>trtb_metronome</span>
+        <span id="date_display"></span>
+    </header>
+
+    <div id="app_container">
+        
+        <div id="app_controls">
+            <button id="tray_toggle"></button> </div>
+
+        <div id="dream_display">
+            <button id="dream_btn" class="stopped">[.dream.]</button>
+        </div>
+
+        <div id="settings_tray">
+            <div style="padding: 10px; background: var(--accent); color: var(--bg); font-weight:bold; margin-bottom:10px;">
+                :: configuration ::
+            </div>
+
+            <div class="setting_row">
+                <span class="setting_label">start bpm</span>
+                <input type="number" id="bpm_start" class="setting_input" value="60">
+            </div>
+            <div class="setting_row">
+                <span class="setting_label">end bpm</span>
+                <input type="number" id="bpm_end" class="setting_input" value="30">
+            </div>
+
+            <div class="setting_row">
+                <span class="setting_label">slow down (min)</span>
+                <input type="number" id="time_ramp" class="setting_input" value="15">
+            </div>
+            <div class="setting_row">
+                <span class="setting_label">stay slow (min)</span>
+                <input type="number" id="time_hold" class="setting_input" value="5">
+            </div>
+
+            <div class="setting_row">
+                <span class="setting_label">pattern</span>
+                <div class="setting_input" style="display:flex; justify-content:space-between;">
+                   <select id="pattern_select" style="width:100%; background:var(--bg); color:var(--fg); border:2px solid var(--accent); padding:5px;">
+                       <option value="1">1:1 (steady)</option>
+                       <option value="2">1:2 (highlight every 2)</option>
+                       <option value="4" selected>1:4 (highlight every 4)</option>
+                       <option value="8">1:8 (highlight every 8)</option>
+                   </select>
+                </div>
+            </div>
+
+            <div class="setting_row">
+                <span class="setting_label">click decay</span>
+                <input type="range" id="synth_decay" min="0.05" max="0.5" step="0.05" value="0.1" class="setting_input">
+            </div>
+            <div class="setting_row">
+                <span class="setting_label">click pitch</span>
+                <input type="range" id="synth_pitch" min="100" max="1000" step="50" value="150" class="setting_input">
+            </div>
+
+            <div class="setting_row" id="audio_source_row" style="display:none;">
+                <span class="setting_label">audio source</span>
+                <select id="audio_source_select" style="width:100%; background:var(--bg); color:var(--fg); border:2px solid var(--accent); padding:5px;">
+                    <option value="synth">synth (default)</option>
+                    <option value="custom">custom file</option>
+                </select>
+            </div>
+
+        </div>
+    </div>
+
+    <footer id="trtb_footer">
+        <span>&copy; 2025 thor smith</span>
+        <span>:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+    </footer>
+
+    <script>
+        // --- USER CONFIG: CUSTOM AUDIO LINKS ---
+        // Place direct URLs to audio files here.
+        // Example: const custom_click_url = "https://example.com/click.mp3";
+        const custom_click_url = ""; 
+        const custom_highlight_url = "";
+
+        // --- GLOBAL VARIABLES ---
+        const els = {
+            date: document.getElementById('date_display'),
+            themeBtn: document.getElementById('theme_toggle'),
+            trayBtn: document.getElementById('tray_toggle'),
+            tray: document.getElementById('settings_tray'),
+            dreamBtn: document.getElementById('dream_btn'),
+            
+            // Inputs
+            bpmStart: document.getElementById('bpm_start'),
+            bpmEnd: document.getElementById('bpm_end'),
+            timeRamp: document.getElementById('time_ramp'),
+            timeHold: document.getElementById('time_hold'),
+            pattern: document.getElementById('pattern_select'),
+            decay: document.getElementById('synth_decay'),
+            pitch: document.getElementById('synth_pitch'),
+            sourceSelect: document.getElementById('audio_source_select'),
+            sourceRow: document.getElementById('audio_source_row')
+        };
+
+        // Audio Context
+        let audioCtx;
+        let isRunning = false;
+        let nextNoteTime = 0.0;
+        let beatCount = 0;
+        let timerID = null;
+        
+        // Session State
+        let startTime = 0;
+        let currentBPM = 60;
+        let rampDurationSec = 0;
+        let holdDurationSec = 0;
+
+        // Custom Audio Buffers
+        let customClickBuffer = null;
+        let customHighlightBuffer = null;
+        let customAudioReady = false;
+
+        // --- INITIALIZATION ---
+        
+        function init() {
+            // Set Date
+            const d = new Date();
+            const yy = d.getFullYear().toString().slice(-2);
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            els.date.textContent = `${yy}-${mm}-${dd}`;
+
+            // Theme Toggle
+            els.themeBtn.addEventListener('click', () => {
+                const current = document.documentElement.getAttribute('data-theme');
+                document.documentElement.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+            });
+
+            // Tray Logic
+            updateTrayBtnState(false);
+            els.trayBtn.addEventListener('click', () => {
+                const isOpen = els.tray.classList.contains('open');
+                if (isOpen) {
+                    els.tray.classList.remove('open');
+                    updateTrayBtnState(false);
+                } else {
+                    els.tray.classList.add('open');
+                    updateTrayBtnState(true);
+                }
+            });
+
+            // Input Flash Logic
+            setupInputFlash(els.bpmStart);
+            setupInputFlash(els.bpmEnd);
+
+            // Audio Source Check
+            checkCustomAudio();
+
+            // Main Button Logic
+            els.dreamBtn.addEventListener('click', toggleMetronome);
+        }
+
+        function updateTrayBtnState(isOpen) {
+            // "When tray open, button solid red. When closed, red outline."
+            if (isOpen) {
+                els.trayBtn.style.background = 'var(--accent)';
+                els.trayBtn.style.color = 'var(--bg)';
+            } else {
+                els.trayBtn.style.background = 'transparent';
+                els.trayBtn.style.color = 'var(--accent)';
+            }
+        }
+
+        // --- AUDIO ENGINE ---
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(time, isHighlight) {
+            const useSynth = els.sourceSelect.value === 'synth' || !customAudioReady;
+
+            if (useSynth) {
+                playSynth(time, isHighlight);
+            } else {
+                playBuffer(time, isHighlight);
+            }
+        }
+
+        function playSynth(time, isHighlight) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            // Settings
+            const baseFreq = parseInt(els.pitch.value);
+            const decay = parseFloat(els.decay.value);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            // Tone generation: Short "thud" with noise burst approximation or low sine
+            // To make it percussive and "clicky" without distinct musical tone:
+            // High frequency start dropping rapidly to low freq.
+            
+            if (isHighlight) {
+                osc.frequency.setValueAtTime(baseFreq * 1.5, time);
+                osc.frequency.exponentialRampToValueAtTime(baseFreq, time + 0.05);
+                gain.gain.setValueAtTime(1.0, time);
+            } else {
+                osc.frequency.setValueAtTime(baseFreq, time);
+                gain.gain.setValueAtTime(0.8, time);
+            }
+
+            // Envelope
+            gain.gain.exponentialRampToValueAtTime(0.001, time + decay);
+
+            osc.start(time);
+            osc.stop(time + decay + 0.1);
+        }
+
+        function playBuffer(time, isHighlight) {
+            const buffer = isHighlight ? customHighlightBuffer : customClickBuffer;
+            if (!buffer) return; // Fallback safety
+
+            const source = audioCtx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(audioCtx.destination);
+            source.start(time);
+        }
+
+        // --- SCHEDULER ---
+
+        function scheduler() {
+            // While there are notes that will need to play before the next interval, 
+            // schedule them and advance the pointer.
+            while (nextNoteTime < audioCtx.currentTime + 0.1) {
+                scheduleNote(nextNoteTime);
+                advanceNote();
+            }
+            
+            if (isRunning) {
+                timerID = requestAnimationFrame(scheduler);
+            }
+        }
+
+        function scheduleNote(time) {
+            // Determine Pattern
+            const pattern = parseInt(els.pattern.value); // 1, 2, 4, 8
+            let isHighlight = false;
+
+            if (pattern === 1) {
+                isHighlight = false; // Steady pulse
+            } else {
+                // Beat count starts at 0. 
+                // Pattern 4: 1(H), 2, 3, 4 -> 0%4 == 0
+                if (beatCount % pattern === 0) {
+                    isHighlight = true;
+                }
+            }
+
+            playSound(time, isHighlight);
+        }
+
+        function advanceNote() {
+            // 60 / BPM = seconds per beat
+            const secondsPerBeat = 60.0 / currentBPM;
+            nextNoteTime += secondsPerBeat;
+            beatCount++;
+
+            updateBPM(); // Calculate new BPM for NEXT beat
+        }
+
+        function updateBPM() {
+            // Elapsed time calculation
+            const elapsed = audioCtx.currentTime - startTime;
+            
+            // Are we in ramp phase?
+            if (elapsed < rampDurationSec) {
+                const start = parseInt(els.bpmStart.value);
+                const end = parseInt(els.bpmEnd.value);
+                const progress = elapsed / rampDurationSec;
+                
+                // Linear interpolation
+                currentBPM = start - ((start - end) * progress);
+            } 
+            // Are we in hold phase?
+            else if (elapsed < (rampDurationSec + holdDurationSec)) {
+                currentBPM = parseInt(els.bpmEnd.value);
+            } 
+            // Are we done?
+            else {
+                stopMetronome();
+            }
+        }
+
+        // --- INTERACTION ---
+
+        function toggleMetronome() {
+            if (isRunning) {
+                stopMetronome();
+            } else {
+                startMetronome();
+            }
+        }
+
+        function startMetronome() {
+            initAudio();
+            isRunning = true;
+            beatCount = 0;
+            currentBPM = parseInt(els.bpmStart.value);
+            startTime = audioCtx.currentTime;
+            nextNoteTime = audioCtx.currentTime + 0.05;
+
+            // Calc durations
+            rampDurationSec = parseInt(els.timeRamp.value) * 60;
+            holdDurationSec = parseInt(els.timeHold.value) * 60;
+
+            // UI Updates
+            els.dreamBtn.textContent = "[.dreaming.]";
+            els.dreamBtn.classList.remove('stopped');
+            els.dreamBtn.classList.add('running');
+            els.trayBtn.disabled = true; // Lock settings while running? Or allow live editing? 
+            // Design choice: Allow settings access but inputs might act weird during ramp. 
+            // Better to let them be.
+            els.trayBtn.disabled = false; 
+
+            scheduler();
+        }
+
+        function stopMetronome() {
+            isRunning = false;
+            cancelAnimationFrame(timerID);
+            
+            els.dreamBtn.textContent = "[.dream.]";
+            els.dreamBtn.classList.remove('running');
+            els.dreamBtn.classList.add('stopped');
+        }
+
+        // --- UTILS ---
+
+        function setupInputFlash(inputEl) {
+            // Visual feedback loop for inputs
+            // We create a local interval for the input element to flash its border
+            // based on the value inside it.
+            
+            let flashInterval = null;
+
+            const flash = () => {
+                inputEl.classList.add('flash_white');
+                setTimeout(() => {
+                    inputEl.classList.remove('flash_white');
+                }, 100);
+            };
+
+            const startFlashing = () => {
+                if (flashInterval) clearInterval(flashInterval);
+                const bpm = parseInt(inputEl.value);
+                if (bpm > 0) {
+                    const intervalMs = (60 / bpm) * 1000;
+                    flashInterval = setInterval(flash, intervalMs);
+                }
+            };
+
+            const stopFlashing = () => {
+                if (flashInterval) clearInterval(flashInterval);
+                inputEl.classList.remove('flash_white');
+            };
+
+            inputEl.addEventListener('focus', startFlashing);
+            inputEl.addEventListener('input', startFlashing);
+            inputEl.addEventListener('blur', stopFlashing);
+        }
+
+        function checkCustomAudio() {
+            if (custom_click_url && custom_highlight_url) {
+                // Try to load
+                Promise.all([
+                    fetch(custom_click_url).then(r => r.arrayBuffer()),
+                    fetch(custom_highlight_url).then(r => r.arrayBuffer())
+                ]).then(async ([buf1, buf2]) => {
+                    // We need a temp context to decode if main one isn't started
+                    const tempCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    customClickBuffer = await tempCtx.decodeAudioData(buf1);
+                    customHighlightBuffer = await tempCtx.decodeAudioData(buf2);
+                    
+                    // Success
+                    customAudioReady = true;
+                    els.sourceRow.style.display = 'flex';
+                }).catch(e => {
+                    console.log("Custom audio load failed, adhering to synth only.");
+                });
+            }
+        }
+
+        // Run Init
+        init();
+
+    </script>
+</body>
+</html>
