@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gentle Check-In</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --pink-soft: #e8c4c8;
+  --pink-deep: #c9929a;
+  --green-soft: #b8cfc4;
+  --green-deep: #7da494;
+  --purple-soft: #c5b8d4;
+  --purple-deep: #8e7aab;
+  --white: #faf8f6;
+  --white-warm: #f3eeea;
+  --black: #1a1a1a;
+  --black-soft: #2d2a2e;
+  --text: #3a3438;
+  --text-light: #6b6068;
+  --border: rgba(142, 122, 171, 0.18);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Lora', Georgia, serif;
+  background: var(--white);
+  color: var(--text);
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(232, 196, 200, 0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(184, 207, 196, 0.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(197, 184, 212, 0.1) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 60px 28px 100px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 56px;
+  padding-bottom: 40px;
+  border-bottom: 1px solid var(--border);
+}
+
+.header h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 300;
+  font-size: 2.8rem;
+  color: var(--black-soft);
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.header p {
+  font-size: 0.95rem;
+  color: var(--text-light);
+  max-width: 480px;
+  margin: 0 auto;
+  font-style: italic;
+}
+
+.disclaimer {
+  margin-top: 20px;
+  padding: 16px 20px;
+  background: rgba(197, 184, 212, 0.1);
+  border-left: 3px solid var(--purple-soft);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.82rem;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.disclaimer strong { color: var(--text); }
+
+/* Affirmations */
+.affirmation {
+  text-align: center;
+  padding: 28px 24px;
+  margin: 40px 0;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--purple-deep);
+  position: relative;
+}
+
+.affirmation::before,
+.affirmation::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 1px;
+  background: var(--border);
+}
+.affirmation::before { top: 0; }
+.affirmation::after { bottom: 0; }
+
+/* Sections */
+.section {
+  margin-bottom: 20px;
+}
+
+.section-title {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 500;
+  font-size: 1.5rem;
+  color: var(--black-soft);
+  margin-bottom: 8px;
+}
+
+.section-desc {
+  font-size: 0.88rem;
+  color: var(--text-light);
+  margin-bottom: 32px;
+}
+
+/* Questions */
+.question-block {
+  margin-bottom: 36px;
+  padding: 24px 28px;
+  background: rgba(255,255,255,0.7);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: border-color 0.3s ease;
+}
+
+.question-block:hover {
+  border-color: rgba(142, 122, 171, 0.32);
+}
+
+.question-label {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+
+.question-hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-light);
+  font-weight: 400;
+  font-style: italic;
+  margin-top: 4px;
+}
+
+/* Multiple choice */
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.choice-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  font-size: 0.9rem;
+}
+
+.choice-label:hover {
+  background: rgba(184, 207, 196, 0.12);
+  border-color: var(--green-soft);
+}
+
+.choice-label input[type="radio"] {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--purple-soft);
+  border-radius: 50%;
+  flex-shrink: 0;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.choice-label input[type="radio"]:checked {
+  border-color: var(--purple-deep);
+  background: var(--purple-deep);
+}
+
+.choice-label input[type="radio"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  background: white;
+  border-radius: 50%;
+}
+
+.choice-label:has(input:checked) {
+  background: rgba(197, 184, 212, 0.12);
+  border-color: var(--purple-soft);
+}
+
+/* Sliders */
+.slider-container {
+  padding: 4px 0;
+}
+
+.slider-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-bottom: 12px;
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, var(--pink-soft), var(--purple-soft), var(--green-soft));
+  outline: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+
+input[type="range"]:hover { opacity: 1; }
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2px solid var(--purple-deep);
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+  transition: transform 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 2px solid var(--purple-deep);
+  cursor: pointer;
+}
+
+.slider-value {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--purple-deep);
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+/* Textarea */
+textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 0.9rem;
+  color: var(--text);
+  background: rgba(255,255,255,0.5);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.3s ease;
+  line-height: 1.6;
+}
+
+textarea:focus {
+  border-color: var(--green-soft);
+}
+
+textarea::placeholder {
+  color: rgba(107, 96, 104, 0.45);
+  font-style: italic;
+}
+
+/* Submit */
+.submit-area {
+  text-align: center;
+  margin-top: 52px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+}
+
+.submit-area p {
+  font-size: 0.88rem;
+  color: var(--text-light);
+  margin-bottom: 24px;
+  font-style: italic;
+}
+
+.submit-btn {
+  display: inline-block;
+  padding: 14px 48px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--white);
+  background: linear-gradient(135deg, var(--purple-deep), var(--pink-deep));
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.02em;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(142, 122, 171, 0.3);
+}
+
+.submit-btn:active {
+  transform: translateY(0);
+}
+
+/* Crisis box */
+.crisis-box {
+  margin-top: 48px;
+  padding: 20px 24px;
+  background: rgba(232, 196, 200, 0.12);
+  border: 1px solid rgba(201, 146, 154, 0.25);
+  border-radius: 10px;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-light);
+  line-height: 1.7;
+}
+
+.crisis-box strong {
+  color: var(--pink-deep);
+  display: block;
+  margin-bottom: 6px;
+  font-size: 0.9rem;
+}
+
+.crisis-box a {
+  color: var(--purple-deep);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Progress bar */
+.progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--pink-soft), var(--purple-soft), var(--green-soft));
+  z-index: 100;
+  transition: width 0.3s ease;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .container { padding: 40px 18px 80px; }
+  .header h1 { font-size: 2.1rem; }
+  .question-block { padding: 18px 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<div class="container">
+  <div class="header">
+    <h1>Gentle Check-In</h1>
+    <p>A quiet moment to sit with yourself. There are no right or wrong answers — only honest ones.</p>
+    <div class="disclaimer">
+      <strong>A note before you begin.</strong>
+      This is a personal reflection tool, not a clinical assessment. It cannot diagnose or replace professional care. If you are in crisis or experiencing thoughts of suicide, please reach out to the <strong>988 Suicide & Crisis Lifeline</strong> (call or text 988) or the <strong>Crisis Text Line</strong> (text HOME to 741741). You deserve support.
+    </div>
+  </div>
+
+  <form id="checkinForm">
+
+    <!-- SECTION: Emotional Baseline -->
+    <div class="section">
+      <h2 class="section-title">How You're Feeling</h2>
+      <p class="section-desc">Let's start with the basics. Just notice — don't judge.</p>
+
+      <div class="question-block">
+        <label class="question-label">
+          Right now, in this moment, how would you describe your overall emotional state?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_emotional_state" value="I feel steady and okay"> I feel steady and okay</label>
+          <label class="choice-label"><input type="radio" name="q_emotional_state" value="I feel low, but I'm managing"> I feel low, but I'm managing</label>
+          <label class="choice-label"><input type="radio" name="q_emotional_state" value="I feel heavy — it's been hard"> I feel heavy — it's been hard</label>
+          <label class="choice-label"><input type="radio" name="q_emotional_state" value="I feel numb or disconnected"> I feel numb or disconnected</label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          Over the past two weeks, how often have you felt a genuine sense of pleasure or interest in things you usually care about?
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>Almost never</span><span>Sometimes</span><span>Often</span></div>
+          <input type="range" name="q_pleasure" min="0" max="10" value="5" oninput="updateSliderLabel(this)">
+          <div class="slider-value">5 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          If you could describe the "weather" inside you right now, what would it be?
+          <span class="question-hint">There's no wrong answer. Just whatever comes to mind.</span>
+        </label>
+        <textarea name="q_weather" placeholder="e.g. Overcast but calm... A slow drizzle... Bright with a chance of clouds..."></textarea>
+      </div>
+    </div>
+
+    <div class="affirmation">You are allowed to take up space, even on your hardest days.</div>
+
+    <!-- SECTION: Daily Life -->
+    <div class="section">
+      <h2 class="section-title">Your Days</h2>
+      <p class="section-desc">How are the small, real things going?</p>
+
+      <div class="question-block">
+        <label class="question-label">
+          How has your sleep been recently?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_sleep" value="I've been sleeping well enough"> I've been sleeping well enough</label>
+          <label class="choice-label"><input type="radio" name="q_sleep" value="Irregular — some good nights, some bad"> Irregular — some good nights, some bad</label>
+          <label class="choice-label"><input type="radio" name="q_sleep" value="I've been sleeping too much"> I've been sleeping too much</label>
+          <label class="choice-label"><input type="radio" name="q_sleep" value="I can't sleep, or I wake up and can't go back"> I can't sleep, or I wake up and can't go back</label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          How well are you eating and taking care of basic needs like hygiene?
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>Really struggling</span><span>Getting by</span><span>Taking good care</span></div>
+          <input type="range" name="q_selfcare" min="0" max="10" value="5" oninput="updateSliderLabel(this)">
+          <div class="slider-value">5 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          How much energy do you have for the things you need to do?
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>Almost none</span><span>Some</span><span>Plenty</span></div>
+          <input type="range" name="q_energy" min="0" max="10" value="5" oninput="updateSliderLabel(this)">
+          <div class="slider-value">5 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          Is there one small thing that brought you comfort this week — even briefly?
+          <span class="question-hint">A meal, a song, a moment of quiet, a text from someone.</span>
+        </label>
+        <textarea name="q_comfort" placeholder="Even the smallest thing counts..."></textarea>
+      </div>
+    </div>
+
+    <div class="affirmation">Struggling is not failing. It's what it looks like to still be here.</div>
+
+    <!-- SECTION: Connection -->
+    <div class="section">
+      <h2 class="section-title">People & Connection</h2>
+      <p class="section-desc">We don't exist alone — even when it feels that way.</p>
+
+      <div class="question-block">
+        <label class="question-label">
+          Do you feel like there is at least one person who would notice if you were having a hard time?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_noticed" value="Yes, I feel seen by someone"> Yes, I feel seen by someone</label>
+          <label class="choice-label"><input type="radio" name="q_noticed" value="Maybe, but I'm not sure they'd know how to help"> Maybe, but I'm not sure they'd know how to help</label>
+          <label class="choice-label"><input type="radio" name="q_noticed" value="I don't think anyone would notice"> I don't think anyone would notice</label>
+          <label class="choice-label"><input type="radio" name="q_noticed" value="I've been hiding how I feel from everyone"> I've been hiding how I feel from everyone</label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          How often do you feel genuinely lonely — not just alone, but lonely?
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>Rarely</span><span>Sometimes</span><span>Most of the time</span></div>
+          <input type="range" name="q_lonely" min="0" max="10" value="5" oninput="updateSliderLabel(this)">
+          <div class="slider-value">5 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          When you're hurting, do you tend to reach out or pull away?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_reachout" value="I usually reach out to someone"> I usually reach out to someone</label>
+          <label class="choice-label"><input type="radio" name="q_reachout" value="It depends on how bad it is"> It depends on how bad it is</label>
+          <label class="choice-label"><input type="radio" name="q_reachout" value="I pull away — I don't want to be a burden"> I pull away — I don't want to be a burden</label>
+          <label class="choice-label"><input type="radio" name="q_reachout" value="I don't have anyone to reach out to"> I don't have anyone to reach out to</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="affirmation">You are not a burden. You are a person carrying a heavy thing.</div>
+
+    <!-- SECTION: Inner Landscape -->
+    <div class="section">
+      <h2 class="section-title">Your Inner World</h2>
+      <p class="section-desc">The thoughts that live underneath. Be as honest as you can — this is just for you.</p>
+
+      <div class="question-block">
+        <label class="question-label">
+          How often do you feel like things will eventually get better?
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>I can't imagine it</span><span>Sometimes</span><span>I believe it will</span></div>
+          <input type="range" name="q_hope" min="0" max="10" value="5" oninput="updateSliderLabel(this)">
+          <div class="slider-value">5 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          Do you feel like you matter — that your being here makes a difference to something or someone?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_matter" value="Yes, I can feel that"> Yes, I can feel that</label>
+          <label class="choice-label"><input type="radio" name="q_matter" value="Intellectually yes, but I don't always feel it"> Intellectually yes, but I don't always feel it</label>
+          <label class="choice-label"><input type="radio" name="q_matter" value="I'm not sure anymore"> I'm not sure anymore</label>
+          <label class="choice-label"><input type="radio" name="q_matter" value="I feel like I don't matter"> I feel like I don't matter</label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          How loud is your inner critic right now? The voice that says you're not enough.
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>Quiet</span><span>Present</span><span>Overwhelming</span></div>
+          <input type="range" name="q_critic" min="0" max="10" value="5" oninput="updateSliderLabel(this)">
+          <div class="slider-value">5 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          Is there something you've been carrying that you haven't told anyone?
+          <span class="question-hint">You don't have to share details. Even naming that it exists can help.</span>
+        </label>
+        <textarea name="q_carrying" placeholder="Only if you want to..."></textarea>
+      </div>
+    </div>
+
+    <div class="affirmation">The fact that you're reflecting at all is an act of courage.</div>
+
+    <!-- SECTION: Safety -->
+    <div class="section">
+      <h2 class="section-title">Safety & Hard Thoughts</h2>
+      <p class="section-desc">These questions are direct because you deserve honesty, not avoidance. Take your time.</p>
+
+      <div class="question-block">
+        <label class="question-label">
+          In the past two weeks, have you had thoughts that life isn't worth living, or that others would be better off without you?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_worth_living" value="No, I haven't had those thoughts"> No, I haven't had those thoughts</label>
+          <label class="choice-label"><input type="radio" name="q_worth_living" value="Fleeting thoughts, but I don't take them seriously"> Fleeting thoughts, but I don't take them seriously</label>
+          <label class="choice-label"><input type="radio" name="q_worth_living" value="Yes, more than a few times"> Yes, more than a few times</label>
+          <label class="choice-label"><input type="radio" name="q_worth_living" value="Yes, and they feel persistent or heavy"> Yes, and they feel persistent or heavy</label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          Have you had thoughts of hurting yourself or ending your life?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_selfharm" value="No"> No</label>
+          <label class="choice-label"><input type="radio" name="q_selfharm" value="I've had passing thoughts but no intention"> I've had passing thoughts but no intention</label>
+          <label class="choice-label"><input type="radio" name="q_selfharm" value="I've thought about it with some seriousness"> I've thought about it with some seriousness</label>
+          <label class="choice-label"><input type="radio" name="q_selfharm" value="I've thought about specific ways or plans"> I've thought about specific ways or plans</label>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          Right now, how safe do you feel with yourself?
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>Not safe</span><span>Uncertain</span><span>I'm safe</span></div>
+          <input type="range" name="q_safety" min="0" max="10" value="7" oninput="updateSliderLabel(this)">
+          <div class="slider-value">7 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          If things got really hard tonight, do you have someone you could call or a place you could go?
+        </label>
+        <div class="choices">
+          <label class="choice-label"><input type="radio" name="q_safetynet" value="Yes — I know who I'd contact"> Yes — I know who I'd contact</label>
+          <label class="choice-label"><input type="radio" name="q_safetynet" value="I think so, but I haven't tested it"> I think so, but I haven't tested it</label>
+          <label class="choice-label"><input type="radio" name="q_safetynet" value="I'm not sure"> I'm not sure</label>
+          <label class="choice-label"><input type="radio" name="q_safetynet" value="No, I don't think I have anyone"> No, I don't think I have anyone</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="affirmation">Having hard thoughts doesn't make you broken. It makes you human and honest.</div>
+
+    <!-- SECTION: Looking Forward -->
+    <div class="section">
+      <h2 class="section-title">Looking Ahead</h2>
+      <p class="section-desc">Not with pressure — just with curiosity.</p>
+
+      <div class="question-block">
+        <label class="question-label">
+          Is there something coming up — even something small — that you're looking forward to?
+        </label>
+        <textarea name="q_forward" placeholder="A show, a meal, a visit, a day off, even just sleeping in..."></textarea>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          What is one kind thing you could do for yourself in the next 24 hours?
+          <span class="question-hint">Not what you should do. What would actually feel kind.</span>
+        </label>
+        <textarea name="q_kindness" placeholder="Be specific if you can — specificity makes it more real..."></textarea>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          How open do you feel to accepting help right now — from anyone?
+        </label>
+        <div class="slider-container">
+          <div class="slider-labels"><span>Not at all</span><span>Somewhat</span><span>Very open</span></div>
+          <input type="range" name="q_opentohelp" min="0" max="10" value="5" oninput="updateSliderLabel(this)">
+          <div class="slider-value">5 / 10</div>
+        </div>
+      </div>
+
+      <div class="question-block">
+        <label class="question-label">
+          Is there anything else on your heart right now that these questions didn't touch?
+        </label>
+        <textarea name="q_anything_else" placeholder="Whatever it is, it's welcome here..."></textarea>
+      </div>
+    </div>
+
+    <div class="submit-area">
+      <p>When you're ready, you can save a copy of your answers as a gentle record for yourself.</p>
+      <button type="button" class="submit-btn" onclick="exportResults()">Save My Check-In</button>
+    </div>
+
+    <div class="crisis-box">
+      <strong>If you need someone right now</strong>
+      <strong>988 Suicide & Crisis Lifeline</strong> — call or text <strong>988</strong>, available 24/7<br>
+      <strong>Crisis Text Line</strong> — text <strong>HOME</strong> to <strong>741741</strong><br>
+      <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a> — international crisis lines
+    </div>
+  </form>
+</div>
+
+<script>
+function updateSliderLabel(el) {
+  const val = el.value;
+  el.parentElement.querySelector('.slider-value').textContent = val + ' / 10';
+}
+
+// Progress bar
+function updateProgress() {
+  const form = document.getElementById('checkinForm');
+  const allQ = form.querySelectorAll('input[type="radio"], input[type="range"], textarea');
+  let groups = {};
+  let answered = 0;
+  let total = 0;
+
+  allQ.forEach(el => {
+    if (el.type === 'radio') {
+      const name = el.name;
+      if (!groups[name]) { groups[name] = false; total++; }
+      if (el.checked) groups[name] = true;
+    } else if (el.type === 'range') {
+      // always counts
+    } else if (el.tagName === 'TEXTAREA') {
+      total++;
+      if (el.value.trim()) answered++;
+    }
+  });
+
+  for (let g in groups) { if (groups[g]) answered++; }
+  // Add sliders as always-answered
+  const sliders = form.querySelectorAll('input[type="range"]');
+  total += sliders.length;
+  answered += sliders.length;
+
+  const pct = total > 0 ? (answered / total) * 100 : 0;
+  document.getElementById('progressBar').style.width = pct + '%';
+}
+
+document.addEventListener('input', updateProgress);
+document.addEventListener('change', updateProgress);
+updateProgress();
+
+function gatherAnswers() {
+  const form = document.getElementById('checkinForm');
+  const data = [];
+
+  const questions = [
+    { name: 'q_emotional_state', label: 'Overall emotional state', type: 'radio' },
+    { name: 'q_pleasure', label: 'Sense of pleasure/interest (past 2 weeks)', type: 'range' },
+    { name: 'q_weather', label: 'Inner weather right now', type: 'text' },
+    { name: 'q_sleep', label: 'Sleep quality', type: 'radio' },
+    { name: 'q_selfcare', label: 'Self-care & basic needs', type: 'range' },
+    { name: 'q_energy', label: 'Energy level', type: 'range' },
+    { name: 'q_comfort', label: 'Something that brought comfort this week', type: 'text' },
+    { name: 'q_noticed', label: 'Feeling seen by someone', type: 'radio' },
+    { name: 'q_lonely', label: 'Loneliness', type: 'range' },
+    { name: 'q_reachout', label: 'Tendency when hurting', type: 'radio' },
+    { name: 'q_hope', label: 'Sense that things will get better', type: 'range' },
+    { name: 'q_matter', label: 'Feeling that you matter', type: 'radio' },
+    { name: 'q_critic', label: 'Inner critic volume', type: 'range' },
+    { name: 'q_carrying', label: 'Something you\'ve been carrying', type: 'text' },
+    { name: 'q_worth_living', label: 'Thoughts about life\'s worth', type: 'radio' },
+    { name: 'q_selfharm', label: 'Thoughts of self-harm', type: 'radio' },
+    { name: 'q_safety', label: 'Feeling safe with yourself', type: 'range' },
+    { name: 'q_safetynet', label: 'Safety net if things got hard', type: 'radio' },
+    { name: 'q_forward', label: 'Something to look forward to', type: 'text' },
+    { name: 'q_kindness', label: 'One kind thing for yourself', type: 'text' },
+    { name: 'q_opentohelp', label: 'Openness to accepting help', type: 'range' },
+    { name: 'q_anything_else', label: 'Anything else on your heart', type: 'text' },
+  ];
+
+  const sections = [
+    { title: 'How You\'re Feeling', items: ['q_emotional_state', 'q_pleasure', 'q_weather'] },
+    { title: 'Your Days', items: ['q_sleep', 'q_selfcare', 'q_energy', 'q_comfort'] },
+    { title: 'People & Connection', items: ['q_noticed', 'q_lonely', 'q_reachout'] },
+    { title: 'Your Inner World', items: ['q_hope', 'q_matter', 'q_critic', 'q_carrying'] },
+    { title: 'Safety & Hard Thoughts', items: ['q_worth_living', 'q_selfharm', 'q_safety', 'q_safetynet'] },
+    { title: 'Looking Ahead', items: ['q_forward', 'q_kindness', 'q_opentohelp', 'q_anything_else'] },
+  ];
+
+  const answers = {};
+  questions.forEach(q => {
+    if (q.type === 'radio') {
+      const checked = form.querySelector(`input[name="${q.name}"]:checked`);
+      answers[q.name] = { label: q.label, value: checked ? checked.value : '(not answered)', type: 'choice' };
+    } else if (q.type === 'range') {
+      const el = form.querySelector(`input[name="${q.name}"]`);
+      answers[q.name] = { label: q.label, value: el ? el.value + ' / 10' : '5 / 10', type: 'slider', num: el ? parseInt(el.value) : 5 };
+    } else {
+      const el = form.querySelector(`[name="${q.name}"]`);
+      answers[q.name] = { label: q.label, value: el && el.value.trim() ? el.value.trim() : '(not answered)', type: 'text' };
+    }
+  });
+
+  return { sections, answers };
+}
+
+function exportResults() {
+  const { sections, answers } = gatherAnswers();
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+  let sectionsHTML = '';
+  const affirmations = [
+    'You showed up for yourself today. That matters.',
+    'Wherever you are is a valid place to be.',
+    'Honesty with yourself is the beginning of healing.',
+    'You don\'t have to have it all figured out.',
+    'Your pain does not define your worth.',
+    'Being here — reading this — is enough for right now.',
+  ];
+
+  sections.forEach((sec, i) => {
+    let itemsHTML = '';
+    sec.items.forEach(name => {
+      const a = answers[name];
+      if (!a) return;
+      let valueHTML = '';
+      if (a.type === 'slider') {
+        const n = a.num || 5;
+        const pct = n * 10;
+        valueHTML = `
+          <div class="slider-bar-wrap">
+            <div class="slider-bar" style="width:${pct}%"></div>
+          </div>
+          <span class="slider-num">${a.value}</span>`;
+      } else if (a.type === 'text') {
+        valueHTML = `<div class="text-answer">${escapeHtml(a.value)}</div>`;
+      } else {
+        valueHTML = `<div class="choice-answer">${escapeHtml(a.value)}</div>`;
+      }
+      itemsHTML += `
+        <div class="result-item">
+          <div class="result-label">${escapeHtml(a.label)}</div>
+          <div class="result-value">${valueHTML}</div>
+        </div>`;
+    });
+
+    sectionsHTML += `
+      <div class="result-section">
+        <h2>${escapeHtml(sec.title)}</h2>
+        ${itemsHTML}
+      </div>
+      <div class="affirmation-out">${affirmations[i] || ''}</div>`;
+  });
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Check-In — ${dateStr}</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Lora', Georgia, serif;
+  background: #faf8f6;
+  color: #3a3438;
+  line-height: 1.7;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(232,196,200,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 85% 75%, rgba(184,207,196,0.15) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 50%, rgba(197,184,212,0.1) 0%, transparent 60%);
+  pointer-events:none; z-index:0;
+}
+.wrap { position:relative; z-index:1; max-width:660px; margin:0 auto; padding:60px 28px 100px; }
+.header-out { text-align:center; margin-bottom:48px; padding-bottom:36px; border-bottom:1px solid rgba(142,122,171,0.18); }
+.header-out h1 { font-family:'Cormorant Garamond',Georgia,serif; font-weight:300; font-size:2.5rem; color:#2d2a2e; letter-spacing:-0.02em; margin-bottom:8px; }
+.header-out .date { font-size:0.92rem; color:#6b6068; font-style:italic; }
+.header-out .time { font-size:0.82rem; color:#8e7aab; margin-top:4px; }
+.result-section { margin-bottom:12px; }
+.result-section h2 {
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-weight:500; font-size:1.4rem; color:#2d2a2e;
+  margin-bottom:20px; padding-bottom:8px;
+  border-bottom:1px solid rgba(142,122,171,0.15);
+}
+.result-item { margin-bottom:20px; padding:16px 20px; background:rgba(255,255,255,0.7); border:1px solid rgba(142,122,171,0.14); border-radius:10px; }
+.result-label { font-size:0.82rem; color:#6b6068; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:8px; }
+.result-value { font-size:0.95rem; }
+.slider-bar-wrap { height:6px; background:rgba(197,184,212,0.2); border-radius:3px; margin-bottom:4px; overflow:hidden; }
+.slider-bar { height:100%; border-radius:3px; background:linear-gradient(90deg,#e8c4c8,#c5b8d4,#b8cfc4); }
+.slider-num { font-size:0.82rem; color:#8e7aab; font-weight:500; }
+.text-answer { font-style:italic; color:#3a3438; white-space:pre-wrap; }
+.choice-answer { color:#3a3438; }
+.affirmation-out {
+  text-align:center; padding:24px 20px; margin:28px 0 36px;
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-size:1.2rem; font-style:italic; color:#8e7aab;
+  position:relative;
+}
+.affirmation-out::before, .affirmation-out::after {
+  content:''; position:absolute; left:50%; transform:translateX(-50%); width:36px; height:1px; background:rgba(142,122,171,0.2);
+}
+.affirmation-out::before { top:0; }
+.affirmation-out::after { bottom:0; }
+.crisis-out {
+  margin-top:48px; padding:20px 24px; background:rgba(232,196,200,0.12);
+  border:1px solid rgba(201,146,154,0.25); border-radius:10px;
+  text-align:center; font-size:0.85rem; color:#6b6068; line-height:1.7;
+}
+.crisis-out strong { color:#c9929a; display:block; margin-bottom:6px; font-size:0.9rem; }
+.crisis-out a { color:#8e7aab; text-decoration:underline; text-underline-offset:3px; }
+.closing {
+  text-align:center; margin-top:48px; padding-top:32px;
+  border-top:1px solid rgba(142,122,171,0.18);
+  font-family:'Cormorant Garamond',Georgia,serif;
+  font-size:1.3rem; font-weight:400; color:#2d2a2e;
+}
+.closing p { margin-bottom:8px; }
+.closing .small { font-family:'Lora',Georgia,serif; font-size:0.82rem; color:#6b6068; font-style:italic; }
+
+/* Fireworks canvas */
+#fireworksCanvas {
+  position:fixed; inset:0; z-index:1000; pointer-events:none;
+}
+</style>
+</head>
+<body>
+<canvas id="fireworksCanvas"></canvas>
+<div class="wrap">
+  <div class="header-out">
+    <h1>Your Check-In</h1>
+    <div class="date">${escapeHtml(dateStr)}</div>
+    <div class="time">${escapeHtml(timeStr)}</div>
+  </div>
+  ${sectionsHTML}
+  <div class="closing">
+    <p>Thank you for being honest with yourself.</p>
+    <p class="small">This record is yours. Keep it, revisit it, or let it go — whatever serves you.</p>
+  </div>
+  <div class="crisis-out">
+    <strong>If you ever need someone</strong>
+    <strong>988 Suicide &amp; Crisis Lifeline</strong> — call or text <strong>988</strong><br>
+    <strong>Crisis Text Line</strong> — text <strong>HOME</strong> to <strong>741741</strong><br>
+    <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a>
+  </div>
+</div>
+<script>
+// Gentle fireworks after 1 second
+setTimeout(() => {
+  const canvas = document.getElementById('fireworksCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H;
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  const colors = [
+    'rgba(232,196,200,A)', 'rgba(197,184,212,A)', 'rgba(184,207,196,A)',
+    'rgba(201,146,154,A)', 'rgba(142,122,171,A)', 'rgba(125,164,148,A)',
+    'rgba(255,255,255,A)'
+  ];
+
+  class Particle {
+    constructor(x, y, color) {
+      this.x = x; this.y = y;
+      this.color = color;
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 3.5 + 1;
+      this.vx = Math.cos(angle) * speed;
+      this.vy = Math.sin(angle) * speed;
+      this.alpha = 1;
+      this.decay = Math.random() * 0.015 + 0.008;
+      this.radius = Math.random() * 2.5 + 0.8;
+    }
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+      this.vy += 0.025;
+      this.vx *= 0.99;
+      this.alpha -= this.decay;
+    }
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+      ctx.fillStyle = this.color.replace('A', this.alpha);
+      ctx.fill();
+    }
+  }
+
+  let particles = [];
+  let bursts = 0;
+  const maxBursts = 7;
+
+  function burst() {
+    if (bursts >= maxBursts) return;
+    const x = W * 0.2 + Math.random() * W * 0.6;
+    const y = H * 0.15 + Math.random() * H * 0.45;
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    for (let i = 0; i < 50; i++) {
+      particles.push(new Particle(x, y, color));
+    }
+    bursts++;
+    if (bursts < maxBursts) {
+      setTimeout(burst, 400 + Math.random() * 500);
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    particles = particles.filter(p => p.alpha > 0);
+    particles.forEach(p => { p.update(); p.draw(); });
+    if (particles.length > 0 || bursts < maxBursts) {
+      requestAnimationFrame(animate);
+    } else {
+      canvas.remove();
+    }
+  }
+
+  burst();
+  animate();
+}, 1000);
+<\/script>
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `check-in-${now.toISOString().slice(0,10)}.html`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+</script>
+</body>
+</html>
