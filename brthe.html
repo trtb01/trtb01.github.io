@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Breathe — ASCII Fluid Meditation</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────────────────── */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    /* Default "Ember" palette */
+    --bg: #0a0a0b;
+    --fg: #c8c8c8;
+    --accent: #ff6b35;
+    --accent2: #ff9f1c;
+    --dim: #3a3a3c;
+    --panel-bg: rgba(18, 18, 20, 0.92);
+    --panel-border: rgba(255, 107, 53, 0.15);
+    --glow: rgba(255, 107, 53, 0.06);
+
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', monospace;
+    --font-display: 'JetBrains Mono', monospace;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-mono);
+    cursor: none;
+    user-select: none;
+  }
+
+  /* ── Custom cursor ────────────────────────────────────────── */
+  #cursor {
+    position: fixed;
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10000;
+    mix-blend-mode: screen;
+    transition: transform 0.08s ease-out, opacity 0.3s;
+    opacity: 0;
+  }
+  body:hover #cursor { opacity: 1; }
+
+  /* ── Canvas layer ─────────────────────────────────────────── */
+  #fluid-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+  }
+
+  /* ── Breath ring overlay ──────────────────────────────────── */
+  #breath-ring {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.12;
+    transition: opacity 0.6s;
+  }
+
+  /* ── HUD overlay ──────────────────────────────────────────── */
+  #hud {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 5;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 32px;
+  }
+
+  .hud-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .hud-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+
+  .hud-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--dim);
+    line-height: 1.8;
+  }
+
+  .hud-value {
+    color: var(--accent);
+    font-size: 11px;
+  }
+
+  .hud-title {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  /* ── Breath phase indicator ───────────────────────────────── */
+  #phase-label {
+    position: fixed;
+    bottom: 50%;
+    left: 50%;
+    transform: translate(-50%, 80px);
+    z-index: 6;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    color: var(--accent);
+    opacity: 0.5;
+    pointer-events: none;
+    transition: opacity 0.8s;
+  }
+
+  /* ── Timer display ────────────────────────────────────────── */
+  #timer-display {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 6;
+    font-size: 42px;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    color: var(--fg);
+    opacity: 0.08;
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Progress bar ─────────────────────────────────────────── */
+  #progress-track {
+    position: fixed;
+    bottom: 0; left: 0;
+    width: 100%; height: 2px;
+    background: var(--dim);
+    z-index: 7;
+    opacity: 0.3;
+  }
+  #progress-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: width 0.5s linear;
+  }
+
+  /* ── Help panel ───────────────────────────────────────────── */
+  #help-panel {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 100;
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    padding: 36px 44px;
+    max-width: 560px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 0 80px var(--glow);
+  }
+  #help-panel.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #help-panel h2 {
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 24px;
+    font-weight: 400;
+  }
+
+  .help-section {
+    margin-bottom: 20px;
+  }
+
+  .help-section h3 {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 10px;
+    font-weight: 400;
+  }
+
+  .help-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+    font-size: 11px;
+    line-height: 1.6;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+  }
+
+  .help-key {
+    color: var(--accent);
+    min-width: 80px;
+    font-size: 10px;
+    letter-spacing: 0.05em;
+  }
+
+  .help-desc {
+    color: var(--fg);
+    opacity: 0.6;
+    text-align: right;
+    font-size: 10px;
+  }
+
+  /* ── Settings toast ───────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 90;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--panel-bg);
+    border: 1px solid var(--panel-border);
+    padding: 10px 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+    backdrop-filter: blur(12px);
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── Start screen ─────────────────────────────────────────── */
+  #start-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    transition: opacity 0.8s ease;
+  }
+  #start-screen.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #start-screen h1 {
+    font-size: 13px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--fg);
+    font-weight: 300;
+    margin-bottom: 40px;
+  }
+
+  .duration-options {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 48px;
+  }
+
+  .dur-btn {
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    padding: 12px 24px;
+    cursor: pointer;
+    transition: all 0.25s;
+    pointer-events: auto;
+  }
+  .dur-btn:hover, .dur-btn.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    box-shadow: 0 0 20px var(--glow);
+  }
+
+  .start-hint {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-top: 8px;
+  }
+
+  /* ── Completion screen ────────────────────────────────────── */
+  #complete-screen {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1.2s ease;
+  }
+  #complete-screen.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #complete-screen h1 {
+    font-size: 12px;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    color: var(--fg);
+    font-weight: 300;
+    margin-bottom: 16px;
+  }
+
+  #complete-screen p {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: var(--dim);
+    margin-bottom: 32px;
+  }
+
+  .restart-btn {
+    background: transparent;
+    border: 1px solid var(--dim);
+    color: var(--fg);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    padding: 10px 28px;
+    cursor: pointer;
+    transition: all 0.25s;
+  }
+  .restart-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── Scrollbar hide ───────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--dim); border-radius: 2px; }
+
+  /* ── Font loading ─────────────────────────────────────────── */
+  @font-face {
+    font-family: 'JetBrains Mono';
+    src: local('JetBrains Mono');
+  }
+</style>
+</head>
+<body>
+
+<!-- Custom cursor -->
+<div id="cursor"></div>
+
+<!-- ASCII fluid canvas -->
+<canvas id="fluid-canvas"></canvas>
+
+<!-- Breath ring SVG -->
+<svg id="breath-ring" width="300" height="300" viewBox="0 0 300 300">
+  <circle cx="150" cy="150" r="100" fill="none" stroke="var(--accent)" stroke-width="0.5" opacity="0.4" id="ring-inner"/>
+  <circle cx="150" cy="150" r="120" fill="none" stroke="var(--accent)" stroke-width="0.3" opacity="0.2" id="ring-outer"/>
+</svg>
+
+<!-- Timer -->
+<div id="timer-display">00:00</div>
+
+<!-- Phase label -->
+<div id="phase-label">inhale</div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hud-top">
+    <div>
+      <div class="hud-label">Breathe</div>
+      <div class="hud-label">In <span class="hud-value" id="hud-in">4.0s</span> · Out <span class="hud-value" id="hud-out">6.0s</span></div>
+    </div>
+    <div style="text-align:right">
+      <div class="hud-title">Breathe</div>
+      <div class="hud-label"><span class="hud-value" id="hud-scheme">Ember</span></div>
+    </div>
+  </div>
+  <div class="hud-bottom">
+    <div>
+      <div class="hud-label">Intensity <span class="hud-value" id="hud-intensity">5</span></div>
+      <div class="hud-label">Char set <span class="hud-value" id="hud-charset">Dense</span></div>
+    </div>
+    <div style="text-align:right">
+      <div class="hud-label"><span class="hud-value" id="hud-session">5:00</span></div>
+      <div class="hud-label">? for help</div>
+    </div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div id="progress-track"><div id="progress-fill"></div></div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Start screen -->
+<div id="start-screen">
+  <h1>Breathe</h1>
+  <div class="duration-options">
+    <button class="dur-btn selected" data-dur="5">5 min</button>
+    <button class="dur-btn" data-dur="10">10 min</button>
+    <button class="dur-btn" data-dur="15">15 min</button>
+    <button class="dur-btn" data-dur="30">30 min</button>
+  </div>
+  <button class="dur-btn" id="begin-btn" style="border-color: var(--accent); color: var(--accent);">Begin</button>
+  <div class="start-hint">or press Space / Enter</div>
+</div>
+
+<!-- Completion screen -->
+<div id="complete-screen">
+  <h1>Session Complete</h1>
+  <p id="complete-msg">You breathed for 5 minutes</p>
+  <button class="restart-btn" id="restart-btn">Begin Again</button>
+</div>
+
+<!-- Help panel -->
+<div id="help-panel">
+  <h2>Controls</h2>
+
+  <div class="help-section">
+    <h3>Session</h3>
+    <div class="help-row"><span class="help-key">Space</span><span class="help-desc">Pause / Resume</span></div>
+    <div class="help-row"><span class="help-key">Escape</span><span class="help-desc">End session / Close panel</span></div>
+    <div class="help-row"><span class="help-key">?</span><span class="help-desc">Toggle this help</span></div>
+  </div>
+
+  <div class="help-section">
+    <h3>Breath Timing</h3>
+    <div class="help-row"><span class="help-key">W / S</span><span class="help-desc">Inhale speed ± 0.5s</span></div>
+    <div class="help-row"><span class="help-key">↑ / ↓</span><span class="help-desc">Exhale speed ± 0.5s</span></div>
+    <div class="help-row"><span class="help-key">H</span><span class="help-desc">Toggle hold between breaths</span></div>
+    <div class="help-row"><span class="help-key">R</span><span class="help-desc">Reset timing to defaults</span></div>
+  </div>
+
+  <div class="help-section">
+    <h3>Visuals</h3>
+    <div class="help-row"><span class="help-key">1–9</span><span class="help-desc">Fluid intensity level</span></div>
+    <div class="help-row"><span class="help-key">C</span><span class="help-desc">Cycle color scheme</span></div>
+    <div class="help-row"><span class="help-key">F</span><span class="help-desc">Cycle character set</span></div>
+    <div class="help-row"><span class="help-key">G</span><span class="help-desc">Toggle glow effect</span></div>
+    <div class="help-row"><span class="help-key">V</span><span class="help-desc">Toggle HUD visibility</span></div>
+    <div class="help-row"><span class="help-key">B</span><span class="help-desc">Toggle breath ring</span></div>
+    <div class="help-row"><span class="help-key">T</span><span class="help-desc">Toggle timer visibility</span></div>
+  </div>
+
+  <div class="help-section">
+    <h3>Presets</h3>
+    <div class="help-row"><span class="help-key">P</span><span class="help-desc">Cycle breath presets (4-7-8, box, etc.)</span></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// BREATHE — ASCII Fluid Meditation
+// A single-file webapp for focused breathing sessions
+// ═══════════════════════════════════════════════════════════════
+
+(() => {
+  'use strict';
+
+  // ── Color schemes ──────────────────────────────────────────
+  const SCHEMES = [
+    {
+      name: 'Ember',
+      bg: '#0a0a0b', fg: '#c8c8c8',
+      accent: '#ff6b35', accent2: '#ff9f1c',
+      dim: '#3a3a3c',
+      colors: ['#1a0800', '#3d1200', '#6b2b00', '#a04400', '#d45e15', '#ff6b35', '#ff9f1c', '#ffcc66', '#ffe6aa']
+    },
+    {
+      name: 'Ocean',
+      bg: '#060b10', fg: '#b8c8d8',
+      accent: '#4ea8de', accent2: '#80c8f0',
+      dim: '#2a3540',
+      colors: ['#040810', '#0a1828', '#123050', '#1a4878', '#2270a8', '#4ea8de', '#80c8f0', '#a8dcff', '#d0ecff']
+    },
+    {
+      name: 'Moss',
+      bg: '#080b08', fg: '#b8c8b8',
+      accent: '#6bba62', accent2: '#a0d890',
+      dim: '#2a3528',
+      colors: ['#040804', '#0a180a', '#184018', '#286828', '#3a9038', '#6bba62', '#a0d890', '#c0eab8', '#dff5d8']
+    },
+    {
+      name: 'Violet',
+      bg: '#0a080e', fg: '#c8b8d8',
+      accent: '#a855f7', accent2: '#c084fc',
+      dim: '#302840',
+      colors: ['#0a0410', '#180a28', '#301850', '#502888', '#7838b8', '#a855f7', '#c084fc', '#d8a8ff', '#ecd0ff']
+    },
+    {
+      name: 'Bone',
+      bg: '#0e0e0c', fg: '#d8d4c8',
+      accent: '#c8b898', accent2: '#e0d4b8',
+      dim: '#3a3830',
+      colors: ['#18160e', '#282418', '#403828', '#685838', '#907850', '#c8b898', '#dcd0b0', '#e8e0c8', '#f4f0e0']
+    },
+    {
+      name: 'Blood Moon',
+      bg: '#0b0608', fg: '#d8c0c0',
+      accent: '#dc2626', accent2: '#f87171',
+      dim: '#3a2028',
+      colors: ['#100408', '#280810', '#500e18', '#781828', '#a82030', '#dc2626', '#f87171', '#fca8a8', '#fdd0d0']
+    },
+    {
+      name: 'Cyan',
+      bg: '#060c0c', fg: '#b8d8d8',
+      accent: '#22d3ee', accent2: '#67e8f9',
+      dim: '#1a3838',
+      colors: ['#041010', '#082020', '#0e3838', '#145858', '#1a7878', '#22d3ee', '#67e8f9', '#a0f0ff', '#d0f8ff']
+    },
+    {
+      name: 'Mono',
+      bg: '#0a0a0a', fg: '#c0c0c0',
+      accent: '#ffffff', accent2: '#e0e0e0',
+      dim: '#333333',
+      colors: ['#111111', '#222222', '#383838', '#505050', '#707070', '#909090', '#b0b0b0', '#d0d0d0', '#f0f0f0']
+    }
+  ];
+
+  // ── Character sets for the fluid ───────────────────────────
+  const CHARSETS = [
+    { name: 'Dense',  chars: ' .·:;+=xX#@' },
+    { name: 'Dots',   chars: ' ·∘○◎●◉⬤' },
+    { name: 'Blocks', chars: ' ░▒▓█' },
+    { name: 'Braille',chars: ' ⠁⠃⠇⡇⡷⣷⣿' },
+    { name: 'Kanji',  chars: ' ·∴※❖◆▣◼⬛' },
+    { name: 'Minimal',chars: ' ._-~:;!#' },
+    { name: 'Waves',  chars: ' ~≈∿⌇⌁⚡' },
+  ];
+
+  // ── Breath presets ─────────────────────────────────────────
+  const PRESETS = [
+    { name: 'Relaxed',     inhale: 4.0, hold1: 0, exhale: 6.0, hold2: 0 },
+    { name: '4-7-8',       inhale: 4.0, hold1: 7, exhale: 8.0, hold2: 0 },
+    { name: 'Box',         inhale: 4.0, hold1: 4, exhale: 4.0, hold2: 4 },
+    { name: 'Calm',        inhale: 5.0, hold1: 0, exhale: 8.0, hold2: 0 },
+    { name: 'Energize',    inhale: 2.0, hold1: 0, exhale: 2.0, hold2: 0 },
+    { name: 'Deep',        inhale: 6.0, hold1: 2, exhale: 10.0, hold2: 2 },
+  ];
+
+  // ── State ──────────────────────────────────────────────────
+  const state = {
+    // Session
+    running: false,
+    paused: false,
+    duration: 5 * 60,       // seconds
+    elapsed: 0,
+    sessionStart: 0,
+
+    // Breath
+    inhale: 4.0,
+    exhale: 6.0,
+    hold1: 0,               // hold after inhale
+    hold2: 0,               // hold after exhale
+    breathPhase: 'inhale',  // inhale | hold1 | exhale | hold2
+    breathProgress: 0,      // 0..1 within current phase
+    breathCycleTime: 0,     // accumulated time in current phase
+
+    // Visuals
+    schemeIndex: 0,
+    charsetIndex: 0,
+    intensity: 5,           // 1-9
+    glowEnabled: true,
+    hudVisible: true,
+    ringVisible: true,
+    timerVisible: true,
+
+    // Preset
+    presetIndex: 0,
+
+    // Help
+    helpOpen: false,
+  };
+
+  // ── DOM refs ───────────────────────────────────────────────
+  const canvas = document.getElementById('fluid-canvas');
+  const ctx = canvas.getContext('2d');
+  const cursor = document.getElementById('cursor');
+  const toast = document.getElementById('toast');
+  const helpPanel = document.getElementById('help-panel');
+  const startScreen = document.getElementById('start-screen');
+  const completeScreen = document.getElementById('complete-screen');
+  const phaseLabel = document.getElementById('phase-label');
+  const timerDisplay = document.getElementById('timer-display');
+  const progressFill = document.getElementById('progress-fill');
+  const ringInner = document.getElementById('ring-inner');
+  const ringOuter = document.getElementById('ring-outer');
+  const breathRing = document.getElementById('breath-ring');
+
+  // ── Canvas sizing ──────────────────────────────────────────
+  // We render ASCII characters on the canvas for maximum performance.
+  // Each "cell" is a single character; we compute a grid that fills the viewport.
+  let cols, rows, cellW, cellH;
+  const FONT_SIZE = 14;
+  const LINE_HEIGHT = 16;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    cellW = FONT_SIZE * 0.6;  // monospace chars are ~60% width of height
+    cellH = LINE_HEIGHT;
+    cols = Math.ceil(canvas.width / cellW);
+    rows = Math.ceil(canvas.height / cellH);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ── Cursor tracking ────────────────────────────────────────
+  let mouseX = -100, mouseY = -100;
+  document.addEventListener('mousemove', e => {
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+    cursor.style.left = e.clientX - 3 + 'px';
+    cursor.style.top = e.clientY - 3 + 'px';
+  });
+
+  // ── Toast system ───────────────────────────────────────────
+  let toastTimer = null;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
+  }
+
+  // ── Apply color scheme ─────────────────────────────────────
+  function applyScheme(idx) {
+    const s = SCHEMES[idx];
+    const root = document.documentElement.style;
+    root.setProperty('--bg', s.bg);
+    root.setProperty('--fg', s.fg);
+    root.setProperty('--accent', s.accent);
+    root.setProperty('--accent2', s.accent2);
+    root.setProperty('--dim', s.dim);
+    root.setProperty('--panel-bg', `rgba(${hexToRgb(s.bg)}, 0.92)`);
+    root.setProperty('--panel-border', `rgba(${hexToRgb(s.accent)}, 0.15)`);
+    root.setProperty('--glow', `rgba(${hexToRgb(s.accent)}, 0.06)`);
+    document.getElementById('hud-scheme').textContent = s.name;
+  }
+
+  function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1,3), 16);
+    const g = parseInt(hex.slice(3,5), 16);
+    const b = parseInt(hex.slice(5,7), 16);
+    return `${r},${g},${b}`;
+  }
+
+  // ── Update HUD ─────────────────────────────────────────────
+  function updateHUD() {
+    document.getElementById('hud-in').textContent = state.inhale.toFixed(1) + 's';
+    document.getElementById('hud-out').textContent = state.exhale.toFixed(1) + 's';
+    document.getElementById('hud-intensity').textContent = state.intensity;
+    document.getElementById('hud-charset').textContent = CHARSETS[state.charsetIndex].name;
+
+    const remaining = Math.max(0, state.duration - state.elapsed);
+    const min = Math.floor(remaining / 60);
+    const sec = Math.floor(remaining % 60);
+    document.getElementById('hud-session').textContent =
+      `${min}:${sec.toString().padStart(2, '0')}`;
+
+    // Timer display
+    timerDisplay.textContent =
+      `${min.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+
+    // Progress
+    progressFill.style.width = `${(state.elapsed / state.duration) * 100}%`;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 3D FLUID SIMULATION (simplified Navier-Stokes inspired)
+  //
+  // We use a 2D scalar field that we perturb with multiple
+  // layered sine waves, Perlin-ish noise, and breath-driven
+  // amplitude modulation. The result maps to ASCII chars.
+  // ═══════════════════════════════════════════════════════════
+
+  let time = 0;
+
+  // Simple hash-based pseudo-noise for fluid turbulence
+  function noise2d(x, y) {
+    const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+    return n - Math.floor(n);
+  }
+
+  // Smooth noise with interpolation for organic fluid look
+  function smoothNoise(x, y) {
+    const ix = Math.floor(x), iy = Math.floor(y);
+    const fx = x - ix, fy = y - iy;
+    // Smoothstep for nicer interpolation
+    const ux = fx * fx * (3 - 2 * fx);
+    const uy = fy * fy * (3 - 2 * fy);
+    const a = noise2d(ix, iy);
+    const b = noise2d(ix + 1, iy);
+    const c = noise2d(ix, iy + 1);
+    const d = noise2d(ix + 1, iy + 1);
+    return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+  }
+
+  // Fractional Brownian Motion — layered noise for rich detail
+  function fbm(x, y, octaves) {
+    let val = 0, amp = 0.5, freq = 1;
+    for (let i = 0; i < octaves; i++) {
+      val += amp * smoothNoise(x * freq, y * freq);
+      amp *= 0.5;
+      freq *= 2.0;
+    }
+    return val;
+  }
+
+  // Compute the breath expansion factor (0..1)
+  // This drives the fluid amplitude, ring size, and phase label
+  function getBreathFactor() {
+    const { breathPhase, breathProgress } = state;
+    switch (breathPhase) {
+      case 'inhale':
+        // Ease-in-out sine curve for smooth breathing feel
+        return 0.5 - 0.5 * Math.cos(Math.PI * breathProgress);
+      case 'hold1':
+        return 1.0;
+      case 'exhale':
+        return 1.0 - (0.5 - 0.5 * Math.cos(Math.PI * breathProgress));
+      case 'hold2':
+        return 0.0;
+      default:
+        return 0.5;
+    }
+  }
+
+  // ── Main render loop ───────────────────────────────────────
+  function render() {
+    const scheme = SCHEMES[state.schemeIndex];
+    const charset = CHARSETS[state.charsetIndex].chars;
+    const breath = state.running && !state.paused ? getBreathFactor() : 0.5 + 0.2 * Math.sin(time * 0.3);
+    const intMul = state.intensity / 5;   // normalize around 5
+
+    ctx.fillStyle = scheme.bg;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = `${FONT_SIZE}px 'JetBrains Mono', 'Fira Code', monospace`;
+    ctx.textBaseline = 'top';
+
+    const cx = cols / 2, cy = rows / 2;
+    const maxDist = Math.sqrt(cx * cx + cy * cy);
+
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        // Normalized coords
+        const nx = col / cols;
+        const ny = row / rows;
+
+        // Distance from center (radial falloff)
+        const dx = (col - cx) / cx;
+        const dy = (row - cy) / cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // ── Fluid field computation ──────────────────────
+        // Layer 1: Large-scale flow driven by breath
+        const flowScale = 2.5 * intMul;
+        const flowSpeed = 0.15;
+        const l1 = fbm(
+          nx * flowScale + time * flowSpeed + breath * 0.8,
+          ny * flowScale + time * flowSpeed * 0.7,
+          3 + Math.floor(intMul)
+        );
+
+        // Layer 2: Medium turbulence
+        const turbScale = 5.0 * intMul;
+        const l2 = fbm(
+          nx * turbScale - time * 0.1,
+          ny * turbScale + time * 0.12 + breath * 1.5,
+          2
+        ) * 0.4;
+
+        // Layer 3: Fine detail shimmer
+        const shimmer = smoothNoise(
+          nx * 12 * intMul + time * 0.4,
+          ny * 12 * intMul - time * 0.3
+        ) * 0.15 * intMul;
+
+        // Layer 4: Radial breath pulse
+        const pulseRadius = 0.3 + breath * 0.5;
+        const pulse = Math.exp(-((dist - pulseRadius) * (dist - pulseRadius)) / (0.15 * intMul));
+
+        // Layer 5: Spiral motion
+        const angle = Math.atan2(dy, dx);
+        const spiral = Math.sin(dist * 6 - time * 0.5 + angle * 2 + breath * Math.PI) * 0.2;
+
+        // Combine all layers
+        let value = (l1 + l2 + shimmer + pulse * 0.5 + spiral) * intMul * 0.5;
+
+        // Center focus: boost values near center during breath
+        const centerBoost = Math.exp(-dist * dist * 2) * breath * 0.4;
+        value += centerBoost;
+
+        // Clamp to 0..1
+        value = Math.max(0, Math.min(1, value));
+
+        // ── Map to character ─────────────────────────────
+        const charIdx = Math.floor(value * (charset.length - 1));
+        const ch = charset[charIdx];
+
+        if (ch === ' ') continue; // skip spaces for perf
+
+        // ── Map to color from scheme palette ─────────────
+        const colorIdx = Math.floor(value * (scheme.colors.length - 1));
+        const color = scheme.colors[colorIdx];
+
+        // Optional glow: slightly transparent for accumulation effect
+        if (state.glowEnabled && value > 0.6) {
+          ctx.globalAlpha = 0.3 + value * 0.7;
+        } else {
+          ctx.globalAlpha = 0.15 + value * 0.85;
+        }
+
+        ctx.fillStyle = color;
+        ctx.fillText(ch, col * cellW, row * cellH);
+      }
+    }
+
+    ctx.globalAlpha = 1.0;
+
+    // ── Breath ring update ───────────────────────────────────
+    if (state.ringVisible) {
+      breathRing.style.opacity = 0.12 + breath * 0.15;
+      const innerR = 60 + breath * 60;
+      const outerR = 80 + breath * 70;
+      ringInner.setAttribute('r', innerR);
+      ringOuter.setAttribute('r', outerR);
+    }
+  }
+
+  // ── Breath phase stepping ──────────────────────────────────
+  // Advances through inhale → hold1 → exhale → hold2 → repeat
+  function stepBreath(dt) {
+    if (!state.running || state.paused) return;
+
+    state.breathCycleTime += dt;
+
+    // Determine current phase duration
+    let phaseDuration;
+    switch (state.breathPhase) {
+      case 'inhale': phaseDuration = state.inhale; break;
+      case 'hold1':  phaseDuration = state.hold1; break;
+      case 'exhale': phaseDuration = state.exhale; break;
+      case 'hold2':  phaseDuration = state.hold2; break;
+    }
+
+    state.breathProgress = Math.min(1, state.breathCycleTime / phaseDuration);
+
+    // Advance to next phase when complete
+    if (state.breathCycleTime >= phaseDuration) {
+      state.breathCycleTime = 0;
+      state.breathProgress = 0;
+      switch (state.breathPhase) {
+        case 'inhale':
+          state.breathPhase = state.hold1 > 0 ? 'hold1' : 'exhale';
+          break;
+        case 'hold1':
+          state.breathPhase = 'exhale';
+          break;
+        case 'exhale':
+          state.breathPhase = state.hold2 > 0 ? 'hold2' : 'inhale';
+          break;
+        case 'hold2':
+          state.breathPhase = 'inhale';
+          break;
+      }
+    }
+
+    // Update phase label text
+    const labels = { inhale: 'Inhale', hold1: 'Hold', exhale: 'Exhale', hold2: 'Hold' };
+    phaseLabel.textContent = labels[state.breathPhase];
+  }
+
+  // ── Session timer ──────────────────────────────────────────
+  function stepSession(dt) {
+    if (!state.running || state.paused) return;
+    state.elapsed += dt;
+    if (state.elapsed >= state.duration) {
+      endSession();
+    }
+  }
+
+  // ── Main loop ──────────────────────────────────────────────
+  let lastTime = 0;
+  function loop(ts) {
+    const dt = Math.min((ts - lastTime) / 1000, 0.1); // cap dt to avoid jumps
+    lastTime = ts;
+    time += dt;
+
+    stepBreath(dt);
+    stepSession(dt);
+    updateHUD();
+    render();
+
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  // ═══════════════════════════════════════════════════════════
+  // SESSION MANAGEMENT
+  // ═══════════════════════════════════════════════════════════
+
+  function startSession(durationMinutes) {
+    state.duration = durationMinutes * 60;
+    state.elapsed = 0;
+    state.running = true;
+    state.paused = false;
+    state.breathPhase = 'inhale';
+    state.breathProgress = 0;
+    state.breathCycleTime = 0;
+    startScreen.classList.add('hidden');
+    completeScreen.classList.remove('visible');
+    phaseLabel.style.opacity = 0.5;
+  }
+
+  function endSession() {
+    state.running = false;
+    state.paused = false;
+    const minutes = Math.round(state.duration / 60);
+    document.getElementById('complete-msg').textContent =
+      `You breathed for ${minutes} minute${minutes > 1 ? 's' : ''}`;
+    completeScreen.classList.add('visible');
+    phaseLabel.style.opacity = 0;
+  }
+
+  function restartToMenu() {
+    state.running = false;
+    state.paused = false;
+    state.elapsed = 0;
+    completeScreen.classList.remove('visible');
+    startScreen.classList.remove('hidden');
+    phaseLabel.style.opacity = 0;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // START SCREEN INTERACTIONS
+  // ═══════════════════════════════════════════════════════════
+
+  let selectedDuration = 5;
+
+  document.querySelectorAll('.dur-btn[data-dur]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.dur-btn[data-dur]').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedDuration = parseInt(btn.dataset.dur);
+    });
+  });
+
+  document.getElementById('begin-btn').addEventListener('click', () => {
+    startSession(selectedDuration);
+  });
+
+  document.getElementById('restart-btn').addEventListener('click', restartToMenu);
+
+  // ═══════════════════════════════════════════════════════════
+  // KEYBOARD CONTROLS
+  // ═══════════════════════════════════════════════════════════
+
+  document.addEventListener('keydown', e => {
+    const key = e.key.toLowerCase();
+
+    // ── Start screen: Space/Enter to begin ────────────────
+    if (!startScreen.classList.contains('hidden')) {
+      if (key === ' ' || key === 'enter') {
+        e.preventDefault();
+        startSession(selectedDuration);
+        return;
+      }
+      // Allow duration selection with 1-4 on start screen too
+      if (key === '1') { selectedDuration = 5; updateStartButtons(); }
+      if (key === '2') { selectedDuration = 10; updateStartButtons(); }
+      if (key === '3') { selectedDuration = 15; updateStartButtons(); }
+      if (key === '4') { selectedDuration = 30; updateStartButtons(); }
+      return;
+    }
+
+    // ── Completion screen: any key to restart ────────────
+    if (completeScreen.classList.contains('visible')) {
+      restartToMenu();
+      return;
+    }
+
+    // ── Help toggle ──────────────────────────────────────
+    if (key === '?' || key === '/') {
+      state.helpOpen = !state.helpOpen;
+      helpPanel.classList.toggle('visible', state.helpOpen);
+      return;
+    }
+
+    if (key === 'escape') {
+      if (state.helpOpen) {
+        state.helpOpen = false;
+        helpPanel.classList.remove('visible');
+        return;
+      }
+      // End session
+      if (state.running) {
+        restartToMenu();
+        showToast('Session ended');
+        return;
+      }
+    }
+
+    // ── Pause / Resume ───────────────────────────────────
+    if (key === ' ') {
+      e.preventDefault();
+      if (state.running) {
+        state.paused = !state.paused;
+        showToast(state.paused ? 'Paused' : 'Resumed');
+      }
+      return;
+    }
+
+    // ── Inhale speed: W/S ────────────────────────────────
+    if (key === 'w') {
+      state.inhale = Math.min(15, state.inhale + 0.5);
+      showToast(`Inhale: ${state.inhale.toFixed(1)}s`);
+      return;
+    }
+    if (key === 's') {
+      state.inhale = Math.max(1, state.inhale - 0.5);
+      showToast(`Inhale: ${state.inhale.toFixed(1)}s`);
+      return;
+    }
+
+    // ── Exhale speed: ↑/↓ ────────────────────────────────
+    if (key === 'arrowup') {
+      e.preventDefault();
+      state.exhale = Math.min(15, state.exhale + 0.5);
+      showToast(`Exhale: ${state.exhale.toFixed(1)}s`);
+      return;
+    }
+    if (key === 'arrowdown') {
+      e.preventDefault();
+      state.exhale = Math.max(1, state.exhale - 0.5);
+      showToast(`Exhale: ${state.exhale.toFixed(1)}s`);
+      return;
+    }
+
+    // ── Toggle hold ──────────────────────────────────────
+    if (key === 'h') {
+      if (state.hold1 === 0) {
+        state.hold1 = 2;
+        state.hold2 = 2;
+        showToast('Hold: 2s between breaths');
+      } else {
+        state.hold1 = 0;
+        state.hold2 = 0;
+        showToast('Hold: off');
+      }
+      return;
+    }
+
+    // ── Reset timing ─────────────────────────────────────
+    if (key === 'r') {
+      const preset = PRESETS[0];
+      state.inhale = preset.inhale;
+      state.exhale = preset.exhale;
+      state.hold1 = preset.hold1;
+      state.hold2 = preset.hold2;
+      showToast('Timing reset to defaults');
+      return;
+    }
+
+    // ── Intensity: 1-9 ──────────────────────────────────
+    if (key >= '1' && key <= '9') {
+      state.intensity = parseInt(key);
+      showToast(`Intensity: ${state.intensity}`);
+      return;
+    }
+
+    // ── Color scheme: C ──────────────────────────────────
+    if (key === 'c') {
+      state.schemeIndex = (state.schemeIndex + 1) % SCHEMES.length;
+      applyScheme(state.schemeIndex);
+      showToast(`Scheme: ${SCHEMES[state.schemeIndex].name}`);
+      return;
+    }
+
+    // ── Character set: F ─────────────────────────────────
+    if (key === 'f') {
+      state.charsetIndex = (state.charsetIndex + 1) % CHARSETS.length;
+      showToast(`Chars: ${CHARSETS[state.charsetIndex].name}`);
+      return;
+    }
+
+    // ── Glow toggle: G ───────────────────────────────────
+    if (key === 'g') {
+      state.glowEnabled = !state.glowEnabled;
+      showToast(`Glow: ${state.glowEnabled ? 'on' : 'off'}`);
+      return;
+    }
+
+    // ── HUD visibility: V ────────────────────────────────
+    if (key === 'v') {
+      state.hudVisible = !state.hudVisible;
+      document.getElementById('hud').style.opacity = state.hudVisible ? 1 : 0;
+      showToast(`HUD: ${state.hudVisible ? 'on' : 'off'}`);
+      return;
+    }
+
+    // ── Breath ring: B ───────────────────────────────────
+    if (key === 'b') {
+      state.ringVisible = !state.ringVisible;
+      breathRing.style.display = state.ringVisible ? 'block' : 'none';
+      showToast(`Ring: ${state.ringVisible ? 'on' : 'off'}`);
+      return;
+    }
+
+    // ── Timer visibility: T ──────────────────────────────
+    if (key === 't') {
+      state.timerVisible = !state.timerVisible;
+      timerDisplay.style.opacity = state.timerVisible ? 0.08 : 0;
+      showToast(`Timer: ${state.timerVisible ? 'on' : 'off'}`);
+      return;
+    }
+
+    // ── Breath presets: P ────────────────────────────────
+    if (key === 'p') {
+      state.presetIndex = (state.presetIndex + 1) % PRESETS.length;
+      const p = PRESETS[state.presetIndex];
+      state.inhale = p.inhale;
+      state.exhale = p.exhale;
+      state.hold1 = p.hold1;
+      state.hold2 = p.hold2;
+      showToast(`Preset: ${p.name}`);
+      return;
+    }
+  });
+
+  function updateStartButtons() {
+    const map = {5: 0, 10: 1, 15: 2, 30: 3};
+    document.querySelectorAll('.dur-btn[data-dur]').forEach(b => {
+      b.classList.toggle('selected', parseInt(b.dataset.dur) === selectedDuration);
+    });
+  }
+
+  // ── Initial state ──────────────────────────────────────────
+  applyScheme(0);
+
+})();
+</script>
+</body>
+</html>
