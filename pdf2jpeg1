@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF → JPEG Converter</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&family=Space+Mono:wght@400;700&display=swap');
+
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --surface-light: #1f2b47;
+      --border-light: #e0c3fc;
+      --border-dark: #3a2060;
+      --text: #e0c3fc;
+      --text-dim: #8b7aa8;
+      --accent-pink: #f8a4c8;
+      --accent-mint: #a8e6cf;
+      --accent-lavender: #c3b1e1;
+      --accent-peach: #ffc8a2;
+      --accent-sky: #a4d8e8;
+      --btn-face: #2a2045;
+      --btn-highlight: #5a4a7a;
+      --btn-shadow: #0e0a1a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Space Mono', 'Courier New', monospace;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    /* Win95-style inset border */
+    .inset {
+      border: 2px solid;
+      border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+    }
+
+    /* Win95-style outset border */
+    .outset {
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    }
+
+    /* Win95-style button */
+    .win-btn {
+      font-family: 'Space Mono', 'Courier New', monospace;
+      background: var(--btn-face);
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+      color: var(--text);
+      padding: 6px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: left;
+      transition: all 0.05s;
+      position: relative;
+    }
+
+    .win-btn:hover {
+      background: #352a55;
+    }
+
+    .win-btn:active {
+      border-color: var(--btn-shadow) var(--btn-highlight) var(--btn-highlight) var(--btn-shadow);
+      padding-top: 7px;
+      padding-left: 17px;
+      padding-bottom: 5px;
+      padding-right: 15px;
+    }
+
+    .win-btn.primary {
+      background: #3a2060;
+      border-color: var(--accent-lavender) var(--btn-shadow) var(--btn-shadow) var(--accent-lavender);
+      color: var(--accent-pink);
+      font-weight: bold;
+    }
+
+    .win-btn.primary:hover {
+      background: #4a2a70;
+    }
+
+    .win-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Title bar */
+    .title-bar {
+      background: linear-gradient(90deg, #3a2060, #5a3a80, #3a2060);
+      padding: 3px 4px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-dark);
+    }
+
+    .title-bar-text {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      color: var(--accent-pink);
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.5);
+      padding-left: 4px;
+    }
+
+    .title-bar-controls {
+      display: flex;
+      gap: 2px;
+    }
+
+    .title-bar-controls button {
+      width: 18px;
+      height: 18px;
+      background: var(--btn-face);
+      border: 1px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+      color: var(--text);
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-family: 'Space Mono', monospace;
+      padding: 0;
+      line-height: 1;
+    }
+
+    /* Window panel */
+    .window {
+      background: var(--surface);
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    }
+
+    /* Drop zone */
+    .drop-zone {
+      background: var(--surface-light);
+      border: 3px dashed var(--border-light);
+      transition: all 0.2s;
+    }
+
+    .drop-zone.drag-over {
+      border-color: var(--accent-pink);
+      background: #2a1a40;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 16px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--surface);
+      border: 1px solid var(--border-dark);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--btn-face);
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+    }
+
+    ::-webkit-scrollbar-button {
+      background: var(--btn-face);
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+      height: 16px;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      background: var(--surface-light);
+      border: 2px solid;
+      border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+      height: 22px;
+      position: relative;
+    }
+
+    .progress-fill {
+      background: repeating-linear-gradient(
+        90deg,
+        var(--accent-lavender) 0px,
+        var(--accent-lavender) 10px,
+        #4a2a70 10px,
+        #4a2a70 12px
+      );
+      height: 100%;
+      transition: width 0.3s;
+    }
+
+    /* Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: var(--surface-light);
+      height: 6px;
+      border: 1px solid var(--border-dark);
+      outline: none;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 20px;
+      background: var(--btn-face);
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+      cursor: pointer;
+    }
+
+    /* Select */
+    .win-select {
+      font-family: 'Space Mono', monospace;
+      background: var(--surface-light);
+      color: var(--text);
+      border: 2px solid;
+      border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+      padding: 4px 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    .win-select option {
+      background: var(--surface);
+      color: var(--text);
+    }
+
+    /* Status text */
+    .status-text {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+    }
+
+    /* Thumbnail grid item */
+    .thumb-item {
+      background: var(--surface-light);
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+      transition: border-color 0.15s;
+      cursor: pointer;
+    }
+
+    .thumb-item:hover {
+      border-color: var(--accent-pink);
+    }
+
+    .thumb-item canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* Checkbox */
+    .win-checkbox {
+      accent-color: var(--accent-lavender);
+    }
+
+    /* Animated scanline effect */
+    .scanlines::after {
+      content: '';
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.03) 2px,
+        rgba(0,0,0,0.03) 4px
+      );
+      pointer-events: none;
+      z-index: 9999;
+    }
+
+    /* Blink animation */
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    .blink {
+      animation: blink 1s infinite;
+    }
+
+    /* Marquee */
+    .marquee-text {
+      font-family: 'VT323', monospace;
+      color: var(--accent-mint);
+      font-size: 14px;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+
+    @keyframes marquee {
+      from { transform: translateX(100%); }
+      to { transform: translateX(-100%); }
+    }
+
+    .marquee-text span {
+      display: inline-block;
+      animation: marquee 15s linear infinite;
+    }
+
+    .page-label {
+      font-family: 'VT323', monospace;
+      font-size: 15px;
+      color: var(--accent-peach);
+    }
+
+    /* Taskbar */
+    .taskbar {
+      background: var(--surface);
+      border-top: 2px solid var(--btn-highlight);
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 3px 4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .start-btn {
+      font-family: 'VT323', monospace;
+      font-size: 18px;
+      background: var(--btn-face);
+      border: 2px solid;
+      border-color: var(--btn-highlight) var(--btn-shadow) var(--btn-shadow) var(--btn-highlight);
+      color: var(--accent-pink);
+      padding: 2px 10px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .start-btn:active {
+      border-color: var(--btn-shadow) var(--btn-highlight) var(--btn-highlight) var(--btn-shadow);
+    }
+
+    .taskbar-clock {
+      font-family: 'VT323', monospace;
+      font-size: 16px;
+      color: var(--accent-lavender);
+      background: var(--surface-light);
+      border: 1px solid;
+      border-color: var(--border-dark) var(--border-light) var(--border-light) var(--border-dark);
+      padding: 2px 10px;
+      margin-left: auto;
+    }
+
+    .taskbar-separator {
+      width: 2px;
+      height: 24px;
+      border-left: 1px solid var(--btn-shadow);
+      border-right: 1px solid var(--btn-highlight);
+    }
+  </style>
+</head>
+<body class="scanlines">
+
+  <!-- Main Container -->
+  <div style="padding: 12px; padding-bottom: 50px;">
+
+    <!-- Main Window -->
+    <div class="window" style="max-width: 720px;">
+      <!-- Title Bar -->
+      <div class="title-bar">
+        <span class="title-bar-text">📄 PDF → JPEG Converter</span>
+        <div class="title-bar-controls">
+          <button>_</button>
+          <button>□</button>
+          <button>✕</button>
+        </div>
+      </div>
+
+      <!-- Menu Bar -->
+      <div style="display:flex; gap:2px; padding: 2px 4px; background: var(--surface); border-bottom: 1px solid var(--border-dark);">
+        <button class="win-btn" style="padding:2px 8px; font-size:12px;" onclick="document.getElementById('pdfInput').click()">File</button>
+        <button class="win-btn" style="padding:2px 8px; font-size:12px;" onclick="showAbout()">Help</button>
+      </div>
+
+      <!-- Marquee -->
+      <div style="padding: 4px 8px; border-bottom: 1px solid var(--border-dark);">
+        <div class="marquee-text">
+          <span>★ Welcome to PDF → JPEG Converter v1.0 ★ Convert your PDFs with style ★ Pastel power! ★ Built with love and monospace fonts ★</span>
+        </div>
+      </div>
+
+      <!-- Body -->
+      <div style="padding: 12px;">
+
+        <!-- Drop Zone -->
+        <div id="dropZone" class="drop-zone inset" style="padding: 32px 20px; text-align: left; margin-bottom: 12px; cursor: pointer;" onclick="document.getElementById('pdfInput').click()">
+          <div style="font-family: 'VT323', monospace; font-size: 28px; color: var(--accent-pink); margin-bottom: 8px;">
+            Drop your PDF here_ <span class="blink">█</span>
+          </div>
+          <div style="font-size: 13px; color: var(--text-dim);">
+            or click to browse your files...
+          </div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 8px;">
+            Supports: .pdf files
+          </div>
+          <input type="file" id="pdfInput" accept=".pdf" style="display:none;">
+        </div>
+
+        <!-- File Info -->
+        <div id="fileInfo" style="display:none; margin-bottom: 12px;">
+          <div class="window" style="padding: 0;">
+            <div class="title-bar" style="padding: 2px 4px;">
+              <span class="title-bar-text" style="font-size:14px;">📋 File Info</span>
+            </div>
+            <div style="padding: 8px; font-size: 12px;">
+              <div>Name: <span id="fileName" style="color: var(--accent-mint);"></span></div>
+              <div>Size: <span id="fileSize" style="color: var(--accent-peach);"></span></div>
+              <div>Pages: <span id="pageCount" style="color: var(--accent-sky);"></span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Settings -->
+        <div class="window" style="margin-bottom: 12px; padding: 0;">
+          <div class="title-bar" style="padding: 2px 4px;">
+            <span class="title-bar-text" style="font-size:14px;">⚙ Settings</span>
+          </div>
+          <div style="padding: 10px;">
+            <!-- Quality -->
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 12px; display: block; margin-bottom: 4px; color: var(--accent-lavender);">
+                JPEG Quality: <span id="qualityVal" style="color: var(--accent-pink);">92%</span>
+              </label>
+              <input type="range" id="quality" min="10" max="100" value="92" style="width: 220px;" oninput="document.getElementById('qualityVal').textContent = this.value + '%'">
+            </div>
+            <!-- Scale -->
+            <div style="margin-bottom: 10px;">
+              <label style="font-size: 12px; display: block; margin-bottom: 4px; color: var(--accent-lavender);">
+                Render Scale: <span id="scaleVal" style="color: var(--accent-pink);">2x</span>
+              </label>
+              <input type="range" id="scale" min="1" max="4" value="2" step="0.5" style="width: 220px;" oninput="document.getElementById('scaleVal').textContent = this.value + 'x'">
+            </div>
+            <!-- Format -->
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <div>
+                <label style="font-size: 12px; display: block; margin-bottom: 4px; color: var(--accent-lavender);">Output Format</label>
+                <select id="outputFormat" class="win-select">
+                  <option value="jpeg">JPEG (.jpg)</option>
+                  <option value="png">PNG (.png)</option>
+                </select>
+              </div>
+              <div style="display:flex; align-items:center; gap:4px; margin-top: 16px;">
+                <input type="checkbox" id="selectAll" class="win-checkbox" checked>
+                <label for="selectAll" style="font-size: 12px; color: var(--accent-peach);">Select All Pages</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap;">
+          <button id="convertBtn" class="win-btn primary" disabled onclick="convertPDF()">
+            ▶ Convert
+          </button>
+          <button id="downloadAllBtn" class="win-btn" disabled onclick="downloadAll()">
+            ↓ Download All
+          </button>
+          <button id="cancelBtn" class="win-btn" style="display:none;" onclick="cancelConversion()">
+            ✕ Cancel
+          </button>
+        </div>
+
+        <!-- Progress -->
+        <div id="progressArea" style="display:none; margin-bottom: 12px;">
+          <div class="status-text" style="margin-bottom: 4px;">
+            <span id="statusText">Processing...</span> <span id="progressPct" style="color: var(--accent-mint);">0%</span>
+          </div>
+          <div class="progress-track">
+            <div id="progressFill" class="progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- Output / Thumbnails -->
+        <div id="outputArea" style="display:none;">
+          <div class="window" style="padding: 0;">
+            <div class="title-bar" style="padding: 2px 4px;">
+              <span class="title-bar-text" style="font-size:14px;">🖼 Output</span>
+            </div>
+            <div style="padding: 8px;">
+              <div id="thumbnailGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px;">
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- About Dialog (hidden) -->
+    <div id="aboutDialog" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background: rgba(0,0,0,0.6); z-index:200; display:none; align-items:center; justify-content:center;">
+      <div class="window" style="width: 340px;">
+        <div class="title-bar">
+          <span class="title-bar-text" style="font-size:14px;">About</span>
+          <div class="title-bar-controls">
+            <button onclick="closeAbout()">✕</button>
+          </div>
+        </div>
+        <div style="padding: 16px; text-align: center;">
+          <div style="font-family: 'VT323', monospace; font-size: 32px; color: var(--accent-pink);">PDF → JPEG</div>
+          <div style="font-family: 'VT323', monospace; font-size: 18px; color: var(--accent-mint); margin-bottom: 8px;">Version 1.0</div>
+          <div style="font-size: 11px; color: var(--text-dim); margin-bottom: 12px;">
+            A retro-themed PDF to image converter.<br>
+            100% client-side. No uploads. Privacy first.
+          </div>
+          <div style="font-size: 10px; color: var(--text-dim);">
+            Built with PDF.js + Canvas API<br>
+            ♥ pastel monospace vibes ♥
+          </div>
+          <button class="win-btn" style="margin-top: 12px;" onclick="closeAbout()">OK</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Taskbar -->
+  <div class="taskbar">
+    <button class="start-btn" onclick="showAbout()">
+      <span style="font-size: 16px;">📄</span> Start
+    </button>
+    <div class="taskbar-separator"></div>
+    <div id="taskbarStatus" class="status-text" style="color: var(--accent-mint); font-size: 13px;">
+      Ready
+    </div>
+    <div class="taskbar-clock" id="clock"></div>
+  </div>
+
+  <script>
+    // PDF.js worker setup
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    let pdfDoc = null;
+    let convertedImages = [];
+    let isConverting = false;
+    let shouldCancel = false;
+
+    // Elements
+    const dropZone = document.getElementById('dropZone');
+    const pdfInput = document.getElementById('pdfInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const convertBtn = document.getElementById('convertBtn');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const progressArea = document.getElementById('progressArea');
+    const progressFill = document.getElementById('progressFill');
+    const progressPct = document.getElementById('progressPct');
+    const statusText = document.getElementById('statusText');
+    const outputArea = document.getElementById('outputArea');
+    const thumbnailGrid = document.getElementById('thumbnailGrid');
+
+    // Clock
+    function updateClock() {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      document.getElementById('clock').textContent = h + ':' + m;
+    }
+    updateClock();
+    setInterval(updateClock, 30000);
+
+    // Drag & drop
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('drag-over');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('drag-over');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'application/pdf') {
+        loadPDF(file);
+      }
+    });
+
+    pdfInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadPDF(file);
+    });
+
+    // Format file size
+    function formatSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // Load PDF
+    async function loadPDF(file) {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        document.getElementById('fileName').textContent = file.name;
+        document.getElementById('fileSize').textContent = formatSize(file.size);
+        document.getElementById('pageCount').textContent = pdfDoc.numPages;
+
+        fileInfo.style.display = 'block';
+        convertBtn.disabled = false;
+        downloadAllBtn.disabled = true;
+        outputArea.style.display = 'none';
+        thumbnailGrid.innerHTML = '';
+        convertedImages = [];
+
+        setTaskbar('Loaded: ' + file.name);
+      } catch (err) {
+        alert('Error loading PDF: ' + err.message);
+        setTaskbar('Error loading PDF');
+      }
+    }
+
+    // Convert PDF pages to images
+    async function convertPDF() {
+      if (!pdfDoc || isConverting) return;
+
+      isConverting = true;
+      shouldCancel = false;
+      convertedImages = [];
+      thumbnailGrid.innerHTML = '';
+
+      const quality = parseInt(document.getElementById('quality').value) / 100;
+      const scale = parseFloat(document.getElementById('scale').value);
+      const format = document.getElementById('outputFormat').value;
+      const selectAll = document.getElementById('selectAll').checked;
+      const totalPages = pdfDoc.numPages;
+
+      convertBtn.disabled = true;
+      downloadAllBtn.disabled = true;
+      cancelBtn.style.display = 'inline-block';
+      progressArea.style.display = 'block';
+      outputArea.style.display = 'block';
+
+      setTaskbar('Converting...');
+
+      for (let i = 1; i <= totalPages; i++) {
+        if (shouldCancel) break;
+
+        try {
+          const page = await pdfDoc.getPage(i);
+          const viewport = page.getViewport({ scale });
+
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+
+          // White background for JPEG
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+          await page.render({ canvasContext: ctx, viewport }).promise;
+
+          const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
+          const ext = format === 'png' ? '.png' : '.jpg';
+          const dataUrl = canvas.toDataURL(mimeType, quality);
+
+          convertedImages.push({
+            dataUrl,
+            name: `page_${i.toString().padStart(3, '0')}${ext}`,
+            page: i,
+            width: canvas.width,
+            height: canvas.height
+          });
+
+          // Create thumbnail
+          const thumb = createThumbnail(dataUrl, i, canvas.width, canvas.height);
+          thumbnailGrid.appendChild(thumb);
+
+          // Update progress
+          const pct = Math.round((i / totalPages) * 100);
+          progressFill.style.width = pct + '%';
+          progressPct.textContent = pct + '%';
+          statusText.textContent = `Rendering page ${i} of ${totalPages}...`;
+
+        } catch (err) {
+          console.error('Error rendering page', i, err);
+        }
+      }
+
+      isConverting = false;
+      convertBtn.disabled = false;
+      cancelBtn.style.display = 'none';
+
+      if (shouldCancel) {
+        statusText.textContent = 'Cancelled.';
+        setTaskbar('Conversion cancelled');
+      } else {
+        statusText.textContent = `Done! ${convertedImages.length} pages converted.`;
+        setTaskbar('Done — ' + convertedImages.length + ' images ready');
+        if (convertedImages.length > 0) {
+          downloadAllBtn.disabled = false;
+        }
+      }
+
+      progressFill.style.width = '100%';
+      progressPct.textContent = '100%';
+    }
+
+    // Create thumbnail card
+    function createThumbnail(dataUrl, pageNum, w, h) {
+      const div = document.createElement('div');
+      div.className = 'thumb-item';
+
+      const img = document.createElement('img');
+      img.src = dataUrl;
+      img.style.cssText = 'display:block; width:100%; height:auto;';
+
+      const info = document.createElement('div');
+      info.style.cssText = 'padding:4px 6px; font-size:11px;';
+      info.innerHTML = `
+        <span class="page-label">p.${pageNum}</span>
+        <span style="color: var(--text-dim); font-size:10px;"> ${w}×${h}</span>
+        <button class="win-btn" style="float:right; padding:1px 8px; font-size:10px;" onclick="downloadSingle(${pageNum - 1})">↓</button>
+      `;
+
+      div.appendChild(img);
+      div.appendChild(info);
+      return div;
+    }
+
+    // Download single image
+    function downloadSingle(index) {
+      const img = convertedImages[index];
+      if (!img) return;
+      triggerDownload(img.dataUrl, img.name);
+    }
+
+    // Download all as individual files
+    function downloadAll() {
+      if (convertedImages.length === 0) return;
+      convertedImages.forEach((img, i) => {
+        setTimeout(() => triggerDownload(img.dataUrl, img.name), i * 200);
+      });
+      setTaskbar('Downloading ' + convertedImages.length + ' files...');
+    }
+
+    function triggerDownload(dataUrl, filename) {
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // Cancel
+    function cancelConversion() {
+      shouldCancel = true;
+    }
+
+    // Taskbar status
+    function setTaskbar(msg) {
+      document.getElementById('taskbarStatus').textContent = msg;
+    }
+
+    // About dialog
+    function showAbout() {
+      document.getElementById('aboutDialog').style.display = 'flex';
+    }
+
+    function closeAbout() {
+      document.getElementById('aboutDialog').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
