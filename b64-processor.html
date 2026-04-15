@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Token-Saving Base64 Injector</title>
+<style>
+/* --- CSS Variables --- */
+:root {
+    --line-thick: 1px;       
+    --page-paddi: 5%;        
+    --min-gap: 5px;          
+    --tight-line: 1.0;       
+    --font-size0: 16px;      
+    --indentatio: 3rem;      
+    --slim-v-mar: 0.5%;      
+    --hr-v-margi: 2%;        
+    --para-inden: 2ch;       
+    --head-inden: 4ch;       
+}
+
+/* --- General Styling --- */
+body {
+    background-color: black;
+    color: white;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    margin: 0;
+    padding: var(--page-paddi);
+    box-sizing: border-box;
+}
+
+/* --- Paragraphs --- */
+p {
+    margin: var(--slim-v-mar) 0;
+    text-indent: var(--para-inden);
+}
+
+/* --- Headers --- */
+h1, h2, h3, h4, h5, h6 {
+    background-color: red;
+    color: black;
+    font-size: inherit;
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: var(--head-inden);
+    padding: 5px 10px;
+    display: inline-block;
+    line-height: var(--tight-line);
+}
+
+/* --- Links --- */
+a {
+    color: white;
+    text-decoration: none;
+    text-decoration-line: overline;
+    text-decoration-color: red;
+    text-decoration-thickness: var(--line-thick);
+    padding: 2px 4px;
+    transition: background-color 0.1s ease-in-out, color 0.1s ease-in-out;
+}
+
+a:hover {
+    background-color: white;
+    color: black;
+}
+
+/* --- Emphasis (.em class) --- */
+.em {
+    color: red;
+}
+
+/* --- Code Blocks (pre, code) --- */
+pre, code {
+    background-color: black;
+    color: white;
+    border: var(--line-thick) solid white;
+    padding: var(--min-gap);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+    overflow-x: auto;
+    box-sizing: border-box;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+}
+
+:not(pre) > code {
+    border-top: none;
+    border-bottom: none;
+    border-left: var(--line-thick) solid white;
+    border-right: var(--line-thick) solid white;
+    padding-top: 0;
+    padding-bottom: 0;
+    padding-left: 3px;
+    padding-right: 3px;
+    display: inline-block;
+    vertical-align: middle; 
+    line-height: inherit;
+}
+
+/* --- Lists --- */
+ul, ol {
+    list-style: none;
+    padding-left: 0;
+    border-left: none;
+    margin: var(--slim-v-mar) 0;
+}
+
+ul li::before {
+    content: '•';
+    color: red;
+    display: inline-block;
+    width: 1em;
+    margin-right: 0.5em;
+}
+
+ol {
+    counter-reset: list-item;
+}
+ol li::before {
+    counter-increment: list-item;
+    content: counter(list-item) ". ";
+    color: red;
+    display: inline-block;
+    width: 2em;
+    margin-right: 0.5em;
+    text-align: right;
+}
+
+/* --- Tables --- */
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: var(--slim-v-mar) 0;
+    font-size: var(--font-size0);
+}
+
+th, td {
+    border: var(--line-thick) solid red;
+    padding: 8px;
+    text-align: left;
+    color: white;
+    line-height: var(--tight-line);
+}
+
+th {
+    background-color: red;
+    color: black;
+    font-weight: normal;
+    font-size: inherit;
+}
+
+tr:nth-child(even) td, tr:nth-child(even) th {
+    border-bottom-color: white;
+}
+tr:nth-child(odd) td, tr:nth-child(odd) th {
+    border-bottom-color: red;
+}
+table tr:last-child td, table tr:last-child th {
+    border-bottom-color: red;
+}
+
+/* --- Blockquotes --- */
+blockquote {
+    border-left: var(--line-thick) solid red;
+    padding-left: 15px;
+    margin: var(--slim-v-mar) 0;
+    font-style: italic;
+    color: white;
+    font-size: var(--font-size0);
+    line-height: var(--tight-line);
+    text-indent: var(--para-inden);
+}
+
+/* --- Horizontal Rule (hr) --- */
+hr {
+    border: none;
+    border-top: var(--line-thick) solid red;
+    margin: var(--hr-v-margi) 0;
+}
+
+/* --- Form Elements --- */
+input, textarea, select, button {
+    background-color: black;
+    color: red;
+    border: var(--line-thick) solid white;
+    padding: 5px;
+    font-family: monospace;
+    font-size: var(--font-size0);
+    box-sizing: border-box;
+    line-height: var(--tight-line);
+    margin: var(--slim-v-mar) 0;
+    display: block;
+    width: 100%;
+}
+
+input:focus, textarea:focus, select:focus, button:focus {
+    border-color: red;
+    outline: none;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+    margin-bottom: 20px;
+    width: auto;
+    display: inline-block;
+}
+
+button:hover {
+    background-color: white;
+    color: black;
+}
+
+/* --- Custom App Layout Classes --- */
+.section-wrapper {
+    border: 1px solid white;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+.actions {
+    display: flex;
+    gap: 10px;
+}
+</style>
+</head>
+<body>
+
+    <h1>Token-Saving Tokenizer</h1>
+    <p>Select a file. This tool will split the workflow into 3 pieces: the raw base64 string for you, the prompt to paste to the AI, and the sample code where you will inject the string later.</p>
+    
+    <input type="file" id="fileInput">
+    <hr>
+
+    <div id="outputContainer" style="display: none;">
+        
+        <div class="section-wrapper">
+            <h2>1. AI Prompt</h2>
+            <p>Paste this to the AI so it knows what variables to use WITHOUT generating the base64 string.</p>
+            <textarea id="aiPromptArea" rows="8" readonly></textarea>
+            <div class="actions">
+                <button onclick="copyText('aiPromptArea')">Copy Text</button>
+                <button onclick="downloadFile('aiPromptArea', '-ai-prompt.txt')">Download .txt</button>
+            </div>
+        </div>
+
+        <div class="section-wrapper">
+            <h2>2. Sample Code Structure</h2>
+            <p>A reference for how the CSS should look. You will paste your raw Base64 string into the placeholder here.</p>
+            <textarea id="codeArea" rows="12" readonly></textarea>
+            <div class="actions">
+                <button onclick="copyText('codeArea')">Copy Text</button>
+                <button onclick="downloadFile('codeArea', '-sample-code.txt')">Download .txt</button>
+            </div>
+        </div>
+
+        <div class="section-wrapper">
+            <h2>3. Raw Base64 String</h2>
+            <p>Keep this file. When the AI finishes making your site, paste this massive string into the CSS placeholder.</p>
+            <textarea id="base64Area" rows="6" readonly></textarea>
+            <div class="actions">
+                <button onclick="copyText('base64Area')">Copy Text</button>
+                <button onclick="downloadFile('base64Area', '-raw-base64.txt')">Download .txt</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentFileName = "file";
+
+        document.getElementById('fileInput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            currentFileName = file.name.split('.')[0].replace(/[^a-zA-Z0-9-]/g, '-').toLowerCase();
+            const fileNameOriginal = file.name;
+            const isFont = fileNameOriginal.match(/\.(woff|woff2|ttf|otf|eot)$/i);
+            const fontFormat = isFont ? fileNameOriginal.split('.').pop().toLowerCase() : '';
+
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const dataUrl = e.target.result; 
+                document.getElementById('outputContainer').style.display = 'block';
+
+                // --- 1. AI PROMPT ---
+                let aiPrompt = "";
+                if (isFont) {
+                    aiPrompt = `AI INSTRUCTIONS:
+I am using a custom font named "${fileNameOriginal}". To save your output tokens, DO NOT generate or attempt to write the base64 string for this font.
+Instead, simply construct your CSS using this placeholder structure. I will inject the actual base64 string locally.
+
+Please include this in your CSS:
+@font-face {
+    font-family: '${currentFileName}';
+    src: var(--font-${currentFileName}-b64);
+    font-weight: normal;
+    font-style: normal;
+}
+
+Use the font-family '${currentFileName}' in the CSS where appropriate.`;
+                } else {
+                    aiPrompt = `AI INSTRUCTIONS:
+I have a media file named "${fileNameOriginal}". To save your output tokens, DO NOT generate or attempt to write the base64 string for this file.
+Instead, assume that I will define a CSS variable named '--file-${currentFileName}-b64' in the :root element locally. 
+
+Whenever you need to display this file, please apply it via CSS like this:
+background-image: var(--file-${currentFileName}-b64);
+background-size: contain;
+background-repeat: no-repeat;`;
+                }
+                document.getElementById('aiPromptArea').value = aiPrompt;
+
+                // --- 2. SAMPLE CODE ---
+                let sampleCode = "";
+                if (isFont) {
+                    let formatString = fontFormat === 'ttf' ? 'truetype' : (fontFormat === 'otf' ? 'opentype' : fontFormat);
+                    sampleCode = `/* 1. Define this variable at the top of your CSS */
+:root {
+    /* Replace the URL below with the raw base64 string */
+    --font-${currentFileName}-b64: url('PASTE_RAW_BASE64_HERE') format('${formatString}');
+}
+
+/* 2. The AI will generate something like this */
+@font-face {
+    font-family: '${currentFileName}';
+    src: var(--font-${currentFileName}-b64);
+}
+
+body {
+    font-family: '${currentFileName}', monospace;
+}`;
+                } else {
+                    sampleCode = `/* 1. Define this variable at the top of your CSS */
+:root {
+    /* Replace the URL below with the raw base64 string */
+    --file-${currentFileName}-b64: url('PASTE_RAW_BASE64_HERE');
+}
+
+/* 2. The AI will generate something like this to use it */
+.my-element {
+    background-image: var(--file-${currentFileName}-b64);
+    width: 200px;
+    height: 200px;
+}`;
+                }
+                document.getElementById('codeArea').value = sampleCode;
+
+                // --- 3. RAW BASE64 ---
+                document.getElementById('base64Area').value = dataUrl;
+            };
+
+            reader.readAsDataURL(file);
+        });
+
+        function copyText(elementId) {
+            const textArea = document.getElementById(elementId);
+            textArea.select();
+            document.execCommand('copy');
+            alert('Copied to clipboard!');
+        }
+
+        function downloadFile(elementId, suffix) {
+            const text = document.getElementById(elementId).value;
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName + suffix;
+            document.body.appendChild(a);
+            a.click();
+            
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
