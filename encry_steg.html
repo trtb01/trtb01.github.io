@@ -1,0 +1,272 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>STEG_TOOL_V1.0</title>
+<style>
+:root{--b:#080808;--f:#e0e0e0;--a:#ff0000;--g:#151515}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Courier New',Courier,monospace;font-size:13px}
+body{background:var(--b);color:var(--f);height:100vh;overflow:hidden}
+.grid{display:grid;grid-template-columns:50% 50%;grid-template-rows:45px 1fr 1fr;height:100%}
+.tabs{display:flex;border-bottom:3px solid var(--a);background:var(--g)}
+.tab{padding:12px 24px;border-right:3px solid var(--a);cursor:pointer;font-weight:bold;letter-spacing:1px}
+.tab:hover,.tab.active{background:var(--a);color:var(--b)}
+.pane{border:3px solid var(--a);padding:16px;margin:4px;overflow:auto;background:var(--b)}
+h2{color:var(--a);border-bottom:2px solid var(--a);margin-bottom:12px;padding-bottom:4px;font-size:14px;text-transform:uppercase}
+input,select,textarea,button{width:100%;margin:8px 0;padding:10px;background:var(--g);color:var(--f);border:2px solid var(--a);outline:none}
+button:hover{background:var(--a);color:var(--b);cursor:pointer}
+input[type="file"]{padding:6px}
+input[type="range"]{padding:0;height:8px;-webkit-appearance:none;background:var(--g)}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;background:var(--a);cursor:pointer}
+canvas{max-width:100%;max-height:160px;border:2px solid var(--a);display:block;margin:10px 0;image-rendering:pixelated}
+.row{display:flex;gap:10px}
+.row>*{flex:1}
+.label{color:var(--a);font-size:11px;margin-top:6px;display:block;text-transform:uppercase}
+#msg{color:var(--a);margin-top:8px;font-size:11px;min-height:20px}
+::-webkit-scrollbar{width:10px;background:var(--b)}
+::-webkit-scrollbar-thumb{background:var(--a);border:2px solid var(--b)}
+</style>
+</head>
+<body>
+<div class="grid">
+<div class="tabs">
+<div class="tab active" onclick="setMode(0)">[ EMBED MODE ]</div>
+<div class="tab" onclick="setMode(1)">[ EXTRACT MODE ]</div>
+</div>
+
+<div class="pane">
+<h2>// IMAGE_INPUT</h2>
+<input type="file" id="fimg" accept="image/*" onchange="ldImg()">
+<canvas id="cv"></canvas>
+<button onclick="dlImg()">DOWNLOAD_IMAGE</button>
+</div>
+
+<div class="pane">
+<h2>// TEXT_IO</h2>
+<textarea id="txt" rows="8" placeholder="ENTER_TEXT_TO_HIDE..."></textarea>
+<div class="row">
+<button onclick="run()" id="btn">EXECUTE_EMBED</button>
+<button onclick="clr()">CLEAR_ALL</button>
+</div>
+<div id="msg"></div>
+</div>
+
+<div class="pane">
+<h2>// PARAMETERS</h2>
+<span class="label">BIT_DEPTH (1-2)</span>
+<input type="range" id="bits" min="1" max="2" value="1">
+<span class="label">CHANNELS</span>
+<select id="ch">
+<option value="7">RGB (ALL)</option>
+<option value="1">RED_ONLY</option>
+<option value="2">GREEN_ONLY</option>
+<option value="4">BLUE_ONLY</option>
+<option value="3">RED+GREEN</option>
+<option value="5">RED+BLUE</option>
+<option value="6">GREEN+BLUE</option>
+</select>
+<span class="label">ENCRYPTION</span>
+<select id="enc">
+<option value="none">NONE</option>
+<option value="xor">XOR_VIGENERE</option>
+<option value="aes">AES_256_GCM</option>
+</select>
+<span class="label">KEY_PHRASE</span>
+<input type="password" id="key" placeholder="SECRET_KEY...">
+</div>
+
+<div class="pane">
+<h2>// PROFILE_SYSTEM</h2>
+<select id="prof" onchange="ldProf()"><option value="">--SELECT_PROFILE--</option></select>
+<div class="row">
+<button onclick="svProf()">SAVE_PROFILE</button>
+<button onclick="rmProf()">DELETE</button>
+</div>
+<input type="text" id="pnam" placeholder="PROFILE_NAME_TO_SAVE">
+<div class="row" style="margin-top:12px">
+<button onclick="expJSON()">EXPORT_JSON_FILE</button>
+<label style="flex:1;position:relative">
+<input type="file" id="imp" style="display:none" onchange="impJSON()">
+<button style="margin:0;width:100%" onclick="document.getElementById('imp').click()">IMPORT_JSON_FILE</button>
+</label>
+</div>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id),cv=$('cv'),cx=cv.getContext('2d');
+let mode=0,imgd=null,profs=JSON.parse(localStorage.getItem('steg_prof')||'{}');
+upProf();
+
+function setMode(m){
+mode=m;
+document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===m));
+$('btn').textContent=mode?'EXECUTE_EXTRACT':'EXECUTE_EMBED';
+$('txt').value='';
+$('msg').textContent='';
+}
+
+function ldImg(){
+const f=$('fimg').files[0];
+if(!f)return;
+const r=new FileReader();
+r.onload=e=>{
+const i=new Image();
+i.onload=()=>{
+cv.width=i.width;cv.height=i.height;
+cx.drawImage(i,0,0);
+imgd=cx.getImageData(0,0,cv.width,cv.height);
+$('msg').textContent=`LOADED: ${i.width}x${i.height}`;
+};
+i.src=e.target.result;
+};
+r.readAsDataURL(f);
+}
+
+function clr(){cx.fillRect(0,0,cv.width,cv.height);$('fimg').value='';$('txt').value='';imgd=null;$('msg').textContent='CLEARED';}
+
+function dlImg(){
+const a=document.createElement('a');
+a.href=cv.toDataURL('image/png');
+a.download=`stego_${Date.now()}.png`;
+a.click();
+}
+
+async function run(){
+if(!imgd)return alert('LOAD_IMAGE_FIRST');
+try{
+if(mode===0){
+let t=$('txt').value;
+if(!t)return alert('ENTER_TEXT');
+if($('enc').value!=='none')t=await enc(t,1);
+const b=str2bin(t+'\0'),d=imgd.data,mask=parseInt($('ch').value),bits=parseInt($('bits').value);
+let idx=0;
+for(let i=0;i<d.length&&idx<b.length;i+=4){
+for(let c=0;c<3;c++){
+if(mask&(1<<c)){
+const bit=(b[idx>>3]>>(7-(idx&7)))&1;
+d[i+c]=(d[i+c]&(0xFF<<bits))|(bit<<(bits-1));
+idx++;
+}
+}
+}
+cx.putImageData(imgd,0,0);
+$('msg').textContent=`EMBEDDED ${t.length} BYTES (NULL_TERM)`;
+$('txt').value='';
+}else{
+const d=imgd.data,mask=parseInt($('ch').value),bits=parseInt($('bits').value);
+let bits_acc='',dec_txt='';
+for(let i=0;i<d.length;i+=4){
+for(let c=0;c<3;c++){
+if(mask&(1<<c)){
+bits_acc+=((d[i+c]>>>(bits-1))&1).toString();
+if(bits_acc.length===8){
+const byte=parseInt(bits_acc,2);
+if(byte===0){
+dec_txt=strFromBin(bits_acc.slice(0,-8));
+$('txt').value=$('enc').value!=='none'?await enc(dec_txt,0):dec_txt;
+$('msg').textContent=`EXTRACTED ${$('txt').value.length} CHARS`;
+return;
+}
+bits_acc='';
+}
+}
+}
+}
+}catch(e){alert('ERROR: '+e);console.error(e);}
+}
+
+function str2bin(s){return s.split('').map(c=>c.charCodeAt(0).toString(2).padStart(8,'0')).join('');}
+function strFromBin(b){let r='';for(let i=0;i<b.length;i+=8)r+=String.fromCharCode(parseInt(b.slice(i,i+8),2));return r;}
+
+async function enc(s,dir){
+const k=$('key').value||'default_key';
+const t=$('enc').value;
+if(t==='xor'){
+return s.split('').map((c,i)=>{
+const x=k[i%k.length].charCodeAt(0);
+return String.fromCharCode(c.charCodeAt(0)^x);
+}).join('');
+}
+if(t==='aes'){
+const e=new TextEncoder(),d=dir===1;
+if(d){
+const iv=crypto.getRandomValues(new Uint8Array(12));
+const ke=await crypto.subtle.importKey('raw',await crypto.subtle.digest('SHA-256',e.encode(k)),{name:'AES-GCM'},false,['encrypt']);
+const c=await crypto.subtle.encrypt({name:'AES-GCM',iv},ke,e.encode(s));
+const r=new Uint8Array([...iv,...new Uint8Array(c)]);
+return btoa(String.fromCharCode(...r));
+}else{
+const b=atob(s),u=new Uint8Array([...b].map(c=>c.charCodeAt(0)));
+const iv=u.slice(0,12),ct=u.slice(12);
+const ke=await crypto.subtle.importKey('raw',await crypto.subtle.digest('SHA-256',e.encode(k)),{name:'AES-GCM'},false,['decrypt']);
+const p=await crypto.subtle.decrypt({name:'AES-GCM',iv},ke,ct);
+return new TextDecoder().decode(p);
+}
+}
+return s;
+}
+
+function svProf(){
+const n=$('pnam').value||(`PROFILE_${Object.keys(profs).length+1}`);
+profs[n]={bits:$('bits').value,ch:$('ch').value,enc:$('enc').value,key:$('key').value};
+localStorage.setItem('steg_prof',JSON.stringify(profs));
+upProf();
+$('prof').value=n;
+}
+
+function rmProf(){delete profs[$('prof').value];localStorage.setItem('steg_prof',JSON.stringify(profs));upProf();}
+
+function upProf(){
+const s=$('prof');
+s.innerHTML='<option value="">--SELECT_PROFILE--</option>'+Object.keys(profs).map(p=>`<option value="${p}">${p}</option>`).join('');
+}
+
+function ldProf(){
+const p=profs[$('prof').value];
+if(!p)return;
+$('bits').value=p.bits;$('ch').value=p.ch;$('enc').value=p.enc;$('key').value=p.key||'';
+}
+
+function expJSON(){
+const b=new Blob([JSON.stringify(profs,null,2)],{type:'application/json'});
+const u=URL.createObjectURL(b);
+const a=document.createElement('a');
+a.href=u;a.download=`steg_profiles_${Date.now()}.json`;a.click();
+setTimeout(()=>URL.revokeObjectURL(u),1000);
+}
+
+function impJSON(){
+const f=$('imp').files[0];
+if(!f)return;
+const r=new FileReader();
+r.onload=e=>{
+try{const j=JSON.parse(e.target.result);Object.assign(profs,j);localStorage.setItem('steg_prof',JSON.stringify(profs));upProf();$('msg').textContent='PROFILES_IMPORTED';}catch(x){alert('INVALID_JSON');}
+};
+r.readAsText(f);
+}
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
