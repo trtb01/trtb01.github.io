@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+# publish — sync, commit, and push changes to the live GitHub Pages site in one shot.
+#
+# Usage:
+#   ./publish                # uses a timestamp as the commit message
+#   ./publish "my note here" # uses your note as the commit message
+#
+# Run it from anywhere; it always operates on the repo folder.
+
+set -euo pipefail
+
+REPO="/home/tori/a1 - websites/trtb-github-com"
+export PATH="$HOME/.local/bin:$PATH"
+
+cd "$REPO"
+
+msg="${1:-Update site $(date '+%Y-%m-%d %H:%M')}"
+
+echo "==> Pulling latest from origin/main (rebase + auto-stash)..."
+git pull --rebase --autostash origin main
+
+echo "==> Staging all changes..."
+git add -A
+
+if git diff --cached --quiet; then
+  echo "==> Nothing new to commit."
+else
+  echo "==> Committing: ${msg}"
+  git commit -m "$msg"
+fi
+
+echo "==> Pushing to origin/main..."
+git push origin main
+
+echo "==> Done — live shortly at https://trtb01.github.io/"
