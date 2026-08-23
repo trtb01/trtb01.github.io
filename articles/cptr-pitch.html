@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>articles/cptr-pitch.html</title>
+    <link rel="stylesheet" href="../trtb.css">
+    <style>
+        /* --- Page-specific tweaks for long-form reading --- */
+        .article-body {
+            padding: var(--pad-inner);
+        }
+        .article-body p,
+        .article-body ul,
+        .article-body ol,
+        .article-body pre {
+            max-width: 78ch;
+        }
+        .article-body ul, .article-body ol {
+            margin-left: var(--indent);
+        }
+        .article-body li {
+            margin-bottom: 5px;
+        }
+        .article-body h2 {
+            margin-top: 15px;
+        }
+        .article-body h3 {
+            margin-top: 12px;
+            border-bottom-width: var(--border-width);
+        }
+        .article-body table {
+            margin: 8px 0;
+        }
+        .article-body hr {
+            margin: 15px 0;
+        }
+        .article-body blockquote {
+            margin: 10px 0;
+        }
+        .signoff {
+            text-align: center;
+            font-style: italic;
+            margin-top: 15px;
+        }
+        /* keep code blocks from overflowing on mobile */
+        .article-body pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="trtb_header">
+        <span><a href="../index.html">trtb01.github.io</a> / articles / cptr-pitch.html</span>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <div id="app_container">
+
+        <div class="trtb_module article-body">
+
+            <h1>open webui computer (cptr) — the pitch for your friend</h1>
+
+            <blockquote>hi mom!!</blockquote>
+
+            <p>
+                here's how i'd sell this to someone who's frustrated that claude code is chained to their laptop. this is everything i found from the knowledge base and the web.
+            </p>
+
+            <hr>
+
+            <h2>the core problem it solves</h2>
+
+            <p>
+                right now your friend's claude code workflow is: <em>be at the laptop, run <code>claude</code>, do the thing, walk away, done</em>. if they want to check on a build, push a hotfix, or review an agent's work from literally anywhere else — phone, tablet, borrowed machine, couch, bed, train — they're out of luck. their machine is locked to them physically.
+            </p>
+
+            <p>
+                <strong><code>cptr</code> flips that completely.</strong> it runs one command on their laptop, and suddenly <strong>their whole machine — files, terminal, git, claude code, everything — is served to any browser</strong>. their phone. a tablet. another computer. someone else's chromebook. doesn't matter. it's not a stripped-down ide in a tab and it's not a container copy of their repo — it's literally <em>their</em> machine, running on <em>their</em> hardware, at full power, wherever they open it.
+            </p>
+
+            <h2>how it works (simple version)</h2>
+
+<pre><code>pip install cptr
+cptr run</code></pre>
+
+            <p>
+                that opens <code>http://localhost:8000</code> in the browser. full workstation. done.
+            </p>
+
+            <p>to access from another device:</p>
+            <ul>
+                <li><strong>same wi‑fi:</strong> <code>cptr run --host 0.0.0.0</code>, then open <code>http://&lt;lan-ip&gt;:8000</code> on the phone</li>
+                <li><strong>away from home:</strong> tailscale (recommended, private mesh), cloudflare tunnel (public url), or ngrok</li>
+            </ul>
+
+            <p>
+                no cloud tenant. no account on someone else's service. no repo upload. nothing leaves their machine unless they choose to expose it.
+            </p>
+
+            <h2>why it's perfect for a claude code power user</h2>
+
+            <h3>1. it unlocks their laptop — the exact frustration you're targeting</h3>
+            <p>
+                they can run claude code from their phone. push a hotfix from the train. check on a long-running deploy from bed. ship a side project from the park. <strong>sessions persist</strong> — close the tab, come back tomorrow on a different device, everything is exactly where they left it. terminal sessions keep running even after disconnect. it genuinely works mobile-first; the ui is built for touch and portrait screens, not a desktop site squeezed into a phone.
+            </p>
+
+            <h3>2. their existing claude code subscription works natively</h3>
+            <p>
+                this is the key part: <strong>you plug claude code in as a native backend inside <code>cptr</code></strong>. no extra api key needed. in settings → admin → agents, you add claude code as a profile (needs <code>claude-agent-sdk</code> pip-installed on the host). it appears in the model selector like any other provider. the conversation runs inside the workspace with full tool access — files, terminal, web search — and sessions resume automatically across devices.
+            </p>
+            <p>
+                and they're not locked into just claude code. <code>cptr</code> supports <strong>codex, claude code, cursor, grok, opencode, cline, gemini, and pi</strong> as native backends — all side by side on the same workspace. one session with claude code, next chat with codex, no context-switching.
+            </p>
+
+            <h3>3. all the other features that make it a full workstation</h3>
+
+            <table>
+                <thead>
+                    <tr><th>feature</th><th>what it does</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>📁 real files</strong></td><td>navigate, create, rename, drag-and-drop. icons by type, sizes at a glance.</td></tr>
+                    <tr><td><strong>✏️ editor</strong></td><td>syntax-highlighted editing with tabs. multiple files side by side.</td></tr>
+                    <tr><td><strong>🔀 git</strong></td><td>stage, commit, diff, branch, push. visual changes view. no command line required unless they want it.</td></tr>
+                    <tr><td><strong>⌨️ terminal</strong></td><td>full shell in the browser. run any cli tool, including running <code>claude</code> directly in a terminal tab if they prefer.</td></tr>
+                    <tr><td><strong>🌐 browser</strong></td><td>browse with a proxied, managed chrome profile right from within the ui. agent can browse the web too.</td></tr>
+                    <tr><td><strong>🔄 persistent sessions</strong></td><td>terminal keeps running when you close the tab. reconnect on any device.</td></tr>
+                    <tr><td><strong>🗂️ workspaces</strong></td><td>multiple projects, one instance. switch without losing place. each workspace keeps its own chats, layout, and history.</td></tr>
+                    <tr><td><strong>🧩 skills</strong></td><td>reusable instruction sets (skill.md files). type <code>$</code> to mention one.</td></tr>
+                    <tr><td><strong>🤖 sub-agents</strong></td><td>ai can spin up parallel workers for complex tasks, each with full tool access.</td></tr>
+                    <tr><td><strong>🔌 mcp/openapi tools</strong></td><td>connect external tool servers.</td></tr>
+                    <tr><td><strong>🗣️ voice mode</strong></td><td>talk to the ai hands-free. it listens, responds, reads back. hands-free coding is wild with this.</td></tr>
+                    <tr><td><strong>⏱️ scheduled tasks</strong></td><td>"run tests every morning." "deploy every friday." automations set up once, run forever.</td></tr>
+                    <tr><td><strong>📱 mobile-first</strong></td><td>not a desktop ui crammed into a phone. built touch-native, portrait-native.</td></tr>
+                    <tr><td><strong>💭 reasoning traces</strong></td><td>see claude's chain of thought as expandable sections.</td></tr>
+                    <tr><td><strong>📎 file mentions (<code>@</code>)</strong></td><td>give the ai file context instantly.</td></tr>
+                    <tr><td><strong>🧠 context compaction</strong></td><td>long conversations auto-summarized to stay fast.</td></tr>
+                </tbody>
+            </table>
+
+            <h3>4. plan mode — because yes, even better approval flow</h3>
+            <p>
+                it has <strong>plan mode</strong>: before the ai writes a single line, it produces an implementation plan. you review and approve before it starts coding. this works with claude code, codex, or the built-in ai agent — whichever they hook up. that's a huge quality-of-life improvement on its own.
+            </p>
+
+            <h3>5. it's free</h3>
+            <p>
+                free forever, even at work, even for companies. $0. no account needed, no credit card. supporter seats are $60/year if they want extras, but the core thing is completely free.
+            </p>
+
+            <h3>6. private by design</h3>
+            <p>
+                it runs on their hardware and talks to nothing unless they configure it to. code never leaves their machine. the ai calls go out to whichever provider they choose (anthropic, openai, local ollama — or nowhere at all). nothing is uploaded to a vendor cloud. treat access like ssh and they're golden.
+            </p>
+
+            <hr>
+
+            <h2>the bottom line</h2>
+            <p>
+                your friend's current frustration is that their coding agent is stuck at their desk. <strong><code>cptr</code> turns their machine into a server that follows them everywhere.</strong> claude code on the phone. full git on the tablet. a terminal session that survives closing the tab and reconnects from any device. every file, every agent, every project — all accessible from any browser, on any screen, without compromising on power or privacy.
+            </p>
+            <p>
+                one command to install. the subscription they already pay for. their machine, from anywhere. that's the pitch.
+            </p>
+
+            <p class="signoff">— end —</p>
+
+        </div>
+
+    </div>
+
+    <div id="trtb_footer">
+        <span>&copy; 2025, 2026 thor smith</span>
+        <span>:: trtb software ::</span>
+        <span><a href="../index.html">[ back to index ]</a></span>
+    </div>
+
+    <script>
+        (function(){
+            const btn = document.getElementById('theme_toggle');
+            const root = document.documentElement;
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme');
+                root.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+            });
+        })();
+    </script>
+
+</body>
+</html>
