@@ -5,110 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>trtb01.github.io/index.html</title>
     
+    <link rel="stylesheet" href="/trtb.css">
     <style>
-        /* * TRTB.css (Thor's Radical Technical Brutalism)
-         * Version: 2.3.0 (Double Line Tabs)
-         * Author: Thor Smith
-         */
-        :root {
-            /* Color Palette */
-            --bg: #000000;
-            --fg: #ffffff;
-            --accent: #ff0000;
-
-            /* Borders - UNIFORM 2PX */
-            --border-width: 2px;
-
-            /* Spacing */
-            --pad-inner: 5px;
-            --indent: 10px;
-            
-            /* Typography */
-            --font-main: monospace;
-            --base-scale: 0.85; 
-        }
-
-        /* Theme Switch: Light Mode Overrides */
-        [data-theme="light"] {
-            --bg: #ffffff;
-            --fg: #000000;
-        }
-
-        /* Global Reset */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            border-radius: 0 !important; /* Strictly 90-degree corners */
-            font-family: var(--font-main);
-            font-size: calc(1rem * var(--base-scale));
-            text-transform: lowercase; /* ENFORCED LOWERCASE */
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--fg);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            padding: 40px 20px; 
-            overflow-y: scroll; /* Force scrollbar to avoid jump */
-        }
-
-        /* --- Mandatory Layout Structure --- */
-        #trtb_header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 5px;
-            padding: 0 2px;
-        }
-
-        #app_container {
-            border: var(--border-width) solid var(--accent);
-            width: 100%;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        #trtb_footer {
-            padding-top: 5px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* --- Modular Div Logic --- */
-        .trtb_module {
-            width: 100%;
-            margin: 0; 
-            border-bottom: var(--border-width) solid var(--accent); /* Stack borders */
-            padding: var(--pad-inner);
-            background: var(--bg);
-        }
-
-        #app_container .trtb_module:last-child {
-            border-bottom: none; /* Remove bottom border for last item */
-        }
-
-        /* --- Typography & Content --- */
-        p { text-indent: var(--indent); margin-bottom: 5px; }
-
-        h3 {
-            color: var(--fg); 
-            background: transparent;
-            padding: 2px 0;
-            font-weight: bold;
-            display: block;
-            width: 100%;
-            border-bottom: var(--border-width) solid var(--accent);
-            margin-bottom: 5px;
-        }
-
-        a { color: var(--fg); text-decoration: overline; }
-        a:hover { background: var(--accent); color: var(--bg); }
+        /* index.html — page-specific styles only. Theme via /trtb.css (v3.0.0). */
 
         /* --- Link Row Layout --- */
         .link_row {
@@ -139,25 +38,6 @@
             .col_name, .col_desc { width: 100%; }
             .col_desc { text-indent: var(--indent); color: #888; }
         }
-
-        /* --- Interactive Elements --- */
-        button {
-            background: var(--bg);
-            color: var(--fg);
-            border: var(--border-width) solid var(--accent);
-            padding: 4px 10px;
-            cursor: pointer;
-            text-transform: lowercase;
-        }
-        button:hover { background: var(--accent); color: var(--bg); }
-
-        #theme_toggle {
-            background: transparent;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-        }
-        #theme_toggle:hover { color: var(--accent); }
 
         /* --- Tab Specific Styles --- */
         #tab_container {
