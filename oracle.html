@@ -4,208 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>the oracle</title>
+    <link rel="stylesheet" href="/trtb.css">
     <style>
-        /*
-         * TRTB.css (Thor's Radical Technical Brutalism)
-         * Version: 2.0.0
-         * Author: Thor Smith
-         */
-
-        :root {
-            /* Color Palette */
-            --bg: #000000;
-            --fg: #ffffff;
-            --accent: #ff0000;
-
-            /* Borders - UNIFORM 2PX */
-            --border-width: 2px;
-
-            /* Spacing */
-            --pad-inner: 5px;
-            --indent: 10px;
-            
-            /* Typography */
-            --font-main: monospace;
-            --base-scale: 0.85; 
-        }
-
-        /* Theme Switch: Light Mode Overrides */
-        [data-theme="light"] {
-            --bg: #ffffff;
-            --fg: #000000;
-        }
-
-        /* Global Reset */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            border-radius: 0 !important; /* Strictly 90-degree corners */
-            font-family: var(--font-main);
-            font-size: calc(1rem * var(--base-scale));
-            text-transform: lowercase; /* ENFORCED LOWERCASE */
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--fg);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-            padding: 40px 20px; 
-        }
-
-        /* --- Mandatory Layout Structure --- */
-
-        /* Top Metadata Row */
-        #trtb_header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 5px;
-            padding: 0 2px;
-        }
-
-        /* The Global Active Content Border */
-        #app_container {
-            border: var(--border-width) solid var(--accent);
-            width: 100%;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* Footer Metadata Row */
-        #trtb_footer {
-            padding-top: 5px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        /* --- Modular Div Logic --- */
-
-        .trtb_module {
-            width: 100%;
-            margin: 0; 
-            border: var(--border-width) solid var(--accent);
-            border-top: none; 
-            padding: var(--pad-inner);
-            background: var(--bg);
-        }
-
-        #app_container > .trtb_module:first-child {
-            border-top: none; 
-        }
-
-        .trtb_row {
-            display: flex;
-            width: 100%;
-        }
-
-        .trtb_row > .trtb_module {
-            flex: 1;
-            border-left: none; 
-        }
-        .trtb_row > .trtb_module:first-child {
-            border-left: var(--border-width) solid var(--accent);
-        }
-
-        /* --- Typography & Content --- */
-
-        p {
-            text-indent: var(--indent);
-            margin-bottom: 5px;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            color: var(--fg); 
-            background: transparent;
-            padding: 2px 0;
-            font-weight: bold;
-            display: block;
-            width: 100%;
-            border-bottom: var(--border-width) solid var(--accent);
-            margin-bottom: 5px;
-        }
-
-        a {
-            color: var(--fg);
-            text-decoration: overline;
-        }
-
-        a:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        /* --- Interactive Elements --- */
-
-        button {
-            background: var(--bg);
-            color: var(--fg);
-            border: var(--border-width) solid var(--accent);
-            padding: 10px;
-            cursor: pointer;
-            width: 100%;
-            text-transform: lowercase;
-            font-weight: bold;
-        }
-
-        button:hover {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        #theme_toggle {
-            background: transparent;
-            border: none;
-            padding: 0;
-            cursor: pointer;
-            width: auto;
-        }
-        #theme_toggle:hover {
-            background: transparent;
-            color: var(--accent);
-        }
-
-        /* Custom Checkbox Containers */
+        /* --- Page-specific overrides --- */
         .checkbox_container {
             display: flex;
             align-items: center;
             margin-bottom: 5px;
             cursor: pointer;
         }
-        
-        input[type="checkbox"] {
-            appearance: none;
-            -webkit-appearance: none;
-            width: 15px;
-            height: 15px;
-            border: var(--border-width) solid var(--accent);
-            background: var(--bg);
-            margin-right: 10px;
-            position: relative;
-        }
 
-        input[type="checkbox"]:checked {
-            background: var(--accent);
-        }
-
-        /* Table Styling */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 5px;
-        }
-        td, th {
-            border: var(--border-width) solid var(--accent);
-            padding: 5px;
-            text-align: left;
-        }
-
-        /* App Specific Typography */
         .display_big {
             font-size: 4rem;
             color: var(--accent);
@@ -214,7 +22,7 @@
             text-align: center;
             margin: 10px 0;
         }
-        
+
         .display_sub {
             font-size: 2rem;
             color: var(--fg);
