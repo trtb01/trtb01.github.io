@@ -28,16 +28,25 @@
     /* Spacing */
     --pad-inner: 5px;
     --indent: 10px;
+    --gap: 5px;
 
     /* Typography */
     --font-main: 'xanh', monospace;
     --base-scale: 0.85;
+
+    /* Layout */
+    --content-max: 1100px;
 }
 
 /* Theme Switch: Light Mode Overrides */
 [data-theme="light"] {
     --bg: #ffffff;
     --fg: #000000;
+}
+
+/* Dark mode: defaults from :root already apply. Kept explicit to make the
+   data-theme contract symmetric and avoid silent breakage. */
+[data-theme="dark"] {
 }
 
 /* --- Global Reset --- */
@@ -56,6 +65,7 @@ body {
     color: var(--fg);
     display: flex;
     flex-direction: column;
+    align-items: center; /* Center the header/app/footer column */
     min-height: 100vh;
     padding: 40px 20px;
     overflow-y: scroll; /* Force scrollbar to avoid jump */
@@ -66,21 +76,24 @@ body {
     display: flex;
     justify-content: space-between;
     width: 100%;
-    margin-bottom: 5px;
+    max-width: var(--content-max);
+    margin-bottom: var(--gap);
     padding: 0 2px;
 }
 
 #app_container {
     border: var(--border-width) solid var(--accent);
     width: 100%;
+    max-width: var(--content-max);
     flex-grow: 1;
     display: flex;
     flex-direction: column;
 }
 
 #trtb_footer {
-    padding-top: 5px;
+    padding-top: var(--gap);
     width: 100%;
+    max-width: var(--content-max);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -93,6 +106,7 @@ body {
     border-bottom: var(--border-width) solid var(--accent); /* Stack borders */
     padding: var(--pad-inner);
     background: var(--bg);
+    overflow-x: auto; /* Scroll wide content inside the frame instead of breaking layout */
 }
 
 #app_container > .trtb_module:last-child {
@@ -115,7 +129,7 @@ body {
 /* --- Typography & Content --- */
 p {
     text-indent: var(--indent);
-    margin-bottom: 5px;
+    margin-bottom: var(--gap);
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -126,7 +140,7 @@ h1, h2, h3, h4, h5, h6 {
     display: block;
     width: 100%;
     border-bottom: var(--border-width) solid var(--accent);
-    margin-bottom: 5px;
+    margin-bottom: var(--gap);
 }
 
 a {
@@ -146,7 +160,6 @@ button {
     border: var(--border-width) solid var(--accent);
     padding: 4px 10px;
     cursor: pointer;
-    text-transform: lowercase;
     font-weight: bold;
 }
 
@@ -173,17 +186,21 @@ input, textarea, select {
     color: var(--fg);
     border: var(--border-width) solid var(--accent);
     padding: 5px;
-    font-family: var(--font-main);
-    font-size: calc(1rem * var(--base-scale));
     box-sizing: border-box;
     line-height: 1.0;
-    margin: 5px 0;
+    margin: var(--gap) 0;
     display: block;
 }
 
 input:focus, textarea:focus, select:focus {
     border-color: var(--fg);
     outline: none;
+}
+
+/* Keyboard focus ring for everything else (links, buttons, summary, etc.) */
+:focus-visible {
+    outline: var(--border-width) solid var(--fg);
+    outline-offset: 1px;
 }
 
 input[type="checkbox"], input[type="radio"] {
@@ -208,7 +225,7 @@ input[type="checkbox"]:checked, input[type="radio"]:checked {
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 5px;
+    margin-top: var(--gap);
 }
 
 td, th {
@@ -229,7 +246,7 @@ pre, code {
     color: var(--fg);
     border: var(--border-width) solid var(--fg);
     padding: var(--pad-inner);
-    margin: 5px 0;
+    margin: var(--gap) 0;
     display: block;
     overflow-x: auto;
     box-sizing: border-box;
@@ -254,7 +271,7 @@ pre, code {
 ul, ol {
     list-style: none;
     padding-left: 0;
-    margin: 5px 0;
+    margin: var(--gap) 0;
 }
 
 ul li::before {
@@ -282,7 +299,7 @@ ol li::before {
 blockquote {
     border-left: var(--border-width) solid var(--accent);
     padding-left: 15px;
-    margin: 5px 0;
+    margin: var(--gap) 0;
     font-style: italic;
     color: var(--fg);
     text-indent: var(--indent);
@@ -296,7 +313,7 @@ figure,
 iframe {
     border: var(--border-width) solid var(--accent);
     display: block;
-    margin: 5px auto;
+    margin: var(--gap) auto;
     max-width: 100%;
     height: auto;
     box-sizing: border-box;
@@ -311,12 +328,12 @@ iframe {
 hr {
     border: none;
     border-top: var(--border-width) solid var(--accent);
-    margin: 2% 0;
+    margin: var(--gap) 0;
 }
 
 /* --- Details/Summary --- */
 details {
-    margin: 5px 0;
+    margin: var(--gap) 0;
     border: var(--border-width) solid var(--bg);
     box-sizing: border-box;
     color: var(--fg);
@@ -331,15 +348,13 @@ summary {
     display: block;
     list-style: none;
 }
-summary::-webkit-details-marker { color: var(--bg); margin-right: var(--pad-inner); }
-summary::marker { color: var(--bg); margin-right: var(--pad-inner); }
 
 details[open] {
     border: var(--border-width) solid var(--accent);
     padding: var(--pad-inner);
 }
 details[open] > *:not(summary) {
-    margin: 5px 0;
+    margin: var(--gap) 0;
 }
 
 /* --- Selection Styling --- */
