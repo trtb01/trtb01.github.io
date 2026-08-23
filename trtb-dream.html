@@ -4,134 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>trtb_metronome</title>
+    <link rel="stylesheet" href="/trtb.css">
     <style>
-        /*
-         * TRTB.css (Thor's Radical Technical Brutalism)
-         * Version: 2.0.0
-         * Author: Thor Smith
-         * Philosophy: Modular, 2D, High-Contrast, Self-Contained.
-         */
+        /* trtb-dream.html — page-specific styles only. Theme via /trtb.css (v3.0.0). */
 
-        :root {
-            /* Color Palette */
-            --bg: #000000;
-            --fg: #ffffff;
-            --accent: #ff0000;
-
-            /* Borders - UNIFORM 2PX */
-            --border-width: 2px;
-
-            /* Spacing */
-            --pad-inner: 5px;
-            --indent: 10px;
-            
-            /* Typography */
-            --font-main: monospace;
-            --base-scale: 0.85; 
-        }
-
-        /* Theme Switch: Light Mode Overrides */
-        [data-theme="light"] {
-            --bg: #ffffff;
-            --fg: #000000;
-        }
-
-        /* Global Reset */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            border-radius: 0 !important; /* Strictly 90-degree corners */
-            font-family: var(--font-main);
-            font-size: calc(1rem * var(--base-scale));
-            text-transform: lowercase; /* ENFORCED LOWERCASE */
-        }
-
-        body {
-            background-color: var(--bg);
-            color: var(--fg);
-            display: flex;
-            flex-direction: column;
-            height: 100vh; /* Fixed height for app-like feel */
-            padding: 20px 10px; 
-            overflow: hidden; /* Prevent body scroll, handle inside app */
-        }
-
-        /* --- Mandatory Layout Structure --- */
-
-        /* Top Metadata Row */
-        #trtb_header {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            margin-bottom: 5px;
-            padding: 0 2px;
-            flex-shrink: 0;
-        }
-
-        /* The Global Active Content Border */
-        #app_container {
-            border: var(--border-width) solid var(--accent);
-            width: 100%;
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            position: relative; /* Context for absolute positioning */
-            overflow: hidden;
-        }
-
-        /* Footer Metadata Row */
-        #trtb_footer {
-            padding-top: 5px;
-            width: 100%;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        /* --- Modular Div Logic --- */
-        .trtb_module {
-            width: 100%;
-            margin: 0; 
-            border: var(--border-width) solid var(--accent);
-            border-top: none; 
-            padding: var(--pad-inner);
-            background: var(--bg);
-        }
-
-        /* --- Typography & Elements --- */
-        p { text-indent: var(--indent); margin-bottom: 5px; }
-        
-        a { color: var(--fg); text-decoration: overline; }
-        a:hover { background: var(--accent); color: var(--bg); }
-
-        button {
-            background: var(--bg);
-            color: var(--fg);
-            border: var(--border-width) solid var(--accent);
-            padding: 4px 10px;
-            cursor: pointer;
-            margin: 2px;
-            text-transform: lowercase;
-            font-weight: bold;
-        }
-        button:hover { background: var(--accent); color: var(--bg); }
-
-        /* The Toggle Button specific style */
-        #theme_toggle { background: transparent; border: none; padding: 0; cursor: pointer; }
-        #theme_toggle:hover { background: transparent; color: var(--accent); }
-
-        /* Inputs */
-        input[type="text"], input[type="number"] {
-            background: var(--bg);
-            color: var(--fg);
-            border: var(--border-width) solid var(--accent);
-            outline: none;
-            margin: 2px; 
-            padding: 4px;
-            width: 100%;
-        }
+        /* Fullscreen app overrides (v3 default is scrollable min-height:100vh;
+           this page needs a fixed viewport with an absolute-positioned tray). */
+        body { height: 100vh; padding: 20px 10px; overflow: hidden; }
+        #app_container { position: relative; overflow: hidden; }
 
         /* --- App Specific Styles --- */
 
