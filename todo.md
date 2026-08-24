@@ -2,6 +2,13 @@
 
 Last updated: by cptr — xanh webfont FIXED + Group C migrations complete; Group B in progress.
 
+## learnings/ section — NEW (2026-08-23)
+- New directory `learnings/` for short, single-word-titled articles on technical/intellectual topics (user's record of things learned with AI). No personal info/stories.
+- `learnings/index.html` = flat list of links + one-line summaries (simplified style, links trtb.css v3).
+- Canonical article page pattern documented in `.cptr/docs/learnings-article-template.md` (full template + markdown→HTML rules). Every article follows it exactly.
+- Directory name `learnings/` is a WORKING NAME — user may rename. Keep in mind.
+- Not yet linked from the main `index.html` hub — ask user if/when to add a link.
+
 ## STATUS (current)
 - **Canonical theme:** `trtb.css` v3.0.0 (Modular) — LIVE. xanh webfont now works (see fix below).
 - **Files on canonical v3.0.0 theme (11):** `oracle.html`, `articles/cptr-pitch.html`, `index.html`, `trtb-calc.html`, `trtb-dice.html`, `trtb-dap.html`, `trtb-dream.html`, `jpegcomp.html`, `trtb1.html`, `md2html.html`, `goodnews.html`.
