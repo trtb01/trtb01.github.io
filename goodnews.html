@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GOODnews.html</title>
-    <!-- Assuming trtb.css defines variables like --line-thick and --min-gap -->
-    <link rel="stylesheet" href="/trtb-legacy.css">
+    <!-- goodnews.html: page-specific styles only. Theme via /trtb.css (v3.0.0). -->
+    <link rel="stylesheet" href="/trtb.css">
     <style>
         /* --- Local Overrides & Layout --- */
+        /* Page-local vars (referenced by .p / .report-10 / .d below). */
         :root {
-            /* Fallback variables in case trtb.css is missing during preview */
             --line-thick: 2px;
             --min-gap: 1rem;
         }
 
+        /* Narrow centered prose column (overrides v3's 1100px content max). */
         body {
             max-width: 800px;
             margin-left: auto;
             margin-right: auto;
-            font-family: sans-serif; /* Fallback font */
         }
 
         /* Custom Post Container */
