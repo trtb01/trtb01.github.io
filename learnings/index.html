@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>learnings/index.html</title>
+
+    <link rel="stylesheet" href="../trtb.css">
+    <style>
+        /* learnings index — page-specific styles only. Theme via ../trtb.css (v3.0.0). */
+
+        /* --- Link Row Layout --- */
+        .link_row {
+            display: flex;
+            width: 100%;
+            padding: 5px 0;
+            border-bottom: var(--border-width) solid var(--accent);
+        }
+        .link_row:first-child { padding-top: 0; }
+        .link_row:last-child  { border-bottom: none; padding-bottom: 0; }
+
+        .col_name {
+            width: 22%;
+            font-weight: bold;
+            padding-right: 10px;
+        }
+        .col_desc {
+            width: 78%;
+            opacity: 0.9;
+        }
+
+        .empty {
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        /* Mobile Adjust */
+        @media (max-width: 600px) {
+            .link_row { flex-direction: column; }
+            .col_name, .col_desc { width: 100%; }
+            .col_desc { text-indent: var(--indent); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="trtb_header">
+        <span><a href="../index.html">trtb01.github.io</a> / learnings</span>
+        <span>26-08-23</span>
+    </div>
+
+    <div id="app_container">
+
+        <div class="trtb_module">
+            <h1>learnings</h1>
+            <p>short, self-contained writeups on technical and intellectual topics. each page is named by a single word.</p>
+        </div>
+
+        <div class="trtb_module">
+            <!--
+                ADD ENTRIES HERE — one .link_row per page.
+                <div class="link_row">
+                    <span class="col_name"><a href="word.html">word</a></span>
+                    <span class="col_desc">short summary of the contents.</span>
+                </div>
+            -->
+            <div class="link_row">
+                <span class="col_name empty">—</span>
+                <span class="col_desc empty">no entries yet.</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="trtb_footer">
+        <span>&copy; 2025, 2026 thor smith</span>
+        <span>:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+        <script>
+            (function(){
+                const btn = document.getElementById('theme_toggle');
+                const root = document.documentElement;
+                btn.addEventListener('click', () => {
+                    const current = root.getAttribute('data-theme');
+                    root.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+                });
+            })();
+        </script>
+    </div>
+
+</body>
+</html>
