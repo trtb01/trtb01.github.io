@@ -1,0 +1,62 @@
+/* --- VOIDSCREAM BLOG STYLING --- */
+
+/* NOTE: This targets the ID "post". 
+   Ideally, repeated elements should use classes (class="post"), 
+   but this CSS is written to handle your current HTML format.
+*/
+
+/* The Container for a single blog entry */
+div[id="post"] {
+    border: 1px solid white; /* Stark white border */
+    margin-bottom: 4rem;     /* Large gap between posts */
+    background-color: black;
+    box-shadow: 4px 4px 0px red; /* Hard shadow for depth */
+    transition: transform 0.2s ease;
+}
+
+div[id="post"]:hover {
+    transform: translate(-2px, -2px); /* Slight lift on hover */
+    box-shadow: 6px 6px 0px red;
+}
+
+/* The Title Bar */
+div[id="posttitle"] {
+    background-color: red;
+    color: black;
+    padding: 8px 12px;
+    border-bottom: 1px solid white;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Resetting paragraph styles inside the title so it fits perfectly */
+div[id="posttitle"] p {
+    margin: 0;
+    text-indent: 0; /* Remove the standard trtb indent */
+    font-size: 0.9rem;
+}
+
+/* The Content Area */
+div[id="postcontent"] {
+    padding: 20px;
+    color: #eeeeee; /* Slightly off-white for readability */
+}
+
+/* Spacing for paragraphs inside the content */
+div[id="postcontent"] p {
+    margin-bottom: 1.5rem;
+    line-height: 1.4; /* Slightly looser reading flow than the main site */
+}
+
+/* Mobile Adjustments */
+@media (max-width: 600px) {
+    div[id="post"] {
+        margin-bottom: 2rem;
+        box-shadow: 2px 2px 0px red;
+    }
+    
+    div[id="posttitle"] p {
+        font-size: 0.75rem; /* Smaller text for dates on phones */
+    }
+}
