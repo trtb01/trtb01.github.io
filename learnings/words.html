@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beyond Diceware: The Science of Pronounceable Passwords</title>
+    <link rel="stylesheet" href="../trtb.css">
+</head>
+<body>
+
+<h1>Beyond Diceware: The Science of Pronounceable Passwords</h1>
+
+<p><em>A technical exploration of pseudoword passphrase generation, entropy accounting, and the state of the art in memorable security.</em></p>
+
+<hr>
+
+<h2>1. The Problem That Won't Go Away</h2>
+
+<p>Passwords are broken, and everyone knows it. The advice is always the same: make them long, random, and unique — then never reuse them. But the human brain struggles with <code>G#7kL9!qZ</code> — a string designed to be maximally hostile to memory.</p>
+
+<p>The standard answer for the past two decades has been the <strong>passphrase</strong>: a sequence of dictionary words that strings together enough entropy to resist brute-force while remaining memorable. XKCD's famous "correct horse battery staple" (2009) popularized the idea, and the Diceware system (originally published by Arnold Reinhold in 1995) formalized it with curated wordlists and precise entropy calculations.</p>
+
+<p>But there's a quieter, more interesting thread of research that asks a different question: <strong>what if the words themselves aren't real words at all?</strong></p>
+
+<hr>
+
+<h2>2. Diceware and the Wordlist Model</h2>
+
+<p>Let's start with the baseline.</p>
+
+<p>Diceware works by rolling five six-sided dice (or using a cryptographically secure random number generator) to pick words from a list of 7,776 entries — exactly 6<sup>5</sup> possibilities. Each word therefore contributes exactly log<sub>2</sub>(7776) ≈ 12.9 bits of entropy. A five-word Diceware passphrase gives you ~64.5 bits; six words give ~77.5 bits.</p>
+
+<p>The security model is clear, public, and well-understood. The attacker knows the wordlist. They know you're using it. But 7776<sup>6</sup> is still a number too large to search (~1.6 × 10<sup>23</sup> possibilities).</p>
+
+<p><strong>The weakness isn't cryptographic — it's ergonomic.</strong> Diceware words average 4–5 characters, meaning a six-word passphrase is 25–35 characters long. That's tedious to type on a phone, frustrating to dictate over the phone to tech support, and still vulnerable to shoulder-surfing if someone catches a real English word in the sequence.</p>
+
+<hr>
+
+<h2>3. The Core Insight: Where Does Entropy Really Come From?</h2>
+
+<p>The critical conceptual leap — and the one you've independently made — is this:</p>
+
+<blockquote>
+In a Diceware passphrase, each word is treated as a single atomic unit of entropy. The attacker cannot gain anything by noticing that "helmet" is made of letters; they must enumerate entire words from the 7,776-entry list. The letters inside a word are, cryptographically speaking, invisible.
+</blockquote>
+
+<p>But here's the corollary: <strong>if the words aren't in any dictionary, the attacker has no wordlist to enumerate.</strong> They're forced back to the character level. And if your pseudowords are constructed from components that produce, say, 10<sup>12</sup> possible 5-character strings, each such pseudoword is worth ~40 bits — comparable to three Diceware words, in half the characters.</p>
+
+<p>This is the foundation of the entire pronounceable-password research area.</p>
+
+<hr>
+
+<h2>4. What Already Exists: The State of the Art</h2>
+
+<h3>4.1 Gramtropy (Pieter Wuille)</h3>
+
+<p><strong>The most rigorous implementation to date.</strong> Gramtropy uses a <strong>context-free grammar</strong> to define what counts as pronounceable, then generates passwords uniformly from all strings matching that grammar — and, critically, <strong>computes the exact entropy</strong>.</p>
+
+<p>A grammar looks like this:</p>
+
+<pre><code>vowel     = "a"|"e"|"i"|"o"|"u";
+consonant = "b"|"d"|"f"|"g"|"h"|"k"|"l"|"m"|"n"|"p"|"r"|"s"|"t"|"v"|"w"|"z";
+convow    = consonant vowel;
+main      = convow+;
+</code></pre>
+
+<p>This defines a space of alternating consonant-vowel strings. Because every valid string is derivable from the grammar, and the grammar is unambiguous, the total number of possible strings of a given length can be <strong>counted exactly</strong>. The tool doesn't guess entropy — it <em>computes</em> it.</p>
+
+<p>Example output: <code>godudamuhasomifohikuwi</code> (22 characters, exactly computed entropy).</p>
+
+<p>You can scale complexity by adding consonant clusters (<code>"ch"</code>, <code>"sh"</code>, <code>"th"</code>, <code>"str"</code>), vowel pairs (<code>"ai"</code>, <code>"ea"</code>, <code>"ou"</code>), or any phonetic rules your language requires. The entropy accounting scales with every addition.</p>
+
+<p><strong>Why this matters:</strong> This is the closest existing implementation to your concept. Gramtropy also aligns with Kerckhoffs's principle — the grammar and component set are public; the security relies solely on the size of the generated keyspace.</p>
+
+<h3>4.2 pwgram (off-by-one)</h3>
+
+<p>An alternative approach using <strong>bigram models (Markov chains)</strong> trained on real wordlists. Rather than defining a grammar, pwgram learns statistical letter-transition probabilities from real words: "t" is likely followed by "h", unlikely by "z". It then generates new words that feel like real English (or German, or any language you train it on) without being real words.</p>
+
+<p>Entropy is estimated via the model's perplexity — around 3.9 bits per character for English-like output, compared to ~3.4 bits per character for pure consonant-vowel alternating generation.</p>
+
+<h3>4.3 vorud Encoding (rsaarelm)</h3>
+
+<p>Takes a different approach: treat pronounceability as an <strong>encoding problem</strong>, not a generation problem. Encode raw bits directly into alternating vowel-diphthong / consonant-cluster strings. The output is deterministic and reversible — any bit sequence maps to exactly one pronounceable string and vice versa. This means entropy is exactly the input bit count (e.g., 64 bits in → ~23 characters out).</p>
+
+<h3>4.4 Bubble Babble (Antti Huima, 2000)</h3>
+
+<p>A well-known encoding scheme from the crypto world, originally designed for SSH fingerprint display (<code>ssh-keygen -B</code>). Produces hyphenated pronounceable strings like <code>xexox-kykyk-...</code>. Less entropy per character than the newer tools but notable for its longevity and real-world deployment.</p>
+
+<h3>4.5 Modern CLI Tools: entropass &amp; npwg</h3>
+
+<p>Both include <code>--pronounceable</code> flags. They implement simpler consonant-vowel alternation with known entropy per character, provide mutation options (capitalize, add digits/symbols), and are straightforward to use. Less flexible than Gramtropy, but more accessible.</p>
+
+<hr>
+
+<h2>5. The Per-User Component List Question</h2>
+
+<p><strong>The answer is: it adds a modest amount of security, but it's better practice not to rely on it.</strong></p>
+
+<p>If the attacker knows your algorithm but not your personal component set, they must brute-force the component selection as well — effectively widening the search space. However, this is a form of <strong>security through obscurity</strong>. Kerckhoffs's principle — the foundational axiom of modern cryptography — states that a system should remain secure even if every detail of the algorithm is public knowledge.</p>
+
+<p>The better approach (exemplified by Gramtropy) is to make the grammar and components public, compute the exact entropy from that grammar, and scale the number of pseudowords or length until the entropy target is met — without relying on any secrets.</p>
+
+<p><strong>That said</strong>, a per-user component list doesn't hurt, as long as it's not your only line of defense. Treat it as a free bonus of a few extra bits, not a replacement for adequate entropy.</p>
+
+<hr>
+
+<h2>6. Comparing the Models: Pseudowords vs. Real Words</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Dimension</th>
+            <th>Diceware / Real Words</th>
+            <th>Pseudowords (Gramtropy-style)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Entropy source</strong></td>
+            <td>Wordlist size (public, known)</td>
+            <td>Grammar-defined string space (public, known)</td>
+        </tr>
+        <tr>
+            <td><strong>Entropy per word/unit</strong></td>
+            <td>~12.9 bits (7,776-word list)</td>
+            <td>Variable — typically 20–40 bits per 5–7 char pseudoword</td>
+        </tr>
+        <tr>
+            <td><strong>Character efficiency</strong></td>
+            <td>Poor (~3.5 chars/word, ~12.9 bits)</td>
+            <td>Better (~2.5–3 bits/char achievable)</td>
+        </tr>
+        <tr>
+            <td><strong>Spellability</strong></td>
+            <td>Trivial (real words)</td>
+            <td>Good (pronounceable by construction)</td>
+        </tr>
+        <tr>
+            <td><strong>Memorability</strong></td>
+            <td>Excellent (semantic meaning)</td>
+            <td>Moderate (no meaning, but can be said aloud)</td>
+        </tr>
+        <tr>
+            <td><strong>Dictation over phone</strong></td>
+            <td>Easy (real words)</td>
+            <td>Moderate (pseudowords sometimes confused)</td>
+        </tr>
+        <tr>
+            <td><strong>Defense against wordlist attacks</strong></td>
+            <td>None (wordlist is public)</td>
+            <td>Inherent (pseudowords aren't in any list)</td>
+        </tr>
+        <tr>
+            <td><strong>Tool maturity</strong></td>
+            <td>High (many implementations)</td>
+            <td>Medium (Gramtropy, pwgram, vorud exist)</td>
+        </tr>
+        <tr>
+            <td><strong>Widely supported</strong></td>
+            <td>Yes (many apps encourage passphrases)</td>
+            <td>No (niche; pseudowords confuse validation)</td>
+        </tr>
+    </tbody>
+</table>
+
+<hr>
+
+<h2>7. Numbers, Symbols, and Hybrid Approaches</h2>
+
+<p>Adding numbers and special characters to a pseudoword passphrase works exactly as you'd expect: it increases the character-level entropy. Tools like entropass and pwgram support this as a post-processing step — for example, capitalizing a random letter and appending <code>3!</code> at the end.</p>
+
+<p>However, the entropy contribution is often overstated. Appending a single digit adds only log<sub>2</sub>(10) ≈ 3.3 bits — about a third of another pseudoword. A better approach is to <strong>include digits and special characters as part of the grammar itself</strong> (e.g., <code>digit = "2"|"3"|"7"</code>, inserted occasionally), which integrates their entropy cleanly into the model.</p>
+
+<hr>
+
+<h2>8. Is Your Idea Viable? (And Is It Already Out There?)</h2>
+
+<p><strong>Yes, it's viable. And yes, it's already out there.</strong></p>
+
+<p>You've independently arrived at an approach that has been explored by cryptographers, tool builders, and security engineers for at least 15 years. The closest match to your concept is <strong>Gramtropy</strong>, which gives you:</p>
+
+<ul>
+    <li>Customizable pronounceability rules</li>
+    <li>Exact entropy computation (not estimation)</li>
+    <li>Per-user grammars (if desired)</li>
+    <li>Uniform sampling (no bias toward certain patterns)</li>
+</ul>
+
+<p>The one real question is whether pseudowords are <strong>more useful than real-word Diceware</strong> for your specific threat model:</p>
+
+<ul>
+    <li><strong>For maximum memorability across long periods</strong> (master passwords, PGP keys): real-word Diceware still wins. Semantic meaning is a powerful mnemonic.</li>
+    <li><strong>For shorter, high-entropy strings typed frequently</strong> (app passwords, Wi-Fi credentials): pseudowords win on character efficiency.</li>
+    <li><strong>For systems that need to be dictated</strong>: real words are easier to communicate, but pronounceable pseudowords are a distant second — still far better than random alphanumeric garbage.</li>
+</ul>
+
+<hr>
+
+<h2>9. Recommendations</h2>
+
+<p>If you want to explore this further:</p>
+
+<ol>
+    <li><strong>Try Gramtropy</strong> — define a grammar that suits your language's phonetics, set an entropy target (80+ bits for most purposes), and generate pseudoword passwords. This is the most rigorous tool available.</li>
+    <li><strong>Try pwgram</strong> — if you prefer a statistical approach that learns from real words rather than requiring hand-crafted grammar rules.</li>
+    <li><strong>For high-security scenarios</strong> (password managers, disk encryption): use a combination — a 4–5 word Diceware passphrase with a single random pseudoword inserted at a random position. This gives semantic memorability plus the attacker-can't-dictionary-attack bonus.</li>
+    <li><strong>For frequent-use passwords</strong>: generate pseudowords with Gramtropy at ~70 bits of entropy (≈ 4–5 short pseudowords) and mutate with one number and one special character.</li>
+    <li><strong>Don't rely on secret component lists</strong> — it's unnecessary if your grammar gives adequate entropy, and it violates Kerckhoffs's principle if you claim cryptographic security.</li>
+</ol>
+
+<hr>
+
+<h2>References</h2>
+
+<ul>
+    <li>Arnold Reinhold, <em>The Diceware Passphrase FAQ</em> (1995–present). <a href="https://diceware.com">diceware.com</a></li>
+    <li>Pieter Wuille, <em>Gramtropy</em>. <a href="https://github.com/sipa/gramtropy">github.com/sipa/gramtropy</a></li>
+    <li>off-by-one, <em>pwgram</em>. <a href="https://github.com/off-by-one/pwgram">github.com/off-by-one/pwgram</a></li>
+    <li>rsaarelm, <em>vorud encoding</em>. <a href="https://github.com/rsaarelm/vorud">github.com/rsaarelm/vorud</a></li>
+    <li>Antti Huima, <em>Bubble Babble Binary Data Encoding</em> (2000).</li>
+    <li>EFF, <em>New Wordlists for Random Passphrases</em> (2016). <a href="https://www.eff.org/dice">eff.org/dice</a></li>
+    <li>Randall Munroe, <em>xkcd #936: Password Strength</em> (2009).</li>
+    <li>Auguste Kerckhoffs, <em>La cryptographie militaire</em> (1883).</li>
+</ul>
+
+<hr>
+
+<p><em>This article was originally researched and written in August 2026.</em></p>
+
+</body>
+</html>

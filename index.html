@@ -42,7 +42,7 @@
         /* --- Tab Specific Styles --- */
         #tab_container {
             display: grid;
-            grid-template-columns: repeat(4, 1fr); /* 4 equal columns */
+            grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
             /* Background is Black (bg) to create black lines via the gaps */
             background: var(--bg); 
             border-bottom: var(--border-width) solid var(--accent);
@@ -65,13 +65,13 @@
         }
 
         /* Top Row Styles: Double Horizontal Line */
-        .tab_btn:nth-child(-n+4) {
+        .tab_btn:nth-child(-n+5) {
             /* 6px double border: 2px black, 2px red (transparent bg), 2px black */
             border-bottom: 6px double var(--bg);
         }
 
         /* Bottom Row Styles: Balance Height */
-        .tab_btn:nth-child(n+5) {
+        .tab_btn:nth-child(n+6) {
             /* Solid red border to match height of top row without visual line */
             border-bottom: 6px solid var(--accent);
         }
@@ -201,6 +201,7 @@
                 <button class="tab_btn active" data-target="tab_main">main</button>
                 <button class="tab_btn" data-target="tab_trtb">trtb-suite</button>
                 <button class="tab_btn" data-target="tab_pages">pages</button>
+                <button class="tab_btn" data-target="tab_learnings">learnings</button>
                 <button class="tab_btn" data-target="tab_b64">b64-suite</button>
                 <button class="tab_btn" data-target="tab_encry">encry-suite</button>
                 <button class="tab_btn" data-target="tab_tools">tools</button>
@@ -268,6 +269,23 @@
                     <div class="link_row">
                         <div class="col_name"><a href="goodnews.html">goodnews.html</a></div>
                         <div class="col_desc">good news archive.</div>
+                    </div>
+                </div>
+
+                <!-- Learnings -->
+                <div id="tab_learnings" class="tab_pane">
+                    <h3>learnings</h3>
+                    <div class="link_row">
+                        <div class="col_name"><a href="learnings/disc.html">disc</a></div>
+                        <div class="col_desc">The Disc Wars — how Xbox is quietly profiting from PlayStation's self-inflicted wound.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="learnings/words.html">words</a></div>
+                        <div class="col_desc">Beyond Diceware — pseudoword passphrase generation and entropy accounting.</div>
+                    </div>
+                    <div class="link_row">
+                        <div class="col_name"><a href="learnings/index.html">index</a></div>
+                        <div class="col_desc">full learnings index.</div>
                     </div>
                 </div>
 
