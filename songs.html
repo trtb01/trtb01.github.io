@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>songs</title>
+    <link rel="stylesheet" href="/trtb.css">
+    <style>
+        /* songs table — extra spacing for readabililty */
+        .songs-table td { vertical-align: top; }
+
+        .songs-table td:first-child  { width: 36px; color: var(--accent); text-align: right; padding-right: 8px; }
+        .songs-table td:nth-child(2) { width: 40%; }
+        .songs-table td:nth-child(3) { width: 40%; }
+        .songs-table td:last-child   { width: 60px; text-align: center; }
+
+        .notes-link {
+            color: var(--accent);
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .notes-link:hover { opacity: 0.7; }
+
+        /* notes panel — hidden by default, slides up at bottom of #app_container */
+        #notes_panel {
+            display: none;
+            margin-top: var(--gap);
+            animation: slideUp 0.25s ease-out;
+        }
+        #notes_panel.open { display: block; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        #notes_panel h4 { color: var(--accent); margin-bottom: 5px; }
+        #notes_panel .notes-body {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        #notes_panel .notes-meta {
+            font-size: 0.85em;
+            opacity: 0.6;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- A. Top strip -->
+    <div id="trtb_header">
+        <span>songs</span>
+        <span>--</span>
+    </div>
+
+    <!-- B. Framed content area -->
+    <div id="app_container">
+
+        <!-- Title module -->
+        <div class="trtb_module">
+            <h1>songs</h1>
+            <p>recommendations, in no particular order. click [notes] where available for extra commentary.</p>
+        </div>
+
+        <!-- Song table module -->
+        <div class="trtb_module" id="song_table_module">
+            <table class="songs-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>artist</th>
+                        <th>song</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="song_rows">
+                    <!-- rows built by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Notes panel module (hidden until a notes link is clicked) -->
+        <div class="trtb_module" id="notes_panel">
+            <h4 id="notes_panel_artist"></h4>
+            <p class="notes-meta" id="notes_panel_title"></p>
+            <div class="notes-body" id="notes_panel_body"></div>
+        </div>
+
+    </div>
+
+    <!-- C. Bottom strip -->
+    <div id="trtb_footer">
+        <span>&copy; 2025, 2026 thor smith</span>
+        <span>:: trtb software ::</span>
+        <a href="/">[ home ]</a>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <!-- Theme toggle -->
+    <script>
+        (function(){
+            const btn = document.getElementById('theme_toggle');
+            const root = document.documentElement;
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme');
+                root.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+            });
+        })();
+    </script>
+
+    <!-- Song data & notes engine -->
+    <script>
+    /* =============================================================
+       EDIT THE SONG LIST HERE.  It's a plain array of objects.
+
+       Keys:
+         artist  — the performer (string, required)
+         title   — the song name   (string, required)
+         notes   — extra text that appears in the bottom panel when
+                   the [notes] link is clicked.  Omit (or set to
+                   null / "") if the song doesn't need notes.
+                   Plain text; line breaks are preserved.
+
+       The table builds in the order the array appears.
+    ============================================================= */
+
+    const songs = [
+        {
+            artist: "Kate Bollinger",
+            title:  "Lady in the Darkest Hour",
+            notes:  "put this on when you're driving alone at dusk with the windows down. the whole ep (*songs from a thousand frames of mind*) has this gauzy, lived-in warmth — like remembering a year through soft-focus polaroids. the bass line in this one sits so deep in the pocket it barely moves, and her voice just floats above it. perfect 3am track.",
+        },
+        {
+            artist: "Glimlip",
+            title:  "Green Heart",
+            notes:  null,                     // no notes — link won't show
+        },
+        {
+            artist: "Biig Piig",
+            title:  "24K",
+            notes:  "effortless late-night lofi. glimlip does these short instrumental sketches that feel like they were played into a mic in someone's bedroom at 2am — because they probably were. this one in particular has a little piano riff that loops so gently you don't even notice it until the third listen. great background music for reading or coding.",
+        },
+        {
+            artist: "Sam Fender",
+            title:  "Mantra",
+            notes:  "finally learned this one on guitar and it still gives me chills every time. the production builds so patiently — just voice and a sparse guitar line, then the drums creep in, then suddenly you're in this massive stadium-sized chorus. fender writes about working-class anxiety with more honesty than almost anyone right now.",
+        },
+        {
+            artist: "A Tribe Called Quest",
+            title:  "Electric Relaxation",
+        },
+        {
+            artist: "Mk.gee",
+            title:  "Are You Looking Up",
+            notes:  "mk.gee's guitar tone is genuinely unclassifiable — it sounds like a vhs tape melting in a broken deck. the whole album (*two star & the dream police*) is one of those rare records where every production choice is slightly wrong in exactly the right way. check the live version too; the way he wrestles sound out of a jazzmaster is wild.",
+        },
+        {
+            artist: "Adrianne Lenker",
+            title:  "anything",
+            notes:  "there's a line in this — \"i don't wanna talk about anything / i wanna kiss, kiss your eyes again\" — that just completely disarms me. lenker records like someone pressed the red button and forgot about it, and the result is these impossibly intimate sketches where you can hear her fingers sliding on the fretboard. don't put this on unless you're ready to feel something.",
+        },
+        {
+            artist: "Yves Tumor",
+            title:  "Gospel for a New Century",
+        },
+        {
+            artist: "Nilüfer Yanya",
+            title:  "midnight sun",
+            notes:  "that guitar hook in the chorus — this choppy, syncopated thing that keeps catching you off guard — is some of the most inventive playing i've heard in indie rock lately. the whole song is about restlessness and not belonging, and the music actually *feels* restless. it never settles into a groove for more than a few bars before it pivots.",
+        },
+        {
+            artist: "Dijon",
+            title:  "The Dress",
+            notes:  "dijon and his collaborators (mk.gee, ryan lee) are making the most interesting guitar music right now and they barely play chords in a conventional way. this song is basically a soul vocal run over what sounds like a band falling apart in slow motion — in the best possible way. the *absolutely* live performance video is essential viewing.",
+        },
+    ];
+
+    /* ---- build the table ---- */
+    (function buildTable() {
+        const tbody = document.getElementById('song_rows');
+        songs.forEach((s, i) => {
+            const tr = document.createElement('tr');
+
+            // # column
+            const tdNum = document.createElement('td');
+            tdNum.textContent = i + 1;
+            tr.appendChild(tdNum);
+
+            // artist
+            const tdArtist = document.createElement('td');
+            tdArtist.textContent = s.artist;
+            tr.appendChild(tdArtist);
+
+            // title
+            const tdTitle = document.createElement('td');
+            const em = document.createElement('em');
+            em.textContent = s.title;
+            tdTitle.appendChild(em);
+            tr.appendChild(tdTitle);
+
+            // notes link
+            const tdNotes = document.createElement('td');
+            if (s.notes) {
+                const link = document.createElement('span');
+                link.className = 'notes-link';
+                link.textContent = '[notes]';
+                link.addEventListener('click', () => showNotes(s));
+                tdNotes.appendChild(link);
+            }
+            tr.appendChild(tdNotes);
+
+            tbody.appendChild(tr);
+        });
+    })();
+
+    /* ---- notes panel logic ---- */
+    function showNotes(song) {
+        const panel   = document.getElementById('notes_panel');
+        const artist  = document.getElementById('notes_panel_artist');
+        const title   = document.getElementById('notes_panel_title');
+        const body    = document.getElementById('notes_panel_body');
+
+        artist.textContent = song.artist;
+        title.textContent  = '“' + song.title + '”';
+        body.textContent   = song.notes;
+
+        // If panel is already open for a different song, close+reopen for re-animation
+        if (panel.classList.contains('open')) {
+            panel.classList.remove('open');
+            void panel.offsetWidth;  // force reflow so animation replays
+        }
+        panel.classList.add('open');
+
+        // Scroll panel into view
+        panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    </script>
+
+</body>
+</html>
