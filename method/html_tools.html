@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>method :: html tools</title>
+    <link rel="stylesheet" href="/trtb.css">
+    <style>
+        /* method/html_tools.html — documentation page. Plain, functional. */
+
+        pre {
+            background: var(--bg);
+            border: var(--border-width) solid var(--accent);
+            padding: 10px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            color: var(--fg);
+        }
+
+        code {
+            color: var(--accent);
+        }
+
+        .section_ref {
+            color: var(--dim);
+            font-size: 0.75rem;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            border: var(--border-width) solid var(--accent);
+            padding: 6px 8px;
+            text-align: left;
+            color: var(--fg);
+        }
+
+        th {
+            color: var(--accent);
+        }
+
+        h2 {
+            border-bottom: var(--border-width) solid var(--accent);
+            padding-bottom: 5px;
+            margin-top: 30px;
+        }
+
+        .toc a {
+            color: var(--accent);
+            text-decoration: none;
+            display: block;
+            padding: 2px 0;
+        }
+
+        .toc a:hover {
+            color: var(--fg);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER -->
+    <div id="trtb_header">
+        <span>method / html_tools</span>
+        <span style="display:flex; gap:10px; align-items:center;">
+            <button onclick="const c=document.documentElement.getAttribute('data-theme');document.documentElement.setAttribute('data-theme',c==='light'?'dark':'light');">[b/w]</button>
+            <span>doc</span>
+        </span>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="app_container">
+
+        <div id="method_module" class="trtb_module">
+
+            <h1>html tools: structure notes</h1>
+            <p class="section_ref">REF :: oracle.html / trtb-dap.html / trtb-dice.html</p>
+
+            <p>This document records the structural findings of three tools built within this collection: the oracle, the audio protocol, and the dice engine. It is a neutral account. No judgments are made regarding merit or quality. The observations are limited to what the source documents contain.</p>
+
+            <h2>table of contents</h2>
+            <div class="toc">
+                <a href="#s1">1. shared conventions</a>
+                <a href="#s2">2. oracle.html</a>
+                <a href="#s3">3. trtb-dap.html</a>
+                <a href="#s4">4. trtb-dice.html</a>
+                <a href="#s5">5. communication patterns</a>
+                <a href="#s6">6. summary</a>
+            </div>
+
+            <!-- SECTION 1 -->
+            <h2 id="s1">1. shared conventions</h2>
+
+            <p>The three tools share a common base. Each is a single HTML file using no framework. Logic is written in vanilla JavaScript, scoped within immediately-invoked function expressions. Styling is inherited from a shared stylesheet which defines the visual variables used throughout.</p>
+
+            <p>The following conventions are present in all three files:</p>
+
+            <table>
+                <thead>
+                    <tr><th>convention</th><th>detail</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>shared stylesheet</td><td><code>/trtb.css</code> (v3.0.0), accessed via <code>&lt;link&gt;</code></td></tr>
+                    <tr><td>theming</td><td><code>data-theme</code> attribute on root element; toggles between <code>light</code> and <code>dark</code></td></tr>
+                    <tr><td>color variables</td><td><code>--accent</code>, <code>--bg</code>, <code>--fg</code>, <code>--dim</code>, <code>--border-width</code></td></tr>
+                    <tr><td>header</td><td><code>#trtb_header</code> containing page title and date</td></tr>
+                    <tr><td>footer</td><td><code>#trtb_footer</code> containing copyright and a <code>[b/w]</code> toggle</td></tr>
+                    <tr><td>date</td><td>auto-generated in <code>YY-MM-DD</code> format via <code>Date</code></td></tr>
+                    <tr><td>container</td><td>content resides in <code>#app_container</code></td></tr>
+                    <tr><td>modules</td><td>logical subdivisions carry the class <code>trtb_module</code></td></tr>
+                </tbody>
+            </table>
+
+            <p>Each file contains a copyright notice attributing the work to thor smith, dated 2025, under the brand identifier "trtb software".</p>
+
+            <!-- SECTION 2 -->
+            <h2 id="s2">2. oracle.html</h2>
+
+            <p class="section_ref">FILE :: oracle.html</p>
+
+            <p>The oracle is a decision-support tool. It produces a d100 outcome and a d10 modifier. The interpretation is left to the user, guided by a static manual. The document is organised into four modules, each containing its own script block.</p>
+
+            <h3>2.1 modules</h3>
+
+            <table>
+                <thead>
+                    <tr><th>module</th><th>id</th><th>function</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>display</td><td><code>#module_display</code></td><td>renders the d100 and the modifier</td></tr>
+                    <tr><td>controls</td><td><code>#module_controls</code></td><td>initiates a roll on button press</td></tr>
+                    <tr><td>settings</td><td><code>#module_settings</code></td><td>manages shake and voice options</td></tr>
+                    <tr><td>help</td><td><code>#module_help</code></td><td>static interpretation table</td></tr>
+                </tbody>
+            </table>
+
+            <h3>2.2 roll logic</h3>
+
+            <p>The roll procedure is deterministic in structure, random in outcome:</p>
+
+            <pre>d100 = floor(random() * 100) + 1
+d10  = floor(random() * 10) + 1
+coin = random() greater than 0.5
+modifier = coin ? +d10 : -d10</pre>
+
+            <p>The modifier is applied to the d100 before comparison with a target. A coin flip determines the sign of the modifier; no weighting is applied.</p>
+
+            <h3>2.3 voice output</h3>
+
+            <p>When enabled, the outcome is spoken via the Speech Synthesis API. Prior utterances are cancelled before a new one is issued. The speaking rate is fixed at 1.1.</p>
+
+            <h3>2.4 shake detection</h3>
+
+            <p>An optional gesture triggers a roll. Acceleration data is read from the device motion events. A speed value is computed from the difference in acceleration over a time interval. A threshold and a cooldown prevent repeated firing. iOS permission is requested conditionally when the API exposes <code>requestPermission</code>.</p>
+
+            <!-- SECTION 3 -->
+            <h2 id="s3">3. trtb-dap.html</h2>
+
+            <p class="section_ref">FILE :: trtb-dap.html</p>
+
+            <p>The audio protocol is a media player. It accepts a local file or a remote URL and renders a live frequency visualisation. The document contains a single module assembled from inline-styled sections.</p>
+
+            <h3>3.1 layout</h3>
+
+            <p>The player is a column flex container with three regions:</p>
+
+            <table>
+                <thead>
+                    <tr><th>region</th><th>content</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>header</td><td>collapsible source loader, file and URL inputs</td></tr>
+                    <tr><td>body</td><td>canvas visualisation and vertical title sidebar</td></tr>
+                    <tr><td>controls</td><td>play/pause and repeat toggle</td></tr>
+                </tbody>
+            </table>
+
+            <p>The title sidebar uses <code>writing-mode: vertical-rl</code> to orient the track name vertically within a fixed-width column.</p>
+
+            <h3>3.2 audio graph</h3>
+
+            <p>On initialisation, an AudioContext is created. A media element source is routed through an analyser node to the destination. The analyser operates with an FFT size of 64.</p>
+
+            <pre>source node -> analyser -> destination (fft: 64)</pre>
+
+            <h3>3.3 visualisation</h3>
+
+            <p>A recursive render loop driven by <code>requestAnimationFrame</code> redraws the canvas each frame. The canvas is resized to its parent each pass. Frequency data is read via <code>getByteFrequencyData</code> into an unsigned byte array. Bars are drawn with heights proportional to the normalised values. The background and bar colours are read from the computed styles of the document.</p>
+
+            <h3>3.4 source handling</h3>
+
+            <p>A local file is loaded via a Blob URL; a remote address is assigned directly. The audio element carries a <code>crossorigin</code> attribute. Playback initiates automatically after a source is activated.</p>
+
+            <!-- SECTION 4 -->
+            <h2 id="s4">4. trtb-dice.html</h2>
+
+            <p class="section_ref">FILE :: trtb-dice.html</p>
+
+            <p>The dice engine is a parsing and evaluation tool. Text input is interpreted as dice notation, resolved to a numeric result, and appended to a history list. It is the most computationally involved of the three files.</p>
+
+            <h3>4.1 parser</h3>
+
+            <p>Dice expressions are matched by a regular expression and replaced in place with their summed result. The pattern:</p>
+
+            <pre>/(\d*)d(f|%|\d+)(!)?((?:k|kh|kl)\d+)?/gi</pre>
+
+            <p>Supported notation:</p>
+
+            <table>
+                <thead>
+                    <tr><th>notation</th><th>meaning</th><th>implementation</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>d%</code></td><td>percentile / d100</td><td>100 sides</td></tr>
+                    <tr><td><code>df</code></td><td>fate die</td><td>d3 mapped to -1/0/+1</td></tr>
+                    <tr><td><code>dN</code></td><td>die with N sides</td><td>direct roll</td></tr>
+                    <tr><td><code>!</code></td><td>exploding die</td><td>re-roll on max, limit 50</td></tr>
+                    <tr><td><code>k/kh/klN</code></td><td>keep highest / lowest N</td><td>sort and drop remainder</td></tr>
+                </tbody>
+            </table>
+
+            <p>An explicit count prefix is supported. A count exceeding 500 is reduced to 500. Fate dice subtract 2 from each roll after rolling a d3.</p>
+
+            <h3>4.2 evaluation</h3>
+
+            <p>After substitution, the remaining string is filtered to numeric operators only and evaluated. Non-integer results are rounded to two decimal places. Each sub-expression produces a human-readable breakdown of individual rolls; kept rolls are summed, dropped rolls are marked with strikethrough styling.</p>
+
+            <h3>4.3 query handling</h3>
+
+            <p>Input is split on commas. Each sub-query is resolved independently. Results are joined with a vertical bar; breakdowns are joined with a double bar. An empty submission recalls the last successful query.</p>
+
+            <h3>4.4 history</h3>
+
+            <p>Completed rolls are inserted at the top of a scrollable list. Each entry contains the original query, the resolved result, and the roll breakdown. The list is capped by vertical scroll rather than item count.</p>
+
+            <!-- SECTION 5 -->
+            <h2 id="s5">5. communication patterns</h2>
+
+            <p>No global state is used. Modules interact with one another through two mechanisms documented here.</p>
+
+            <h3>5.1 methods attached to elements</h3>
+
+            <p>A module may expose a function by assigning it to its own DOM element or a child. Other modules retrieve that element and invoke the function. The intent is portability: the logic is scoped to its container and does not leak into the global namespace.</p>
+
+            <pre>element.triggerRoll = performRoll;
+element.getTTSState = function() { ... };
+element.updateValues = function(d100, mod) { ... };</pre>
+
+            <h3>5.2 sibling access</h3>
+
+            <p>Cross-module state (such as a checkbox value) is read by locating the sibling element by identifier at call time rather than by holding a reference. This decouples the modules from one another's internal details.</p>
+
+            <!-- SECTION 6 -->
+            <h2 id="s6">6. summary</h2>
+
+            <p>The three tools follow a consistent template. Each is a self-contained HTML document with scoped JavaScript, shared styling, and a common header/footer arrangement. They differ in purpose and complexity.</p>
+
+            <p>The oracle is modular and gesture-aware. The audio protocol is a single visual container wrapping the Web Audio API. The dice engine is a text parser with the most involved logic. Communication between parts is achieved by attaching functions to DOM elements and reading siblings by identifier.</p>
+
+            <p>No assertions are made about performance, accessibility, or maintainability. The above is a record of what the source documents contain.</p>
+
+        </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <div id="trtb_footer">
+        <span>MODE: DOCUMENTATION</span>
+        <span>&copy; 2025 thor smith</span>
+    </div>
+
+</body>
+</html>
