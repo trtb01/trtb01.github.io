@@ -1,6 +1,14 @@
 # trtb01.github.io — TODO & site notes
 
-Last updated: by cptr — xanh webfont FIXED + Group C migrations complete; Group B in progress.
+Last updated: by cptr — trtb-count.html added (live) + index link + todo note.
+
+## trtb-count.html — NEW (2026-09-15)
+- Commissioned page: character/word/etc counter. Live at https://trtb01.github.io/trtb-count.html
+- Canonical v3.0.0 frame (`#trtb_header` / `#app_container` / `.trtb_module` × 2 / `#trtb_footer`), links `/trtb.css`.
+- Two boxes as requested: input module on top, compact results grid on bottom.
+- Input module: `[-] text field` collapse toggle + `[ upload .txt ]` file upload (hidden input, styled label, `accept=".txt,text/plain,text/*"`, read via `f.text()`, re-uploading same file works).
+- Results: characters, chars (no spaces), words, sentences, lines, paragraphs, tokens (≈ chars/4, red), reading time (≈ 200 wpm, red). Number formatting via `toLocaleString`. Mobile: grid 2-col.
+- Counting logic unit-tested in node (empty string, 1 word, multiline/multi-para, 200/1999/12000 wpm edge cases) — all pass.
 
 ## learnings/ section — NEW (2026-08-23)
 - New directory `learnings/` for short, single-word-titled articles on technical/intellectual topics (user's record of things learned with AI). No personal info/stories.
@@ -11,7 +19,7 @@ Last updated: by cptr — xanh webfont FIXED + Group C migrations complete; Grou
 
 ## STATUS (current)
 - **Canonical theme:** `trtb.css` v3.0.0 (Modular) — LIVE. xanh webfont now works (see fix below).
-- **Files on canonical v3.0.0 theme (11):** `oracle.html`, `articles/cptr-pitch.html`, `index.html`, `trtb-calc.html`, `trtb-dice.html`, `trtb-dap.html`, `trtb-dream.html`, `jpegcomp.html`, `trtb1.html`, `md2html.html`, `goodnews.html`.
+- **Files on canonical v3.0.0 theme (12):** `oracle.html`, `articles/cptr-pitch.html`, `index.html`, `trtb-calc.html`, `trtb-count.html`, `trtb-dice.html`, `trtb-dap.html`, `trtb-dream.html`, `jpegcomp.html`, `trtb1.html`, `md2html.html`, `goodnews.html`.
 - **`voidscream.html`** — STANDALONE modernized theme (`voidscream.css` v2.0.0, no trtb dependency). Original backed up as `voidscream.css.bak`. Commit `b343342`.
 - **Group B: COMPLETE ✅** — all 5 migrated. `trtb-legacy.css` now has NO consumers (see cleanup note below).
 - **Group D & E: CANCELLED by user** — standalone pages left as-is.

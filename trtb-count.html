@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TRTB Counter</title>
+    <link rel="stylesheet" href="/trtb.css">
+    <style>
+        /* trtb-count.html — page-specific styles only. Theme via /trtb.css (v3.0.0). */
+
+        /* --- Custom Scrollbar (not in canonical trtb.css; kept local) --- */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000;
+            border-left: var(--border-width) solid var(--accent);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #000;
+            border: var(--border-width) solid var(--accent);
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #fff;
+        }
+
+        /* --- Input controls --- */
+        #input_controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--gap);
+        }
+        #file_input {
+            display: none;
+        }
+        /* file upload styled to match the global button look */
+        #file_btn {
+            display: inline-block;
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            padding: 4px 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        #file_btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        /* --- Text field --- */
+        #text_entry {
+            width: 100%;
+            min-height: 180px;
+            line-height: 1.4; /* override trtb.css 1.0 for readability */
+            resize: vertical;
+        }
+
+        /* --- Results grid: red gridlines via accent background + gap trick --- */
+        #stat_grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: var(--border-width);
+            background: var(--accent);
+            border: var(--border-width) solid var(--accent);
+        }
+        .stat {
+            background: var(--bg);
+            padding: var(--pad-inner);
+        }
+        .stat_label {
+            color: var(--fg);
+            opacity: 0.6;
+            font-size: 0.8rem;
+        }
+        .stat_value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+        /* the two llm-era metrics get the accent */
+        .stat_value.accent {
+            color: var(--accent);
+        }
+
+        /* Mobile adjustment */
+        @media (max-width: 600px) {
+            #stat_grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            #trtb_header, #trtb_footer {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TOP METADATA -->
+    <div id="trtb_header">
+        <span id="header_title">trtb counter</span>
+        <span id="header_date"></span>
+    </div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app_container">
+
+        <!-- MODULE: INPUT -->
+        <div class="trtb_module">
+            <div id="input_controls">
+                <button id="collapse_btn" type="button">[-] text field</button>
+                <label id="file_btn" for="file_input">[ upload .txt ]</label>
+                <input type="file" id="file_input" accept=".txt,text/plain,text/*">
+            </div>
+            <textarea id="text_entry" placeholder="paste or type text here..." rows="10" autofocus></textarea>
+        </div>
+
+        <!-- MODULE: RESULTS -->
+        <div class="trtb_module">
+            <div id="stat_grid">
+                <div class="stat">
+                    <div class="stat_label">characters</div>
+                    <div class="stat_value" id="stat_chars">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat_label">chars (no spaces)</div>
+                    <div class="stat_value" id="stat_chars_ns">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat_label">words</div>
+                    <div class="stat_value" id="stat_words">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat_label">sentences</div>
+                    <div class="stat_value" id="stat_sentences">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat_label">lines</div>
+                    <div class="stat_value" id="stat_lines">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat_label">paragraphs</div>
+                    <div class="stat_value" id="stat_paragraphs">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat_label">tokens (≈)</div>
+                    <div class="stat_value accent" id="stat_tokens">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat_label">reading time (≈)</div>
+                    <div class="stat_value accent" id="stat_time">0s</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- BOTTOM METADATA -->
+    <div id="trtb_footer">
+        <span id="footer_copyright">© 2025, 2026 thor smith</span>
+        <span id="footer_brand">:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <!-- COUNTER LOGIC -->
+    <script>
+        (function() {
+            const field = document.getElementById('text_entry');
+            const fileInput = document.getElementById('file_input');
+            const collapseBtn = document.getElementById('collapse_btn');
+
+            const els = {
+                chars:       document.getElementById('stat_chars'),
+                chars_ns:    document.getElementById('stat_chars_ns'),
+                words:       document.getElementById('stat_words'),
+                sentences:   document.getElementById('stat_sentences'),
+                lines:       document.getElementById('stat_lines'),
+                paragraphs:  document.getElementById('stat_paragraphs'),
+                tokens:      document.getElementById('stat_tokens'),
+                time:        document.getElementById('stat_time')
+            };
+
+            function fmtNum(n) {
+                return n.toLocaleString('en-US');
+            }
+
+            /* approx reading time at 200 words per minute */
+            function readTime(words) {
+                if (!words) return '0s';
+                const sec = Math.max(1, Math.round(words * 60 / 200));
+                if (sec < 60) return sec + 's';
+                const min = Math.floor(sec / 60), s = sec % 60;
+                if (min < 60) return s ? min + 'm ' + s + 's' : min + 'm';
+                const h = Math.floor(min / 60), m = min % 60;
+                return m ? h + 'h ' + m + 'm' : h + 'h';
+            }
+
+            function update() {
+                const t = field.value;
+                const chars = t.length;
+                const charsNs = t.replace(/\s/g, '').length;
+                const words = t.trim() ? t.trim().split(/\s+/).length : 0;
+                const lines = t === '' ? 0 : t.split('\n').length;
+                const sentences = t.split(/[.!?]+/).map(s => s.trim()).filter(Boolean).length;
+                const paragraphs = t.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean).length;
+                const tokens = Math.round(chars / 4); /* ≈4 chars per llm token */
+
+                els.chars.textContent = fmtNum(chars);
+                els.chars_ns.textContent = fmtNum(charsNs);
+                els.words.textContent = fmtNum(words);
+                els.sentences.textContent = fmtNum(sentences);
+                els.lines.textContent = fmtNum(lines);
+                els.paragraphs.textContent = fmtNum(paragraphs);
+                els.tokens.textContent = fmtNum(tokens);
+                els.time.textContent = readTime(words);
+            }
+
+            field.addEventListener('input', update);
+
+            /* -- text file upload -- */
+            fileInput.addEventListener('change', async () => {
+                const f = fileInput.files && fileInput.files[0];
+                if (!f) return;
+                try {
+                    field.value = await f.text();
+                    /* if the field was collapsed, expand it so the upload is visible */
+                    if (field.style.display === 'none') expandField();
+                    update();
+                } catch (err) {
+                    alert('could not read that file.');
+                }
+                fileInput.value = ''; /* allow re-uploading the same file */
+            });
+
+            /* -- collapsing text field toggle -- */
+            function collapseField() {
+                field.style.display = 'none';
+                collapseBtn.textContent = '[+] text field';
+            }
+            function expandField() {
+                field.style.display = '';
+                collapseBtn.textContent = '[-] text field';
+            }
+            collapseBtn.addEventListener('click', () => {
+                if (field.style.display === 'none') expandField();
+                else collapseField();
+            });
+
+            update(); /* initial state: all zeros */
+        })();
+    </script>
+
+    <!-- FOOTER / GLOBAL LOGIC -->
+    <script>
+        // Header Date Logic
+        (function() {
+            const dateEl = document.getElementById('header_date');
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            dateEl.innerText = `${yy}-${mm}-${dd}`;
+        })();
+
+        // Theme Toggle Logic
+        (function() {
+            const btn = document.getElementById('theme_toggle');
+            const root = document.documentElement;
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme');
+                root.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+            });
+        })();
+    </script>
+</body>
+</html>
