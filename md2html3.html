@@ -40,9 +40,7 @@
     padding: clamp(20px, 4vw, 40px);
   }
 
-  header {
-    margin: 0 0 28px 0;
-  }
+  header { margin: 0 0 28px 0; }
 
   h1 {
     margin: 0;
@@ -84,26 +82,23 @@
   }
 
   button {
-    font-family: inherit; 
-    font-size: 0.8em; 
+    font-family: inherit;
+    font-size: 0.8em;
     letter-spacing: 0.08em;
-    text-transform: uppercase; 
-    color: var(--ink); 
+    text-transform: uppercase;
+    color: var(--ink);
     background: transparent;
-    border: 1px solid var(--ink); 
-    padding: 6px 14px; 
+    border: 1px solid var(--ink);
+    padding: 6px 14px;
     cursor: pointer;
     transition: color 0.6s ease, background-color 0.6s ease;
   }
 
-  button:hover { 
-    background: var(--ink); 
-    color: var(--paper); 
-  }
+  button:hover { background: var(--ink); color: var(--paper); }
 
   iframe {
     width: 100%;
-    height: 480px;
+    height: 520px;
     border: 1px solid var(--ink);
     background: var(--paper);
     margin: 0 0 24px 0;
@@ -116,9 +111,7 @@
     margin-bottom: 6px;
   }
 
-  .output-header label {
-    margin: 0;
-  }
+  .output-header label { margin: 0; }
 
   .copy-msg {
     font-size: 0.8em;
@@ -128,14 +121,15 @@
     transition: opacity 0.6s ease;
   }
 
-  .copy-msg.show {
-    opacity: 1;
+  .copy-msg.show { opacity: 1; }
+
+  .hint {
+    margin: -16px 0 24px 0;
+    font-size: 0.8em;
+    color: var(--muted);
   }
 
-  :focus-visible { 
-    outline: 1px solid var(--ink); 
-    outline-offset: 2px; 
-  }
+  :focus-visible { outline: 1px solid var(--ink); outline-offset: 2px; }
 
   @keyframes breathe {
     0%, 100% { color: var(--ink); }
@@ -155,7 +149,8 @@
 
     <section>
       <label for="md-input">Markdown</label>
-      <textarea id="md-input" rows="12" aria-label="Markdown input" placeholder="# Title&#10;&#10;Write your text here..."></textarea>
+      <textarea id="md-input" rows="14" aria-label="Markdown input" placeholder="# Title&#10;&#10;Write your text here..."></textarea>
+      <p class="hint">Supports headings, lists, task lists, tables, blockquotes, code, links, images, strikethrough.</p>
     </section>
 
     <div class="controls">
@@ -166,7 +161,7 @@
     <section>
       <label for="preview-frame">Preview</label>
       <iframe id="preview-frame" title="Rendered HTML preview"></iframe>
-      
+
       <div class="output-header">
         <label for="html-output">HTML Source</label>
         <span id="copy-msg" class="copy-msg">Copied.</span>
@@ -192,15 +187,300 @@
   var btnDownload = document.getElementById("btn-download");
   var copyMsg = document.getElementById("copy-msg");
 
-  try {
-    var saved = window.localStorage.getItem(KEY);
-    if (saved && mdInput) mdInput.value = saved;
-  } catch (e) {}
+  function parseMd(src) {
+    src = src.replace(/\r\n?/g, "\n");
 
-  if (mdInput) {
-    mdInput.addEventListener("input", function () {
-      try { window.localStorage.setItem(KEY, mdInput.value); } catch (e) {}
+    var CODE = [];
+    src = src.replace(/^[ \t]*```([^\n]*)\n?([\s\S]*?)\n?[ \t]*```[ \t]*$/gm, function (m, lang, code) {
+      CODE.push({ lang: lang.trim(), code: code });
+      return "\x00CODE" + (CODE.length - 1) + "\x00";
     });
+
+    src = src.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+    var LIST_ITEM = /^( {0,8})([-*+]|\d{1,9}[.)])\s+(.*)$/;
+    var HR = /^ {0,3}((?:-[ \t]*){3,}|(?:\*[ \t]*){3,}|(?:_[ \t]*){3,})$/;
+    var ATX = /^ {0,3}(#{1,6})\s+(.*?)\s*#*\s*$/;
+    var SETEXT = /^ {0,3}(=+|-+)\s*$/;
+    var BQ = /^ {0,3}(?:&gt;)+/;
+
+    function renderCode(block) {
+      var escaped = block.code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      var cls = block.lang ? ' class="language-' + block.lang.replace(/"/g, "&quot;") + '"' : "";
+      return "<pre><code" + cls + ">" + escaped + "</code></pre>\n";
+    }
+
+    function splitRow(line) {
+      line = line.trim();
+      if (line.charAt(0) === "|") line = line.slice(1);
+      if (line.charAt(line.length - 1) === "|") line = line.slice(0, -1);
+      var cells = [], cur = "", k;
+      for (k = 0; k < line.length; k++) {
+        if (line.charAt(k) === "\\" && line.charAt(k + 1) === "|") { cur += "\x02"; k++; }
+        else if (line.charAt(k) === "|") { cells.push(cur); cur = ""; }
+        else cur += line.charAt(k);
+      }
+      cells.push(cur);
+      for (k = 0; k < cells.length; k++) cells[k] = cells[k].trim().replace(/\x02/g, "\\|");
+      return cells;
+    }
+
+    function isTableSep(line) {
+      if (line.indexOf("|") === -1 || line.indexOf("-") === -1) return false;
+      var cells = splitRow(line);
+      if (!cells.length) return false;
+      for (var s = 0; s < cells.length; s++) {
+        if (!/^:?-+:?$/.test(cells[s].trim())) return false;
+      }
+      return true;
+    }
+
+    function alignStyle(al) {
+      return al ? ' style="text-align:' + al + '"' : "";
+    }
+
+    function parseTable(lines, i) {
+      var header = splitRow(lines[i]);
+      var sepCells = splitRow(lines[i + 1]);
+      var aligns = [], a;
+      for (a = 0; a < header.length; a++) {
+        var c = (sepCells[a] || "").trim();
+        var left = c.charAt(0) === ":";
+        var right = c.charAt(c.length - 1) === ":";
+        aligns.push(left && right ? "center" : right ? "right" : left ? "left" : "");
+      }
+      var j = i + 2;
+      var rows = [];
+      while (j < lines.length && lines[j].trim() !== "" && lines[j].indexOf("|") !== -1 && !isTableSep(lines[j])) {
+        rows.push(splitRow(lines[j]));
+        j++;
+      }
+      var n = header.length;
+      var h = "<table>\n<thead>\n<tr>\n";
+      var cc;
+      for (cc = 0; cc < n; cc++) h += "<th" + alignStyle(aligns[cc]) + ">" + inlineFormat(header[cc] || "") + "</th>\n";
+      h += "</tr>\n</thead>\n";
+      if (rows.length) {
+        h += "<tbody>\n";
+        for (var r = 0; r < rows.length; r++) {
+          h += "<tr>\n";
+          for (cc = 0; cc < n; cc++) h += "<td" + alignStyle(aligns[cc]) + ">" + inlineFormat(rows[r][cc] || "") + "</td>\n";
+          h += "</tr>\n";
+        }
+        h += "</tbody>\n";
+      }
+      h += "</table>\n";
+      return { html: h, next: j };
+    }
+
+    function parseListBlock(lines, i) {
+      var first = lines[i].match(LIST_ITEM);
+      var baseIndent = first[1].length;
+      var ordered = /\d/.test(first[2]);
+      var startNum = ordered ? parseInt(first[2], 10) : 1;
+      var markerLen = first[2].length + 1;
+      var items = [];
+      var cur = [];
+      var j = i;
+
+      function flushItem() { if (cur.length) { items.push(cur); cur = []; } }
+
+      while (j < lines.length) {
+        var line = lines[j];
+
+        if (/^\s*$/.test(line)) {
+          var nxt = lines[j + 1];
+          if (nxt !== undefined) {
+            var nm = nxt.match(LIST_ITEM);
+            if ((nm && nm[1].length >= baseIndent) || /^ {2,}/.test(nxt)) {
+              cur.push("");
+              j++;
+              continue;
+            }
+          }
+          break;
+        }
+
+        var m = line.match(LIST_ITEM);
+        if (m && m[1].length === baseIndent && (/\d/.test(m[2]) === ordered)) {
+          flushItem();
+          cur.push(m[3]);
+          j++;
+          continue;
+        }
+        if (m && m[1].length > baseIndent) {
+          cur.push(line);
+          j++;
+          continue;
+        }
+        if (!m) {
+          var ind = line.match(/^( *)/)[1].length;
+          if (ind >= baseIndent + markerLen) {
+            cur.push(line.slice(baseIndent + markerLen));
+            j++;
+            continue;
+          }
+        }
+        break;
+      }
+      flushItem();
+
+      var anyTask = false;
+      var inner = "";
+      for (var k = 0; k < items.length; k++) {
+        var it = items[k].slice();
+        while (it.length > 1 && /^\s*$/.test(it[it.length - 1])) it.pop();
+        var head = it[0];
+        var rest = it.slice(1);
+        while (rest.length && /^\s*$/.test(rest[0])) rest.shift();
+
+        var cls = "";
+        var prefix = "";
+        var task = head.match(/^\[([ xX])\]\s+(.*)$/);
+        if (task) {
+          anyTask = true;
+          cls = ' class="task-item"';
+          prefix = '<input type="checkbox" disabled' + (/[xX]/.test(task[1]) ? " checked" : "") + "> ";
+          head = task[2];
+        }
+
+        inner += "<li" + cls + ">" + prefix + inlineFormat(head);
+        if (rest.length) inner += "\n" + parseLines(rest);
+        inner += "</li>\n";
+      }
+
+      var tag = ordered ? "ol" : "ul";
+      var attrs = "";
+      if (!ordered && anyTask) attrs = ' class="task-list"';
+      if (ordered && startNum !== 1) attrs += ' start="' + startNum + '"';
+      return { html: "<" + tag + attrs + ">\n" + inner + "</" + tag + ">\n", next: j };
+    }
+
+    function inlineFormat(text) {
+      if (!text) return "";
+      var esc = [];
+      text = text.replace(/\\([\\`*_{}\[\]()#+\-.!~|])/g, function (m, ch) {
+        esc.push(ch);
+        return "\x00ESC" + (esc.length - 1) + "\x00";
+      });
+
+      var codes = [];
+      text = text.replace(/`([^`]+)`/g, function (m, code) {
+        codes.push("<code>" + code + "</code>");
+        return "\x00INLINE" + (codes.length - 1) + "\x00";
+      });
+
+      text = text.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, function (m, alt, url, title) {
+        var out = '<img src="' + url.replace(/"/g, "&quot;") + '" alt="' + alt.replace(/[*_~`#]/g, "").replace(/"/g, "&quot;") + '"';
+        if (title) out += ' title="' + title.replace(/"/g, "&quot;") + '"';
+        return out + ">";
+      });
+
+      text = text.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g, function (m, label, url, title) {
+        var out = '<a href="' + url.replace(/"/g, "&quot;") + '"';
+        if (title) out += ' title="' + title.replace(/"/g, "&quot;") + '"';
+        return out + ">" + label + "</a>";
+      });
+
+      text = text.replace(/&lt;((?:https?:\/\/|mailto:)[^\s]+)&gt;/g, '<a href="$1">$1</a>');
+
+      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+      text = text.replace(/__([^_]+)__/g, "<strong>$1</strong>");
+      text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
+      text = text.replace(/_([^_]+)_/g, "<em>$1</em>");
+      text = text.replace(/~~([^~]+)~~/g, "<del>$1</del>");
+
+      text = text.replace(/\x00INLINE(\d+)\x00/g, function (m, idx) { return codes[parseInt(idx, 10)]; });
+      text = text.replace(/\x00ESC(\d+)\x00/g, function (m, idx) { return esc[parseInt(idx, 10)]; });
+      return text;
+    }
+
+    function parseLines(lines) {
+      var html = "";
+      var para = [];
+      var i = 0;
+
+      function flushPara() {
+        if (para.length) {
+          html += "<p>" + para.join("").replace(/\s+$/, "") + "</p>\n";
+          para = [];
+        }
+      }
+
+      while (i < lines.length) {
+        var line = lines[i];
+
+        if (/^\s*$/.test(line)) { flushPara(); i++; continue; }
+
+        var cm = line.match(/^\s*\x00CODE(\d+)\x00\s*$/);
+        if (cm) {
+          flushPara();
+          html += renderCode(CODE[parseInt(cm[1], 10)]);
+          i++;
+          continue;
+        }
+
+        var atx = line.match(ATX);
+        if (atx) {
+          flushPara();
+          var lvl = atx[1].length;
+          html += "<h" + lvl + ">" + inlineFormat(atx[2]) + "</h" + lvl + ">\n";
+          i++;
+          continue;
+        }
+
+        if (BQ.test(line)) {
+          flushPara();
+          var bqLines = [];
+          while (i < lines.length && BQ.test(lines[i])) {
+            bqLines.push(lines[i].replace(/^ {0,3}&gt; ?/, ""));
+            i++;
+          }
+          html += "<blockquote>\n" + parseLines(bqLines) + "</blockquote>\n";
+          continue;
+        }
+
+        if (para.length && SETEXT.test(line)) {
+          var lvl2 = line.trim().charAt(0) === "=" ? 1 : 2;
+          html += "<h" + lvl2 + ">" + para.join("").replace(/\s+$/, "") + "</h" + lvl2 + ">\n";
+          para = [];
+          i++;
+          continue;
+        }
+
+        if (HR.test(line)) {
+          flushPara();
+          html += "<hr>\n";
+          i++;
+          continue;
+        }
+
+        if (line.indexOf("|") !== -1 && i + 1 < lines.length && isTableSep(lines[i + 1])) {
+          flushPara();
+          var t = parseTable(lines, i);
+          html += t.html;
+          i = t.next;
+          continue;
+        }
+
+        if (LIST_ITEM.test(line)) {
+          flushPara();
+          var l = parseListBlock(lines, i);
+          html += l.html;
+          i = l.next;
+          continue;
+        }
+
+        var hard = / {2,}$/.test(line);
+        para.push(inlineFormat(line) + (hard ? "<br>" : " "));
+        i++;
+      }
+
+      flushPara();
+      return html;
+    }
+
+    return parseLines(src.split("\n"));
   }
 
   function extractTitle(md) {
@@ -210,181 +490,89 @@
     if (h1Match) {
       rawTitle = h1Match[1];
     } else {
-      var plain = md.replace(/[#*_`>\-\[\]\(\)!]/g, " ").replace(/\s+/g, " ").trim();
+      var plain = md.replace(/[#*_`>\-\[\]\(\)!~|]/g, " ").replace(/\s+/g, " ").trim();
       var words = plain.split(" ");
       rawTitle = words.slice(0, 2).join(" ");
     }
-    rawTitle = rawTitle.replace(/[*_`]/g, "").trim().substring(0, 20);
+    rawTitle = rawTitle.replace(/[*_`~]/g, "").trim().substring(0, 20);
     if (!rawTitle) rawTitle = "Document";
     return rawTitle;
   }
 
-  function parseMd(md) {
-    var codeBlocks = [];
-    md = md.replace(/```([\s\S]*?)```/g, function (m, code) {
-      codeBlocks.push("<pre><code>" + code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").trim() + "</code></pre>");
-      return "\x00CODE" + (codeBlocks.length - 1) + "\x00";
-    });
-
-    md = md.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-    var lines = md.split("\n");
-    var html = "";
-    var inUl = false;
-    var inOl = false;
-    var inBlockquote = false;
-    var currentParagraph = [];
-
-    function flushParagraph() {
-      if (currentParagraph.length > 0) {
-        var text = currentParagraph.join(" ").trim();
-        if (text) html += "<p>" + text + "</p>\n";
-        currentParagraph = [];
-      }
-    }
-
-    function flushList() {
-      if (inUl) { html += "</ul>\n"; inUl = false; }
-      if (inOl) { html += "</ol>\n"; inOl = false; }
-    }
-
-    function flushBlockquote() {
-      if (inBlockquote) { html += "</blockquote>\n"; inBlockquote = false; }
-    }
-
-    function inlineFormat(text) {
-      var inlineCodes = [];
-      text = text.replace(/`([^`]+)`/g, function (m, code) {
-        inlineCodes.push("<code>" + code + "</code>");
-        return "\x00INLINE" + (inlineCodes.length - 1) + "\x00";
-      });
-      
-      text = text.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
-      text = text.replace(/__([^_]+)__/g, "<strong>$1</strong>");
-      text = text.replace(/\*([^*]+)\*/g, "<em>$1</em>");
-      text = text.replace(/_([^_]+)_/g, "<em>$1</em>");
-      text = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-
-      text = text.replace(/\x00INLINE(\d+)\x00/g, function (m, idx) {
-        return inlineCodes[parseInt(idx)];
-      });
-      return text;
-    }
-
-    for (var i = 0; i < lines.length; i++) {
-      var line = lines[i];
-      
-      var codeMatch = line.match(/^\x00CODE(\d+)\x00$/);
-      if (codeMatch) {
-        flushParagraph(); flushList(); flushBlockquote();
-        html += codeBlocks[parseInt(codeMatch[1])] + "\n";
-        continue;
-      }
-
-      var hMatch = line.match(/^(#{1,6})\s+(.*)$/);
-      if (hMatch) {
-        flushParagraph(); flushList(); flushBlockquote();
-        var level = hMatch[1].length;
-        html += "<h" + level + ">" + inlineFormat(hMatch[2]) + "</h" + level + ">\n";
-        continue;
-      }
-
-      if (/^(---|\*\*\*|___)$/.test(line.trim())) {
-        flushParagraph(); flushList(); flushBlockquote();
-        html += "<hr>\n";
-        continue;
-      }
-
-      var bqMatch = line.match(/^&gt;\s?(.*)$/);
-      if (bqMatch) {
-        flushParagraph(); flushList();
-        if (!inBlockquote) { html += "<blockquote>\n"; inBlockquote = true; }
-        html += inlineFormat(bqMatch[1]) + "<br>\n";
-        continue;
-      } else if (inBlockquote && line.trim() === "") {
-        flushBlockquote();
-        continue;
-      } else if (inBlockquote) {
-        flushBlockquote();
-      }
-
-      var ulMatch = line.match(/^[-*+]\s+(.*)$/);
-      if (ulMatch) {
-        flushParagraph(); flushBlockquote();
-        if (!inUl) { flushList(); html += "<ul>\n"; inUl = true; }
-        html += "<li>" + inlineFormat(ulMatch[1]) + "</li>\n";
-        continue;
-      }
-
-      var olMatch = line.match(/^\d+\.\s+(.*)$/);
-      if (olMatch) {
-        flushParagraph(); flushBlockquote();
-        if (!inOl) { flushList(); html += "<ol>\n"; inOl = true; }
-        html += "<li>" + inlineFormat(olMatch[1]) + "</li>\n";
-        continue;
-      }
-
-      if ((inUl || inOl) && line.trim() === "") {
-        flushList();
-        continue;
-      } else if ((inUl || inOl)) {
-        flushList();
-      }
-
-      if (line.trim() === "") {
-        flushParagraph();
-        continue;
-      }
-
-      currentParagraph.push(inlineFormat(line));
-    }
-
-    flushParagraph();
-    flushList();
-    flushBlockquote();
-
-    return html;
-  }
-
   function generateHtml(bodyContent, docTitle) {
+    var css = [
+      "  body { font-family: serif; font-size: 16px; line-height: 2; color: #000; background: #fff;",
+      "    margin: 0 auto; padding: 1in; max-width: 8.5in; }",
+      "  p { margin: 0; text-indent: 0.5in; }",
+      "  h1, h2, h3, h4, h5, h6 { font-size: 1em; font-weight: bold; margin: 0; text-indent: 0; line-height: 2; }",
+      "  h1 { text-align: center; font-weight: normal; margin-bottom: 1em; }",
+      "  ul, ol { margin: 0; padding-left: 1in; }",
+      "  li { margin: 0; text-indent: 0; }",
+      "  li p { text-indent: 0; }",
+      "  blockquote { margin: 0; padding-left: 0.5in; }",
+      "  hr { border: none; border-top: 1px solid #000; margin: 0; }",
+      "  a { color: #000; text-decoration: underline; }",
+      "  pre, code { font-family: monospace; font-size: 0.9em; }",
+      "  pre { white-space: pre-wrap; text-indent: 0; margin: 0; line-height: 1.2; }",
+      "  table { border-collapse: collapse; margin: 0 0 0 0.5in; line-height: 1.4; }",
+      "  th, td { border: 1px solid #000; padding: 0.04in 0.15in; text-align: left; vertical-align: top;",
+      "    font-variant-numeric: tabular-nums; }",
+      "  th { font-weight: bold; }",
+      "  img { max-width: 100%; }",
+      "  del { text-decoration: line-through; }",
+      "  ul.task-list { list-style: none; }",
+      "  li.task-item { text-indent: 0; }",
+      "  li.task-item input { margin-right: 0.1in; accent-color: #000; }"
+    ].join("\n");
+
     return '<!DOCTYPE html>\n' +
       '<html lang="en">\n' +
       '<head>\n' +
       '<meta charset="utf-8">\n' +
       '<title>' + docTitle.replace(/</g, '&lt;') + '</title>\n' +
-      '<style>\n' +
-      '  body {\n' +
-      '    font-family: serif;\n' +
-      '    font-size: 16px;\n' +
-      '    line-height: 2;\n' +
-      '    color: #000;\n' +
-      '    background: #fff;\n' +
-      '    margin: 0 auto;\n' +
-      '    padding: 1in;\n' +
-      '    max-width: 8.5in;\n' +
-      '  }\n' +
-      '  p { margin: 0; text-indent: 0.5in; }\n' +
-      '  h1, h2, h3, h4, h5, h6 {\n' +
-      '    font-size: 1em;\n' +
-      '    font-weight: bold;\n' +
-      '    margin: 0;\n' +
-      '    text-indent: 0;\n' +
-      '    line-height: 2;\n' +
-      '  }\n' +
-      '  h1 { text-align: center; font-weight: normal; margin-bottom: 1em; }\n' +
-      '  ul, ol { margin: 0; padding-left: 1in; }\n' +
-      '  li { margin: 0; text-indent: 0; }\n' +
-      '  blockquote { margin: 0; padding-left: 0.5in; text-indent: 0; }\n' +
-      '  hr { border: none; border-top: 1px solid #000; margin: 0; }\n' +
-      '  a { color: #000; text-decoration: underline; }\n' +
-      '  pre, code { font-family: monospace; font-size: 0.9em; }\n' +
-      '  pre { white-space: pre-wrap; text-indent: 0; margin: 0; line-height: 1.2; }\n' +
-      '</style>\n' +
+      '<style>\n' + css + '\n</style>\n' +
       '</head>\n' +
       '<body>\n' +
       bodyContent +
       '</body>\n' +
       '</html>';
+  }
+
+  var SAMPLE = [
+    "# Field Notes",
+    "",
+    "A short specimen demonstrating **bold**, *italics*, ~~struck~~ text, `inline code`, and [a link](https://example.com).",
+    "",
+    "## Observations",
+    "",
+    "1. Basalt — fine-grained",
+    "2. Granite — coarse-grained",
+    "3. Slate — foliated",
+    "",
+    "| Sample | Hardness | Notes |",
+    "| :--- | :---: | ---: |",
+    "| A-01 | 6 | fractured |",
+    "| A-02 | 3 | weathered |",
+    "",
+    "> All observations are provisional.",
+    "> Recheck before citing.",
+    "",
+    "- [x] Catalogue drawer one",
+    "- [ ] Catalogue drawer two",
+    "",
+    "```",
+    "status: draft",
+    "revised: 2026-09-24",
+    "```"
+  ].join("\n");
+
+  var saved = null;
+  try { saved = window.localStorage.getItem(KEY); } catch (e) {}
+  if (mdInput) {
+    mdInput.value = (saved !== null) ? saved : SAMPLE;
+    mdInput.addEventListener("input", function () {
+      try { window.localStorage.setItem(KEY, mdInput.value); } catch (e) {}
+    });
   }
 
   function convert() {
@@ -420,7 +608,7 @@
         }
       } catch (e) {
         if (navigator.clipboard) {
-          navigator.clipboard.writeText(htmlOutput.value).then(function() {
+          navigator.clipboard.writeText(htmlOutput.value).then(function () {
             if (copyMsg) {
               copyMsg.classList.add("show");
               setTimeout(function () { copyMsg.classList.remove("show"); }, 2000);
@@ -435,7 +623,7 @@
     btnDownload.addEventListener("click", function () {
       if (!htmlOutput || !htmlOutput.value || !mdInput) return;
       var docTitle = extractTitle(mdInput.value);
-      var safeName = docTitle.replace(/[^a-z0-9]/gi, '_').substring(0, 20) || "document";
+      var safeName = docTitle.replace(/[^a-z0-9]/gi, "_").substring(0, 20) || "document";
       var blob = new Blob([htmlOutput.value], { type: "text/html" });
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
@@ -448,9 +636,7 @@
     });
   }
 
-  if (mdInput && mdInput.value) {
-    convert();
-  }
+  if (mdInput && mdInput.value) convert();
 })();
 </script>
 </body>
