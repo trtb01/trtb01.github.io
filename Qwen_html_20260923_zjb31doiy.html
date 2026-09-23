@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD → HTML</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background: #fff;
+    color: #000;
+    font-family: Georgia, 'Times New Roman', serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.9;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  h1 span {
+    display: inline-block;
+    border: 4px solid #000;
+    padding: 8px 16px;
+    margin: 4px;
+  }
+
+  .subtitle {
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 40px;
+    text-align: center;
+    max-width: 600px;
+  }
+
+  #dropzone {
+    width: 100%;
+    max-width: 700px;
+    min-height: 400px;
+    border: 5px solid #000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 20px;
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+  }
+
+  #dropzone:hover {
+    background: #000;
+    color: #fff;
+  }
+
+  #dropzone.dragover {
+    background: #000;
+    color: #fff;
+  }
+
+  #dropzone.dragover .drop-text {
+    text-decoration: line-through;
+  }
+
+  .drop-text {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    text-align: center;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+  }
+
+  .drop-hint {
+    font-size: 1rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    text-align: center;
+    opacity: 0.7;
+  }
+
+  #fileInput {
+    display: none;
+  }
+
+  #status {
+    margin-top: 30px;
+    font-size: 1.5rem;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+    min-height: 2em;
+  }
+
+  #status.success {
+    border-top: 4px solid #000;
+    border-bottom: 4px solid #000;
+    padding: 15px 0;
+  }
+
+  #status.error {
+    border: 4px solid #000;
+    padding: 15px 30px;
+  }
+
+  footer {
+    margin-top: auto;
+    padding-top: 40px;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    font-weight: 700;
+    opacity: 0.6;
+  }
+</style>
+</head>
+<body>
+
+  <h1><span>MD</span>→<span>HTML</span></h1>
+  <div class="subtitle">Drop a markdown file. Get an HTML file. Nothing else.</div>
+
+  <label for="fileInput" id="dropzone">
+    <div class="drop-text">DROP YOUR .MD FILE HERE</div>
+    <div class="drop-hint">— Or click to browse —</div>
+  </label>
+  <input type="file" id="fileInput" accept=".md,.markdown,.txt">
+
+  <div id="status"></div>
+
+  <footer>Runs entirely in your browser</footer>
+
+<script>
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('fileInput');
+  const status = document.getElementById('status');
+
+  function setStatus(msg, type) {
+    status.textContent = msg;
+    status.className = type || '';
+  }
+
+  function handleFile(file) {
+    if (!file) return;
+
+    const validExts = ['.md', '.markdown', '.txt'];
+    const nameLower = file.name.toLowerCase();
+    if (!validExts.some(ext => nameLower.endsWith(ext))) {
+      setStatus('✗ THAT IS NOT A MARKDOWN FILE', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const md = e.target.result;
+        const html = marked.parse(md);
+
+        const doc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${file.name.replace(/\.[^.]+$/, '')}</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 720px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #222; }
+  h1, h2, h3, h4 { margin-top: 2em; }
+  code { background: #f4f4f4; padding: 2px 6px; font-size: 0.9em; }
+  pre { background: #f4f4f4; padding: 16px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  blockquote { border-left: 4px solid #000; margin: 0; padding-left: 16px; font-style: italic; }
+  img { max-width: 100%; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { border: 1px solid #000; padding: 8px; }
+</style>
+</head>
+<body>
+${html}
+</body>
+</html>`;
+
+        const blob = new Blob([doc], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = file.name.replace(/\.[^.]+$/, '') + '.html';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        setStatus('✓ ' + a.download + ' downloaded', 'success');
+      } catch (err) {
+        setStatus('✗ CONVERSION FAILED', 'error');
+        console.error(err);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Drag and drop
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.add('dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(evt => {
+    dropzone.addEventListener(evt, (e) => {
+      e.preventDefault();
+      dropzone.classList.remove('dragover');
+    });
+  });
+
+  dropzone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files[0];
+    handleFile(file);
+  });
+
+  fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    handleFile(file);
+    fileInput.value = '';
+  });
+</script>
+
+</body>
+</html>
