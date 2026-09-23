@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>To-Do Generator</title>
+<style>
+  :root {
+    --gutter-x: 40%;        /* left + right page margin */
+    --gutter-y: 20%;        /* top + bottom page margin  */
+    --ink: #000000;
+    --faded: #a9a9a9;
+    --wash: #f4f4f4;
+  }
+
+  html, body { background: #ffffff; }
+
+  body {
+    margin: var(--gutter-y) var(--gutter-x);
+    font-family: serif;
+    font-size: 16px;
+    line-height: 1.45;
+    color: var(--ink);
+  }
+
+  h1 {
+    margin: 0 0 2px 0;
+    font-size: 1.1em;
+    font-weight: normal;
+    animation: breathe 16s ease-in-out infinite;
+  }
+
+  .sub {
+    margin: 0 0 22px 0;
+    font-size: 0.8em;
+    animation: breathe-soft 16s ease-in-out infinite;
+  }
+
+  @keyframes breathe      { 0%, 100% { color: #000000; } 50% { color: #5a5a5a; } }
+  @keyframes breathe-soft { 0%, 100% { color: #7d7d7d; } 50% { color: #b0b0b0; } }
+
+  /* ---------- form ---------- */
+
+  form { margin: 0 0 26px 0; }
+
+  label {
+    display: block;
+    margin: 0 0 3px 0;
+    font-size: 0.75em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  input[type="text"],
+  input[type="date"] {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    font-family: serif;
+    font-size: 0.9em;
+    color: #000000;
+    background-color: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 0;
+    padding: 5px 7px;
+    transition: background-color 0.6s ease, color 0.6s ease;
+  }
+
+  input::placeholder { color: #b0b0b0; }
+  input:hover { background-color: var(--wash); }
+  input:focus { outline: 1px solid #000000; outline-offset: -1px; background-color: #fafafa; }
+
+  .field { margin: 0 0 10px 0; }
+
+  button {
+    font-family: serif;
+    font-size: 0.8em;
+    letter-spacing: 0.04em;
+    color: #000000;
+    background-color: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 0;
+    padding: 5px 8px;
+    cursor: pointer;
+    transition: background-color 0.6s ease, color 0.6s ease;
+  }
+
+  button:hover  { background-color: var(--wash); }
+  button:active { background-color: #ededed; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .actions.add    { margin: 2px 0 0 0; }
+  .actions.export { margin: 22px 0 0 0; }
+
+  /* ---------- table ---------- */
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+
+  th, td {
+    border: 1px solid #000000;
+    padding: 5px 7px;
+    text-align: left;
+    vertical-align: top;
+    background-color: #ffffff;
+    color: #000000;
+    transition: color 0.6s ease,
+                background-color 0.6s ease,
+                text-decoration-color 0.6s ease;
+  }
+
+  th {
+    font-weight: normal;
+    font-size: 0.85em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  td {
+    text-decoration: line-through;
+    text-decoration-color: transparent;
+  }
+
+  td.box  { width: 16px; padding-left: 4px; padding-right: 4px; text-align: center; text-decoration: none; }
+  td.act  { width: 14px; padding-left: 3px; padding-right: 3px; text-align: center; text-decoration: none; }
+  td.time { white-space: nowrap; }
+
+  input[type="checkbox"] { margin: 0; accent-color: #000000; cursor: pointer; }
+
+  tbody tr:hover td { background-color: var(--wash); }
+  tbody tr:has(input:checked) td { color: var(--faded); text-decoration-color: var(--faded); }
+
+  .del {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    font-size: 0.9em;
+    line-height: 1;
+    color: #000000;
+    cursor: pointer;
+  }
+  .del:hover { background: transparent; color: var(--faded); }
+
+  .msg {
+    min-height: 1.3em;
+    margin: 8px 0 0 0;
+    font-size: 0.75em;
+    color: #7d7d7d;
+  }
+  .msg.on { animation: msgfade 3s ease-out forwards; }
+  @keyframes msgfade { 0% { color: #000000; } 60% { color: #000000; } 100% { color: #7d7d7d; } }
+
+  .note { margin: 20px 0 0 0; font-size: 0.72em; color: #8a8a8a; }
+</style>
+</head>
+<body>
+
+  <h1>To-Do Generator</h1>
+  <p class="sub">Builds a standalone to-do page</p>
+
+  <form id="form">
+    <div class="field">
+      <label for="date">Date</label>
+      <input type="date" id="date">
+    </div>
+
+    <div class="field">
+      <label for="time">Time</label>
+      <input type="text" id="time" placeholder="e.g. 10a, 11:45a, 1:30p, 13:45" autocomplete="off">
+    </div>
+
+    <div class="field">
+      <label for="task">Task</label>
+      <input type="text" id="task" placeholder="Task name" autocomplete="off">
+    </div>
+
+    <div class="actions add">
+      <button type="submit">Add item</button>
+    </div>
+  </form>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="box"></th>
+        <th>Time</th>
+        <th>Task</th>
+        <th class="act"></th>
+      </tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+
+  <div class="actions export">
+    <button type="button" id="download">Download HTML</button>
+    <button type="button" id="copy">Copy HTML</button>
+    <button type="button" id="clear">Clear checks</button>
+  </div>
+  <p class="msg" id="msg"></p>
+
+  <p class="note">
+    Checkmarks are saved in this browser under a key for each date, so they survive
+    closing the page &mdash; here and in anything this generator exports.
+  </p>
+
+<script>
+(function () {
+  'use strict';
+
+  var ITEMS_KEY = 'todo:gen:v1';      /* the editable list + chosen date */
+  var CHECK_KEY = 'todo:v1:';         /* checkmarks, one key per date     */
+
+  var SEED = {
+    date: null,
+    seq: 7,
+    items: [
+      { id: 'i1', time: '10a',   name: 'Add stats' },
+      { id: 'i2', time: '10a',   name: 'Check teams' },
+      { id: 'i3', time: '11:45a', name: 'Deliver blue bag to mail room' },
+      { id: 'i4', time: '11:45a', name: 'Check mail' },
+      { id: 'i5', time: '',      name: 'Pick up one package from AC1-260 addressed to Jessica Garcia' },
+      { id: 'i6', time: '1:30p', name: 'Clean tech' },
+      { id: 'i7', time: '1:30p', name: 'Reset computers' }
+    ]
+  };
+
+  var elForm = document.getElementById('form');
+  var elDate = document.getElementById('date');
+  var elTime = document.getElementById('time');
+  var elTask = document.getElementById('task');
+  var elRows = document.getElementById('rows');
+  var elMsg  = document.getElementById('msg');
+
+  /* ---------- small helpers ---------- */
+
+  function pad(n) { return n < 10 ? '0' + n : '' + n; }
+
+  function isoToday() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  function longDate(iso) {
+    var p = String(iso || '').split('-');
+    if (p.length !== 3) return String(iso || '');
+    var d = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+    if (isNaN(d.getTime())) return String(iso);
+    return d.toLocaleDateString('en-US', {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric'
+    });
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  /* "10a" -> "10:00 a.m."; anything unrecognised is left as typed */
+  function fmtTime(raw) {
+    var s = String(raw == null ? '' : raw).trim();
+    if (!s) return '\u2014';
+
+    var m = s.match(/^(\d{1,2})(?::([0-5]\d))?\s*([ap])\.?\s*m?\.?$/i);
+    if (m) {
+      var h = parseInt(m[1], 10);
+      if (h >= 1 && h <= 12) {
+        return pad(h) + ':' + (m[2] || '00') + ' ' + m[3].toLowerCase() + '.m.';
+      }
+      return s;
+    }
+
+    var t = s.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
+    if (t) {
+      var H = parseInt(t[1], 10);
+      return pad(H % 12 || 12) + ':' + t[2] + ' ' + (H < 12 ? 'a' : 'p') + '.m.';
+    }
+
+    return s;
+  }
+
+  /* ---------- storage ---------- */
+
+  function load() {
+    var raw = null;
+    try { raw = window.localStorage.getItem(ITEMS_KEY); } catch (e) { raw = null; }
+
+    if (raw) {
+      try {
+        var s = JSON.parse(raw);
+        if (s && Array.isArray(s.items)) {
+          if (!s.date) s.date = isoToday();
+          if (!s.seq)  s.seq = s.items.length + 1;
+          return s;
+        }
+      } catch (e) { /* fall through to seed */ }
+    }
+
+    var fresh = JSON.parse(JSON.stringify(SEED));
+    fresh.date = isoToday();
+    return fresh;
+  }
+
+  function persist() {
+    try { window.localStorage.setItem(ITEMS_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  function readChecks(iso) {
+    try {
+      var raw = window.localStorage.getItem(CHECK_KEY + iso);
+      return raw ? (JSON.parse(raw) || {}) : {};
+    } catch (e) { return {}; }
+  }
+
+  function writeChecks() {
+    var out = {};
+    var boxes = elRows.querySelectorAll('input[type="checkbox"][data-id]');
+    for (var i = 0; i < boxes.length; i++) {
+      if (boxes[i].checked) out[boxes[i].getAttribute('data-id')] = 1;
+    }
+    try { window.localStorage.setItem(CHECK_KEY + state.date, JSON.stringify(out)); } catch (e) {}
+  }
+
+  function pruneChecks() {
+    var live = {}, keep = {}, i, k;
+    for (i = 0; i < state.items.length; i++) live[state.items[i].id] = 1;
+    var stored = readChecks(state.date);
+    for (k in stored) {
+      if (Object.prototype.hasOwnProperty.call(stored, k) && live[k]) keep[k] = stored[k];
+    }
+    try { window.localStorage.setItem(CHECK_KEY + state.date, JSON.stringify(keep)); } catch (e) {}
+  }
+
+  /* ---------- model ---------- */
+
+  var state = load();
+
+  function newId() {
+    state.seq = (state.seq || 1) + 1;
+    return 'i' + state.seq;
+  }
+
+  function addItem(name, time) {
+    state.items.push({ id: newId(), time: time, name: name });
+    persist();
+    render();
+  }
+
+  function removeItem(id) {
+    state.items = state.items.filter(function (it) { return it.id !== id; });
+    pruneChecks();
+    persist();
+    render();
+  }
+
+  function clearChecks() {
+    try { window.localStorage.removeItem(CHECK_KEY + state.date); } catch (e) {}
+    render();
+  }
+
+  /* ---------- render (this page doubles as the preview) ---------- */
+
+  function render() {
+    var checks = readChecks(state.date);
+    var html = '', i, it, ck;
+
+    for (i = 0; i < state.items.length; i++) {
+      it = state.items[i];
+      ck = checks[it.id] ? ' checked' : '';
+      html += '<tr>';
+      html += '<td class="box"><input type="checkbox" data-id="' + esc(it.id) +
+              '" aria-label="' + esc(it.name) + '"' + ck + '></td>';
+      html += '<td class="time">' + esc(fmtTime(it.time)) + '</td>';
+      html += '<td>' + esc(it.name) + '</td>';
+      html += '<td class="act"><button type="button" class="del" data-del="' + esc(it.id) +
+              '" aria-label="Remove ' + esc(it.name) + '">&times;</button></td>';
+      html += '</tr>';
+    }
+
+    if (!state.items.length) {
+      html = '<tr><td class="box"></td><td class="time">&mdash;</td>' +
+             '<td colspan="2">No items yet.</td></tr>';
+    }
+
+    elRows.innerHTML = html;
+    elDate.value = state.date;
+    bindRows();
+  }
+
+  function bindRows() {
+    var i;
+    var boxes = elRows.querySelectorAll('input[type="checkbox"][data-id]');
+    for (i = 0; i < boxes.length; i++) {
+      boxes[i].addEventListener('change', function () { writeChecks(); });
+    }
+    var dels = elRows.querySelectorAll('button[data-del]');
+    for (i = 0; i < dels.length; i++) {
+      dels[i].addEventListener('click', function () {
+        removeItem(this.getAttribute('data-del'));
+      });
+    }
+  }
+
+  function msg(text) {
+    elMsg.textContent = text;
+    elMsg.classList.remove('on');
+    void elMsg.offsetWidth;          /* restart the colour fade */
+    elMsg.classList.add('on');
+  }
+
+  /* ---------- export ---------- */
+
+  function buildRows(iso) {
+    var checks = readChecks(iso);
+    var out = '', i, it, ck;
+
+    for (i = 0; i < state.items.length; i++) {
+      it = state.items[i];
+      ck = checks[it.id] ? ' checked' : '';
+      out += '      <tr>\n';
+      out += '        <td class="box"><input type="checkbox" data-id="' + esc(it.id) +
+             '" aria-label="' + esc(it.name) + '"' + ck + '></td>\n';
+      out += '        <td class="time">' + esc(fmtTime(it.time)) + '</td>\n';
+      out += '        <td>' + esc(it.name) + '</td>\n';
+      out += '      </tr>\n';
+    }
+    return out;
+  }
+
+  function buildDoc() {
+    var iso  = state.date;
+    var long = longDate(iso);
+    var rows = buildRows(iso);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>To-Do — ${esc(long)}</title>
+<style>
+  html, body {
+    background: #ffffff;
+  }
+
+  body {
+    margin: 20% 40%;
+    font-family: serif;
+    font-size: 16px;
+    line-height: 1.45;
+    color: #000000;
+  }
+
+  h1 {
+    margin: 0 0 2px 0;
+    font-size: 1.1em;
+    font-weight: normal;
+    animation: breathe 16s ease-in-out infinite;
+  }
+
+  .date {
+    margin: 0 0 20px 0;
+    font-size: 0.8em;
+    animation: breathe-soft 16s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { color: #000000; }
+    50%      { color: #5a5a5a; }
+  }
+
+  @keyframes breathe-soft {
+    0%, 100% { color: #7d7d7d; }
+    50%      { color: #b0b0b0; }
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9em;
+  }
+
+  th, td {
+    border: 1px solid #000000;
+    padding: 5px 7px;
+    text-align: left;
+    vertical-align: top;
+    background-color: #ffffff;
+    color: #000000;
+    transition: color 0.6s ease,
+                background-color 0.6s ease,
+                text-decoration-color 0.6s ease;
+  }
+
+  th {
+    font-weight: normal;
+    font-size: 0.85em;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  td {
+    text-decoration: line-through;
+    text-decoration-color: transparent;
+  }
+
+  td.box {
+    width: 16px;
+    padding-left: 4px;
+    padding-right: 4px;
+    text-align: center;
+    text-decoration: none;
+  }
+
+  td.time { white-space: nowrap; }
+
+  input[type="checkbox"] {
+    margin: 0;
+    accent-color: #000000;
+    cursor: pointer;
+  }
+
+  tbody tr:hover td {
+    background-color: #f4f4f4;
+  }
+
+  tbody tr:has(input:checked) td {
+    color: #a9a9a9;
+    text-decoration-color: #a9a9a9;
+  }
+</style>
+</head>
+<body>
+
+  <h1>To-Do</h1>
+  <p class="date">${esc(long)}</p>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="box"></th>
+        <th>Time</th>
+        <th>Task</th>
+      </tr>
+    </thead>
+    <tbody>
+${rows}    </tbody>
+  </table>
+
+<script>
+(function () {
+  var KEY = ${JSON.stringify(CHECK_KEY + iso)};
+  var boxes = document.querySelectorAll('input[type="checkbox"][data-id]');
+  var saved = {};
+
+  try {
+    saved = JSON.parse(window.localStorage.getItem(KEY) || '{}') || {};
+  } catch (e) {
+    saved = {};
+  }
+
+  function save() {
+    var out = {};
+    var i;
+    for (i = 0; i < boxes.length; i++) {
+      if (boxes[i].checked) out[boxes[i].getAttribute('data-id')] = 1;
+    }
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(out));
+    } catch (e) {}
+  }
+
+  var i;
+  for (i = 0; i < boxes.length; i++) {
+    if (saved[boxes[i].getAttribute('data-id')]) boxes[i].checked = true;
+    boxes[i].addEventListener('change', save);
+  }
+})();
+` + '<\/script>\n</body>\n</html>\n';
+  }
+
+  function download() {
+    var html = buildDoc();
+    var iso  = state.date;
+    var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+
+    a.href = url;
+    a.download = 'todo-' + iso + '.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    window.setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+    msg('Saved as todo-' + iso + '.html');
+  }
+
+  function copy() {
+    var html = buildDoc();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(html).then(
+        function () { msg('HTML copied to the clipboard.'); },
+        function () { fallbackCopy(html); }
+      );
+    } else {
+      fallbackCopy(html);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.setAttribute('readonly', '');
+    ta.style.position = 'fixed';
+    ta.style.top = '-1000px';
+    document.body.appendChild(ta);
+    ta.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    msg(ok ? 'HTML copied to the clipboard.' : 'Copy failed — use Download instead.');
+  }
+
+  /* ---------- wire up ---------- */
+
+  elForm.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var name = elTask.value.trim();
+    if (!name) { msg('Type a task name first.'); elTask.focus(); return; }
+    addItem(name, elTime.value.trim());
+    elTask.value = '';
+    elTime.value = '';
+    elTask.focus();
+    msg('Added.');
+  });
+
+  elDate.addEventListener('change', function () {
+    writeChecks();                                  /* save under the old date */
+    state.date = elDate.value || isoToday();
+    persist();
+    render();
+  });
+
+  document.getElementById('download').addEventListener('click', download);
+  document.getElementById('copy').addEventListener('click', copy);
+  document.getElementById('clear').addEventListener('click', function () {
+    clearChecks();
+    msg('Checks cleared for ' + longDate(state.date) + '.');
+  });
+
+  render();
+  elTask.focus();
+})();
+</script>
+</body>
+</html>
