@@ -1,6 +1,13 @@
 # trtb01.github.io — TODO & site notes
 
-Last updated: by cptr — trtb-count.html added (live) + index link + todo note.
+Last updated: by cptr — sitemap.html added (live).
+
+## sitemap.html — NEW
+- Full site map at https://trtb01.github.io/sitemap.html — canonical v3.0.0 frame (`#trtb_header` / `#app_container` / `.trtb_module` × N / `#trtb_footer`), links `/trtb.css`.
+- Lists **all 55 HTML pages** as direct links in 8 sections (home & main, trtb suite, read (trtb), pages & things, b64 suite, encry suite, tools & utilities, experiments & demos), plus a “text sources” module for the raw markdown files (README.md, todo.md, md/voidscream.md, msg/README.md).
+- Jump nav with anchor links; live page/section counts computed in JS; inline `[top]` links per section; v3 theme toggle in footer.
+- Completeness verified against `find` (55/55 HTML files linked, zero missing/extra).
+- **Not yet linked from index.html** — reachable directly at `/sitemap.html`. Ask user if they want a hub link added.
 
 ## trtb-count.html — NEW (2026-09-15)
 - Commissioned page: character/word/etc counter. Live at https://trtb01.github.io/trtb-count.html

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>sitemap — trtb01.github.io</title>
+
+    <link rel="stylesheet" href="/trtb.css">
+    <style>
+        /* sitemap.html — page-specific styles only. Theme via /trtb.css (v3.0.0). */
+
+        /* --- Link Row Layout (mirrors index.html) --- */
+        .link_row {
+            display: flex;
+            width: 100%;
+            padding: 5px 0;
+            border-bottom: var(--border-width) solid var(--accent);
+        }
+        .link_row:last-child {
+            border-bottom: none;
+        }
+
+        .col_name {
+            width: 34%;
+            font-weight: bold;
+            padding-right: 10px;
+            overflow-wrap: anywhere;
+        }
+        .col_desc {
+            width: 66%;
+            opacity: 0.9;
+        }
+
+        /* --- Jump Nav --- */
+        #jump_nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 8px;
+            margin-top: var(--gap);
+        }
+        #jump_nav a {
+            border: var(--border-width) solid var(--accent);
+            padding: 2px 8px;
+            text-decoration: none;
+        }
+
+        /* --- Section headings: inline "back to top" link --- */
+        h3 .to_top {
+            float: right;
+            font-weight: normal;
+            opacity: 0.5;
+            text-decoration: none;
+        }
+        h3 .to_top:hover {
+            opacity: 1;
+        }
+
+        /* --- Intro meta line --- */
+        #meta_line {
+            opacity: 0.75;
+        }
+
+        /* --- Mobile Adjust --- */
+        @media (max-width: 600px) {
+            .link_row { flex-direction: column; margin-bottom: 0; }
+            .col_name, .col_desc { width: 100%; }
+            .col_desc { text-indent: var(--indent); color: #888; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="trtb_header">
+        <span>trtb01.github.io/sitemap.html</span>
+        <span id="header_date"></span>
+    </div>
+
+    <div id="app_container">
+
+        <!-- INTRO / JUMP NAV -->
+        <div class="trtb_module" id="top">
+            <h3>site map</h3>
+            <p id="meta_line">complete index of every page on this site —
+                <span id="page_count">?</span> pages across
+                <span id="section_count">?</span> sections, plus raw text sources.
+                every entry is a direct link.</p>
+            <div id="jump_nav">
+                <a href="#sec_home">home &amp; main</a>
+                <a href="#sec_suite">trtb suite</a>
+                <a href="#sec_read">read (trtb)</a>
+                <a href="#sec_pages">pages &amp; things</a>
+                <a href="#sec_b64">b64 suite</a>
+                <a href="#sec_encry">encry suite</a>
+                <a href="#sec_tools">tools &amp; utilities</a>
+                <a href="#sec_exps">experiments &amp; demos</a>
+                <a href="#sources">text sources</a>
+            </div>
+        </div>
+
+        <!-- 01 · HOME & MAIN -->
+        <div class="trtb_module page_section" id="sec_home">
+            <h3>01 · home &amp; main <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="index.html">index.html</a></div>
+                <div class="col_desc">site hub — tabbed index of every section and tool on the site.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb1.html">trtb1.html</a></div>
+                <div class="col_desc">introduction and primary info.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb2.html">trtb2.html</a></div>
+                <div class="col_desc">secondary information page.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="sitemap.html">sitemap.html</a></div>
+                <div class="col_desc">this page — complete index of every page, with direct links.</div>
+            </div>
+        </div>
+
+        <!-- 02 · TRTB SUITE -->
+        <div class="trtb_module page_section" id="sec_suite">
+            <h3>02 · trtb suite <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb-calc.html">trtb-calc.html</a></div>
+                <div class="col_desc">calculator.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb-dap.html">trtb-dap.html</a></div>
+                <div class="col_desc">trtb audio protocol — audio player.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb-dice.html">trtb-dice.html</a></div>
+                <div class="col_desc">dice roller.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb-count.html">trtb-count.html</a></div>
+                <div class="col_desc">text counter: characters, words, sentences, tokens, reading time.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb-dream.html">trtb-dream.html</a></div>
+                <div class="col_desc">trtb metronome.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtb-reader.html">trtb-reader.html</a></div>
+                <div class="col_desc">zero-reader-strict — distraction-free reader.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="md-view.html">md-view.html</a></div>
+                <div class="col_desc">cool little markdown editor.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="brthe.html">brthe.html</a></div>
+                <div class="col_desc">breathe — meditation visualizer and timer.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="mnthgen.html">mnthgen.html</a></div>
+                <div class="col_desc">simple markdown calendar (dates).</div>
+            </div>
+        </div>
+
+        <!-- 03 · READ (TRTB) -->
+        <div class="trtb_module page_section" id="sec_read">
+            <h3>03 · read (trtb) <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="voidscream.html">voidscream.html</a></div>
+                <div class="col_desc">my blog.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="goodnews.html">goodnews.html</a></div>
+                <div class="col_desc">good news archive.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="learnings/index.html">learnings/index.html</a></div>
+                <div class="col_desc">short, self-contained writeups on technical and intellectual topics.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="learnings/disc.html">learnings/disc.html</a></div>
+                <div class="col_desc">the disc wars: how xbox is quietly profiting from playstation's self-inflicted wound.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="learnings/words.html">learnings/words.html</a></div>
+                <div class="col_desc">beyond diceware: the science of pronounceable passwords.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="articles/cptr-pitch.html">articles/cptr-pitch.html</a></div>
+                <div class="col_desc">the cptr pitch — an article.</div>
+            </div>
+        </div>
+
+        <!-- 04 · PAGES & THINGS -->
+        <div class="trtb_module page_section" id="sec_pages">
+            <h3>04 · pages &amp; things <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="ace-steam.html">ace-steam.html</a></div>
+                <div class="col_desc">steam page links / ace-beam tutorial.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="gllry.html">gllry.html</a></div>
+                <div class="col_desc">image gallery builder.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="songs.html">songs.html</a></div>
+                <div class="col_desc">song recommendations with inline notes.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="wl-final.html">wl-final.html</a></div>
+                <div class="col_desc">tori's study guide.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="trtbphoto-001.html">trtbphoto-001.html</a></div>
+                <div class="col_desc">trtb photography 001 — photo gallery.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="s.html">s.html</a></div>
+                <div class="col_desc">gentle check-in.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="msg/chuds.html">msg/chuds.html</a></div>
+                <div class="col_desc">chuds — short message page.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="msg/hi.html">msg/hi.html</a></div>
+                <div class="col_desc">hi — short message page.</div>
+            </div>
+        </div>
+
+        <!-- 05 · B64 SUITE -->
+        <div class="trtb_module page_section" id="sec_b64">
+            <h3>05 · b64 suite <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="b64.html">b64.html</a></div>
+                <div class="col_desc">base-64 utility / file converter.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="b64-comp.html">b64-comp.html</a></div>
+                <div class="col_desc">base-64 encode tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="b64-imgview.html">b64-imgview.html</a></div>
+                <div class="col_desc">base-64 image viewer.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="b64-processor.html">b64-processor.html</a></div>
+                <div class="col_desc">token-saving base-64 injector.</div>
+            </div>
+        </div>
+
+        <!-- 06 · ENCRY SUITE -->
+        <div class="trtb_module page_section" id="sec_encry">
+            <h3>06 · encry suite <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="encry.html">encry.html</a></div>
+                <div class="col_desc">simple text encryption tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="encry-html.html">encry-html.html</a></div>
+                <div class="col_desc">static html encrypter.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="encry-md.html">encry-md.html</a></div>
+                <div class="col_desc">markdown editor with encryption.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="encry-phrasegen.html">encry-phrasegen.html</a></div>
+                <div class="col_desc">trtb passphrase generator v2.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="encry_steg.html">encry_steg.html</a></div>
+                <div class="col_desc">steganography tool (steg_tool v1.0).</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="crypt-001.html">crypt-001.html</a></div>
+                <div class="col_desc">protected page — password-gated.</div>
+            </div>
+        </div>
+
+        <!-- 07 · TOOLS & UTILITIES -->
+        <div class="trtb_module page_section" id="sec_tools">
+            <h3>07 · tools &amp; utilities <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="md2html.html">md2html.html</a></div>
+                <div class="col_desc">markdown to html generator.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="md2html2.html">md2html2.html</a></div>
+                <div class="col_desc">md → html — alternate markdown converter.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="md2html3.html">md2html3.html</a></div>
+                <div class="col_desc">markdown to html — extended markdown compatibility.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="jpegcomp.html">jpegcomp.html</a></div>
+                <div class="col_desc">simple jpeg compression tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="pdf2jpeg/index.html">pdf2jpeg/index.html</a></div>
+                <div class="col_desc">pdf → jpeg converter. local, browser only.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="pdf2jpeg1.html">pdf2jpeg1.html</a></div>
+                <div class="col_desc">pdf → jpeg converter — single-file implementation.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="pdf2jpeg(2)/index.html">pdf2jpeg(2)/index.html</a></div>
+                <div class="col_desc">pdf to jpeg converter — alternate build.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="qrkii.html">qrkii.html</a></div>
+                <div class="col_desc">the trtb qr code tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="clean_rubrik.html">clean_rubrik.html</a></div>
+                <div class="col_desc">cleaning rubric.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="todo_make.html">todo_make.html</a></div>
+                <div class="col_desc">to-do generator.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="livetext.html">livetext.html</a></div>
+                <div class="col_desc">live text — real-time text tool.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="method/html_tools.html">method/html_tools.html</a></div>
+                <div class="col_desc">method :: html tools.</div>
+            </div>
+        </div>
+
+        <!-- 08 · EXPERIMENTS & DEMOS -->
+        <div class="trtb_module page_section" id="sec_exps">
+            <h3>08 · experiments &amp; demos <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="roulette.html">roulette.html</a></div>
+                <div class="col_desc">local roulette table simulator.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="oracle.html">oracle.html</a></div>
+                <div class="col_desc">ultralightweight ttrpg oracle.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="soda.html">soda.html</a></div>
+                <div class="col_desc">russian roulette with soda.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="hands.html">hands.html</a></div>
+                <div class="col_desc">hand pose ai wireframe — hand tracking demo.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="face.html">face.html</a></div>
+                <div class="col_desc">facial expression ai analyzer.</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="game-test.html">game-test.html</a></div>
+                <div class="col_desc">xbox controller input tester.</div>
+            </div>
+        </div>
+
+        <!-- TEXT SOURCES (raw markdown) -->
+        <div class="trtb_module" id="sources">
+            <h3>text sources <a class="to_top" href="#top">[top]</a></h3>
+            <div class="link_row">
+                <div class="col_name"><a href="README.md">README.md</a></div>
+                <div class="col_desc">repository readme (raw markdown).</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="todo.md">todo.md</a></div>
+                <div class="col_desc">project status and decision log (raw markdown).</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="md/voidscream.md">md/voidscream.md</a></div>
+                <div class="col_desc">voidscream blog source (raw markdown).</div>
+            </div>
+            <div class="link_row">
+                <div class="col_name"><a href="msg/README.md">msg/README.md</a></div>
+                <div class="col_desc">notes about the msg/ folder (raw markdown).</div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="trtb_footer">
+        <span>&copy; 2025, 2026 thor smith</span>
+        <span>:: trtb software ::</span>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <script>
+        // Header Date Logic
+        (function() {
+            const dateEl = document.getElementById('header_date');
+            const now = new Date();
+            const yy = String(now.getFullYear()).slice(-2);
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const dd = String(now.getDate()).padStart(2, '0');
+            dateEl.innerText = `${yy}-${mm}-${dd}`;
+        })();
+
+        // Live counts
+        (function() {
+            const pages = document.querySelectorAll('.page_section .link_row').length;
+            const sections = document.querySelectorAll('.page_section').length;
+            document.getElementById('page_count').textContent = pages;
+            document.getElementById('section_count').textContent = sections;
+        })();
+
+        // Theme Toggle Logic
+        (function() {
+            const btn = document.getElementById('theme_toggle');
+            const root = document.documentElement;
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme');
+                root.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+            });
+        })();
+    </script>
+
+</body>
+</html>
