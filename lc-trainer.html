@@ -1,0 +1,322 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LC Call Number Ordering Practice</title>
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+    color: #000;
+    font-family: serif;
+    height: 100%;
+  }
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    transition: background-color 0.15s ease;
+  }
+  body.flash-good { background-color: #4caf50; }
+  body.flash-bad  { background-color: #e0a060; }
+
+  .card {
+    border: 1px solid #000;
+    padding: 24px 28px;
+    background: #fff;
+    max-width: 360px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  h1 {
+    font-size: 1.1em;
+    font-weight: bold;
+    margin: 0 0 4px 0;
+    text-align: center;
+  }
+  p.hint {
+    font-size: 0.8em;
+    margin: 0 0 16px 0;
+    text-align: center;
+    color: #444;
+  }
+  ul {
+    list-style: none;
+    margin: 0 0 16px 0;
+    padding: 0;
+  }
+  li {
+    border: 1px solid #000;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    cursor: grab;
+    user-select: none;
+    font-size: 1em;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  li.dragging {
+    opacity: 0.4;
+  }
+  li.drop-target {
+    border-top: 3px solid #000;
+  }
+  li .grip {
+    color: #888;
+    font-size: 0.85em;
+  }
+  .buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  button {
+    font-family: serif;
+    font-size: 0.95em;
+    padding: 6px 14px;
+    border: 1px solid #000;
+    background: #fff;
+    color: #000;
+    cursor: pointer;
+    border-radius: 0;
+  }
+  button:hover { background: #eee; }
+  button:active { background: #ddd; }
+  .result {
+    text-align: center;
+    font-size: 0.85em;
+    min-height: 1.2em;
+    margin-top: 12px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Order the LC Call Numbers</h1>
+  <p class="hint">Drag to sort lowest to highest, then submit.</p>
+  <ul id="list"></ul>
+  <div class="buttons">
+    <button id="submit">Submit</button>
+    <button id="new">New Set</button>
+  </div>
+  <div class="result" id="result"></div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // A small bank of LC call numbers, each paired with a value used for
+  // correct ascending sort. Values are derived by hand so ordering is
+  // unambiguous: class letters, then numeric class number, then cutter
+  // (alphanumeric), then date.
+  var BANK = [
+    { label: "QA 76.73 .J38 A76 2019", key: "QA|76.73|J|A76|2019" },
+    { label: "QA 76.73 .J38 S64 2004", key: "QA|76.73|S|S64|2004" },
+    { label: "QA 76.9 .D34 B47 2018",  key: "QA|76.9|D34|B47|2018" },
+    { label: "QA 76 .9 .C66 C48 2015", key: "QA|76|C66|C48|2015" },
+    { label: "HB 3711 .K78 2009",      key: "HB|3711|K78|2009" },
+    { label: "HB 3717 .S65 2001",      key: "HB|3717|S65|2001" },
+    { label: "PN 1993.5 .U6 G67 2010", key: "PN|1993.5|U6|G67|2010" },
+    { label: "PN 1995.9 .W6 H37 2012", key: "PN|1995.9|W6|H37|2012" },
+    { label: "PS 3558 .A743 A6 2008",  key: "PS|3558|A743|A6|2008" },
+    { label: "PS 3558 .A743 Z85 2014", key: "PS|3558|A743|Z85|2014" },
+    { label: "TK 5105.888 .V36 2020",  key: "TK|5105|888|V36|2020" },
+    { label: "TK 5105.8885 .A63 N54 2013", key: "TK|5105.8885|A63|N54|2013" },
+    { label: "Z 253.3 .A45 1998",      key: "Z|253.3|A45|1998" },
+    { label: "Z 253 .S52 1990",        key: "Z|253|S52|1990" }
+  ];
+
+  var listEl   = document.getElementById("list");
+  var resultEl = document.getElementById("result");
+  var bodyEl   = document.body;
+
+  // --- Correct ordering -------------------------------------------------
+  // Compare by the structured key. Numeric class numbers must be compared
+  // numerically (76 < 76.73 < 76.9), and cutters/letters alphabetically.
+  function compareKeys(a, b) {
+    var pa = a.split("|"), pb = b.split("|");
+    // 1. Class letters (e.g. "QA", "HB")
+    if (pa[0] !== pb[0]) return pa[0] < pb[0] ? -1 : 1;
+    // 2. Class number (numeric, may be decimal)
+    var na = parseFloat(pa[1]), nb = parseFloat(pb[1]);
+    if (na !== nb) return na < nb ? -1 : 1;
+    // 3. Remaining segments, compared as strings (cutter letters then digits)
+    for (var i = 2; i < Math.max(pa.length, pb.length); i++) {
+      var sa = pa[i] || "", sb = pb[i] || "";
+      if (sa !== sb) return sa < sb ? -1 : 1;
+    }
+    return 0;
+  }
+
+  function correctOrder(items) {
+    return items.slice().sort(function (a, b) {
+      return compareKeys(a.key, b.key);
+    });
+  }
+
+  // --- Rendering --------------------------------------------------------
+  function shuffle(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  var currentItems = [];
+
+  function render(items) {
+    listEl.innerHTML = "";
+    items.forEach(function (item) {
+      var li = document.createElement("li");
+      li.draggable = true;
+      li.dataset.key = item.key;
+      li.dataset.label = item.label;
+      li.innerHTML = '<span class="grip">&#9776;</span><span>' + item.label + "</span>";
+      listEl.appendChild(li);
+    });
+  }
+
+  function readOrder() {
+    return Array.prototype.map.call(listEl.children, function (li) {
+      return { key: li.dataset.key, label: li.dataset.label };
+    });
+  }
+
+  // --- Drag and drop ----------------------------------------------------
+  var dragIndex = null;
+
+  listEl.addEventListener("dragstart", function (e) {
+    var li = e.target.closest("li");
+    if (!li) return;
+    dragIndex = Array.prototype.indexOf.call(listEl.children, li);
+    li.classList.add("dragging");
+    e.dataTransfer.effectAllowed = "move";
+    // Some browsers require setData for drag to fire correctly.
+    try { e.dataTransfer.setData("text/plain", String(dragIndex)); } catch (err) {}
+  });
+
+  listEl.addEventListener("dragend", function (e) {
+    var li = e.target.closest("li");
+    if (li) li.classList.remove("dragging");
+    clearDropTargets();
+    dragIndex = null;
+  });
+
+  ieFixDragOver(); // ensure drop works reasonably across browsers
+
+  function ieFixDragOver() {
+    listEl.addEventListener("dragover", function (e) {
+      e.preventDefault();
+      if (dragIndex === null) return;
+      var li = e.target.closest("li");
+      clearDropTargets();
+      if (li && li !== listEl.children[dragIndex]) {
+        li.classList.add("drop-target");
+      }
+    });
+  }
+
+  function clearDropTargets() {
+    Array.prototype.forEach.call(listEl.children, function (li) {
+      li.classList.remove("drop-target");
+    });
+  }
+
+  listEl.addEventListener("drop", function (e) {
+    e.preventDefault();
+    if (dragIndex === null) return;
+    var li = e.target.closest("li");
+    if (!li) return;
+    var dropIndex = Array.prototype.indexOf.call(listEl.children, li);
+    if (dropIndex === dragIndex) return;
+    var moving = listEl.children[dragIndex];
+    // Insert before or after depending on direction.
+    if (dropIndex > dragIndex) {
+      listEl.insertBefore(moving, li.nextSibling);
+    } else {
+      listEl.insertBefore(moving, li);
+    }
+    dragIndex = null;
+    clearDropTargets();
+  });
+
+  // --- Flash feedback ---------------------------------------------------
+  var flashTimer = null;
+
+  function flash(cls) {
+    if (flashTimer) clearTimeout(flashTimer);
+    bodyEl.classList.remove("flash-good", "flash-bad");
+    // Force reflow so re-adding the class retriggers the transition.
+    void bodyEl.offsetWidth;
+    bodyEl.classList.add(cls);
+    flashTimer = setTimeout(function () {
+      bodyEl.classList.remove(cls);
+    }, 500);
+  }
+
+  // --- Actions ----------------------------------------------------------
+  function newSet() {
+    var pool = shuffle(BANK.slice());
+    currentItems = pool.slice(0, 5);
+    // Randomize the presented order (ensure it is not already correct).
+    var presented = shuffle(currentItems.slice());
+    var correct = correctOrder(currentItems);
+    var alreadyCorrect = presented.every(function (it, i) {
+      return it.key === correct[i].key;
+    });
+    if (alreadyCorrect) presented = shuffle(presented.slice());
+    render(presented);
+    resultEl.textContent = "";
+  }
+
+  document.getElementById("submit").addEventListener("click", function () {
+    var user = readOrder();
+    var correct = correctOrder(user);
+    var ok = user.every(function (it, i) {
+      return it.key === correct[i].key;
+    });
+    if (ok) {
+      flash("flash-good");
+      resultEl.textContent = "Correct!";
+    } else {
+      flash("flash-bad");
+      resultEl.textContent = "Not quite \u2014 try again.";
+    }
+  });
+
+  document.getElementById("new").addEventListener("click", newSet);
+
+  newSet();
+})();
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
