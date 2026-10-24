@@ -1,0 +1,951 @@
+
+                        <!DOCTYPE html>
+                        <html lang="en">
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+							<style>
+								body {
+									background-color: white; /* Ensure the iframe has a white background */
+								}
+
+								
+							</style>
+                        </head>
+                        <body>
+                            <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Video Dubber</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: #fff;
+    color: #000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .card {
+    width: 100%;
+    max-width: 880px;
+    background: #fff;
+    color: #000;
+    border: 1px solid #000;
+    padding: 20px;
+  }
+
+  .title { font-size: 15px; font-weight: 600; margin: 0 0 16px; }
+
+  .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .row + .row { margin-top: 12px; }
+
+  button, .filebtn {
+    font: inherit;
+    color: #000;
+    background: #fff;
+    border: 1px solid #000;
+    padding: 6px 12px;
+    cursor: pointer;
+    user-select: none;
+  }
+  button:hover:not(:disabled), .filebtn:hover { background: #000; color: #fff; }
+  button:disabled { opacity: .35; cursor: default; }
+  button.on { background: #000; color: #fff; }
+
+  .filebtn { display: inline-block; }
+  .filebtn input { display: none; }
+
+  video {
+    display: block;
+    width: 100%;
+    max-height: 380px;
+    background: #fff;
+    border: 1px solid #000;
+    margin-top: 14px;
+  }
+
+  .timeline {
+    position: relative;
+    height: 120px;
+    margin-top: 12px;
+    border: 1px solid #000;
+    overflow: hidden;
+    cursor: pointer;
+    touch-action: none;
+    user-select: none;
+  }
+  .timeline.select { cursor: crosshair; }
+  .timeline canvas {
+    position: absolute; left: 0; top: 0;
+    width: 100%; height: 100%;
+    display: block;
+  }
+
+  .scrubrow { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+  input[type=range] { flex: 1 1 auto; min-width: 80px; accent-color: #000; }
+
+  .time {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .status { font-size: 12px; }
+  .hint { font-size: 12px; margin: 14px 0 0; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h1 class="title">Video Dubber</h1>
+
+  <div class="row">
+    <label class="filebtn">Load video<input type="file" id="file" accept="video/*"></label>
+    <span class="status" id="status">No video loaded</span>
+  </div>
+
+  <video id="video" playsinline></video>
+
+  <div class="timeline" id="timeline">
+    <canvas id="wave"></canvas>
+    <canvas id="ov"></canvas>
+  </div>
+
+  <div class="scrubrow">
+    <span class="time" id="cur">0:00.00</span>
+    <input type="range" id="scrub" min="0" max="0" step="0.001" value="0" disabled>
+    <span class="time" id="dur">0:00.00</span>
+  </div>
+
+  <div class="row">
+    <button id="play" disabled>Play</button>
+    <button id="record" disabled>Record</button>
+    <button id="select" disabled>Select</button>
+    <button id="del" disabled>Delete recorded section</button>
+  </div>
+
+  <p class="hint">
+    Drag the timeline to scrub (or use the slider). Turn on <strong>Select</strong> and drag to mark a
+    section, then press <strong>Record</strong> to dub over it — the original audio is muted there.
+    With a section selected, <strong>Delete recorded section</strong> removes the dub and restores the
+    original audio underneath.
+  </p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ------------------------------------------------------------------ *
+   * Element references
+   * ------------------------------------------------------------------ */
+  const video      = document.getElementById('video');
+  const timelineEl = document.getElementById('timeline');
+  const waveCanvas = document.getElementById('wave');
+  const ovCanvas   = document.getElementById('ov');
+  const scrub      = document.getElementById('scrub');
+  const curEl      = document.getElementById('cur');
+  const durEl      = document.getElementById('dur');
+  const playBtn    = document.getElementById('play');
+  const recordBtn  = document.getElementById('record');
+  const selectBtn  = document.getElementById('select');
+  const deleteBtn  = document.getElementById('del');
+  const statusEl   = document.getElementById('status');
+  const fileInput  = document.getElementById('file');
+
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+
+  /* ------------------------------------------------------------------ *
+   * State
+   * ------------------------------------------------------------------ */
+  let audioCtx      = null;
+  let srcNode       = null;   // MediaElementAudioSourceNode (original audio)
+  let originalGain  = null;   // gain that mutes the original audio
+
+  let loaded        = false;
+  let duration      = 0;
+  let playing       = false;
+  let originalMuted = false;
+
+  let regions       = [];     // [{ start, end, buffer }]  dubbed spans
+  let selection     = null;   // { start, end }
+  let selectMode    = false;
+
+  let activeSources = [];     // playing AudioBufferSourceNodes
+  let peaks         = null;   // waveform peak cache
+  let originalDuration = 0;
+  let objectUrl     = null;
+
+  let recording     = false;
+  let recordStart   = 0;
+  let recordEnd     = null;
+  let mediaRecorder = null;
+  let micStream     = null;
+  let recordChunks  = [];
+
+  let drag          = null;
+  let scrubDragging = false;
+  let scrubWasPlaying = false;
+  let rafId         = 0;
+
+  let waveCtx = null;
+  let ovCtx   = null;
+  let cssW    = 1;
+  let cssH    = 120;
+
+  /* ------------------------------------------------------------------ *
+   * Small helpers
+   * ------------------------------------------------------------------ */
+  function setStatus(text) { statusEl.textContent = text; }
+
+  function fmt(t) {
+    if (!isFinite(t) || t < 0) t = 0;
+    const m = Math.floor(t / 60);
+    const s = t - m * 60;
+    return m + ':' + (s < 10 ? '0' : '') + s.toFixed(2);
+  }
+
+  function ensureCtx() {
+    if (!audioCtx) audioCtx = new AudioCtor();
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(function () {});
+    return audioCtx;
+  }
+
+  function initGraph() {
+    if (srcNode || !audioCtx) return;
+    srcNode = audioCtx.createMediaElementSource(video);
+    originalGain = audioCtx.createGain();
+    originalGain.gain.value = 1;
+    srcNode.connect(originalGain);
+    originalGain.connect(audioCtx.destination);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Canvas layout / waveform rendering
+   * ------------------------------------------------------------------ */
+  function layout() {
+    const w = Math.max(1, timelineEl.clientWidth);
+    const h = Math.max(1, timelineEl.clientHeight);
+    cssW = w;
+    cssH = h;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    [waveCanvas, ovCanvas].forEach(function (cv) {
+      cv.width  = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+      cv.getContext('2d').setTransform(dpr, 0, 0, dpr, 0, 0);
+    });
+
+    waveCtx = waveCanvas.getContext('2d');
+    ovCtx   = ovCanvas.getContext('2d');
+
+    drawWave();
+    requestRender();
+  }
+
+  /** Peak cache: one max-amplitude value per bucket. */
+  function computePeaks(buffer, buckets) {
+    const out = new Float32Array(buckets);
+    const chans = [];
+    for (let c = 0; c < buffer.numberOfChannels; c++) chans.push(buffer.getChannelData(c));
+
+    const len  = buffer.length;
+    const step = len / buckets;
+
+    for (let b = 0; b < buckets; b++) {
+      const s = Math.floor(b * step);
+      const e = Math.min(len, Math.max(s + 1, Math.floor((b + 1) * step)));
+      let max = 0;
+      for (let c = 0; c < chans.length; c++) {
+        const d = chans[c];
+        for (let i = s; i < e; i++) {
+          const v = d[i] < 0 ? -d[i] : d[i];
+          if (v > max) max = v;
+        }
+      }
+      out[b] = max;
+    }
+    return out;
+  }
+
+  /** Static layer — only redrawn on load / resize. */
+  function drawWave() {
+    if (!waveCtx) return;
+    const ctx = waveCtx;
+    const w = cssW, h = cssH;
+    const mid = Math.round(h / 2);
+
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, w, h);
+
+    // centre line
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, mid, w, 1);
+
+    if (!peaks || !duration) return;
+
+    // The audio track may be shorter than the video — map it honestly.
+    const ratio  = originalDuration > 0 ? Math.min(1, originalDuration / duration) : 1;
+    const wAvail = Math.max(1, Math.round(w * ratio));
+    const B = peaks.length;
+
+    ctx.beginPath();
+    for (let x = 0; x < wAvail; x++) {
+      const b0 = Math.floor(x * B / wAvail);
+      const b1 = Math.max(b0 + 1, Math.floor((x + 1) * B / wAvail));
+      let max = 0;
+      for (let b = b0; b < b1 && b < B; b++) if (peaks[b] > max) max = peaks[b];
+      const amp = Math.max(0.5, max * (mid - 2));
+      ctx.moveTo(x + 0.5, mid - amp);
+      ctx.lineTo(x + 0.5, mid + amp);
+    }
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  /** Live layer — regions, selection, playhead. Redrawn every frame. */
+  function drawOverlay() {
+    if (!ovCtx) return;
+    const ctx = ovCtx;
+    const w = cssW, h = cssH;
+
+    ctx.clearRect(0, 0, w, h);
+    if (!duration) return;
+
+    const xOf = function (t) {
+      t = Math.min(Math.max(t, 0), duration);
+      return (t / duration) * w;
+    };
+
+    // dubbed regions
+    for (let i = 0; i < regions.length; i++) {
+      const r  = regions[i];
+      const x0 = xOf(r.start);
+      const wd = Math.max(1, xOf(r.end) - x0);
+      ctx.fillStyle = 'rgba(0,0,0,0.14)';
+      ctx.fillRect(x0, 0, wd, h);
+      ctx.fillStyle = '#000';
+      ctx.fillRect(x0, h - 3, wd, 3);
+    }
+
+    // selection
+    if (selection) {
+      const x0 = xOf(selection.start);
+      const wd = Math.max(1, xOf(selection.end) - x0);
+      ctx.fillStyle = 'rgba(0,0,0,0.28)';
+      ctx.fillRect(x0, 0, wd, h);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(x0 + 0.5, 0.5, Math.max(1, wd - 1), h - 1);
+    }
+
+    // playhead (black line with a white halo so it reads over the waveform)
+    const px = xOf(video.currentTime || 0);
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(px - 1.5, 0, 3, h);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(px - 0.5, 0, 1, h);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Render loop — only runs when there is something to animate
+   * ------------------------------------------------------------------ */
+  function requestRender() {
+    if (!rafId) rafId = requestAnimationFrame(frame);
+  }
+
+  function frame() {
+    rafId = 0;
+    if (!loaded) return;
+
+    updateMute();
+    drawOverlay();
+    syncUI();
+
+    if (recording && recordEnd !== null && video.currentTime >= recordEnd) {
+      stopRecording();
+      return;
+    }
+
+    if (playing || recording) requestRender();
+  }
+
+  function syncUI() {
+    const t = video.currentTime || 0;
+    curEl.textContent = fmt(t);
+    if (!scrubDragging) scrub.value = String(t);
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Original-audio muting
+   * ------------------------------------------------------------------ */
+  function updateMute() {
+    if (!originalGain) return;
+
+    const t = video.currentTime || 0;
+    let mute = recording;
+    if (!mute) {
+      for (let i = 0; i < regions.length; i++) {
+        const r = regions[i];
+        if (t >= r.start && t < r.end) { mute = true; break; }
+      }
+    }
+
+    if (mute !== originalMuted) {
+      originalMuted = mute;
+      const now = audioCtx.currentTime;
+      const g = originalGain.gain;
+      g.cancelScheduledValues(now);
+      g.setTargetAtTime(mute ? 0 : 1, now, 0.012); // short ramp avoids clicks
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Dub playback scheduling
+   * ------------------------------------------------------------------ */
+  function stopSources() {
+    for (let i = 0; i < activeSources.length; i++) {
+      const s = activeSources[i];
+      s.onended = null;
+      try { s.stop(); } catch (e) { /* already stopped */ }
+    }
+    activeSources.length = 0;
+  }
+
+  function scheduleRegions(fromTime) {
+    stopSources();
+    if (!playing || !audioCtx) return;
+
+    const anchor = audioCtx.currentTime; // audio-clock time == video time `fromTime`
+
+    for (let i = 0; i < regions.length; i++) {
+      const r = regions[i];
+      if (r.end <= fromTime) continue;
+
+      const offset = Math.max(0, fromTime - r.start);
+      const when   = anchor + Math.max(0, r.start - fromTime);
+      const dur    = r.end - Math.max(fromTime, r.start);
+      if (dur <= 0.005) continue;
+
+      const src = audioCtx.createBufferSource();
+      src.buffer = r.buffer;
+      src.connect(audioCtx.destination);
+      try { src.start(when, offset, dur); } catch (e) { continue; }
+
+      src.onended = function () {
+        const idx = activeSources.indexOf(src);
+        if (idx >= 0) activeSources.splice(idx, 1);
+      };
+      activeSources.push(src);
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Transport
+   * ------------------------------------------------------------------ */
+  function startPlay() {
+    if (!loaded || playing) return;
+    ensureCtx();
+    playing = true;
+    setButtons();
+
+    const p = video.play();
+    if (p && p.then) {
+      p.then(function () {
+        if (playing) { scheduleRegions(video.currentTime); updateMute(); }
+      }).catch(function () {});
+    }
+    requestRender();
+  }
+
+  function pausePlay() {
+    if (!playing) return;
+    playing = false;
+    video.pause();
+    stopSources();
+    setButtons();
+    requestRender();
+  }
+
+  function seek(t) {
+    if (!loaded) return;
+    t = Math.min(Math.max(t, 0), duration);
+    video.currentTime = t;
+    requestRender();
+  }
+
+  function seekTo(t) {
+    return new Promise(function (resolve) {
+      if (Math.abs(video.currentTime - t) < 0.005 && video.readyState >= 2) return resolve();
+      let done = false;
+      const fin = function () {
+        if (done) return;
+        done = true;
+        video.removeEventListener('seeked', fin);
+        resolve();
+      };
+      video.addEventListener('seeked', fin);
+      video.currentTime = t;
+      setTimeout(fin, 400);
+    });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Region editing
+   * ------------------------------------------------------------------ */
+  function trimBuffer(buf, off0, off1) {
+    const sr = buf.sampleRate;
+    const s  = Math.max(0, Math.round(off0 * sr));
+    const e  = Math.min(buf.length, Math.round(off1 * sr));
+    const len = Math.max(1, e - s);
+
+    const out = audioCtx.createBuffer(buf.numberOfChannels, len, sr);
+    for (let c = 0; c < buf.numberOfChannels; c++) {
+      out.getChannelData(c).set(buf.getChannelData(c).subarray(s, s + len));
+    }
+    return out;
+  }
+
+  function sliceRegion(r, start, end) {
+    return {
+      start: start,
+      end: end,
+      buffer: trimBuffer(r.buffer, start - r.start, end - r.start)
+    };
+  }
+
+  /** Remove [start, end] from every region (splitting where needed). */
+  function deleteRange(start, end) {
+    const out = [];
+    for (let i = 0; i < regions.length; i++) {
+      const r = regions[i];
+      if (r.end <= start || r.start >= end) { out.push(r); continue; }
+      if (r.start < start) out.push(sliceRegion(r, r.start, start));
+      if (r.end > end)     out.push(sliceRegion(r, end, r.end));
+    }
+    regions = out;
+  }
+
+  function addRegion(region) {
+    deleteRange(region.start, region.end); // new dub replaces anything underneath
+    regions.push(region);
+    regions.sort(function (a, b) { return a.start - b.start; });
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Recording
+   * ------------------------------------------------------------------ */
+  function pickMime() {
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'];
+    for (let i = 0; i < candidates.length; i++) {
+      if (window.MediaRecorder && MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
+    }
+    return '';
+  }
+
+  function cleanupMic() {
+    if (!micStream) return;
+    micStream.getTracks().forEach(function (t) { t.stop(); });
+    micStream = null;
+  }
+
+  async function startRecording() {
+    if (!loaded || recording || duration <= 0) return;
+
+    ensureCtx();
+
+    let start = selection ? selection.start : video.currentTime;
+    let end   = selection ? selection.end   : null;
+
+    if (end !== null && end - start < 0.05) return;
+    start = Math.min(Math.max(start, 0), Math.max(0, duration - 0.02));
+    if (end !== null) end = Math.min(end, duration);
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setStatus('Microphone not available in this browser.');
+      return;
+    }
+
+    try {
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      setStatus('Microphone access was denied.');
+      return;
+    }
+
+    // Stop playback, park the playhead at the record start.
+    playing = false;
+    video.pause();
+    stopSources();
+    await seekTo(start);
+
+    recordStart = start;
+    recordEnd   = end;
+    recording   = true;
+    setButtons();
+    updateMute();     // mute the original for the whole take
+
+    recordChunks = [];
+    const mime = pickMime();
+    try {
+      mediaRecorder = mime
+        ? new MediaRecorder(micStream, { mimeType: mime })
+        : new MediaRecorder(micStream);
+    } catch (e) {
+      try {
+        mediaRecorder = new MediaRecorder(micStream);
+      } catch (e2) {
+        setStatus('Recording is not supported in this browser.');
+        recording = false;
+        cleanupMic();
+        setButtons();
+        return;
+      }
+    }
+
+    mediaRecorder.ondataavailable = function (ev) {
+      if (ev.data && ev.data.size) recordChunks.push(ev.data);
+    };
+
+    setStatus('Recording…');
+    mediaRecorder.start(100);
+    video.play().catch(function () {});
+    requestRender();
+  }
+
+  function stopRecorder() {
+    return new Promise(function (resolve) {
+      const mr = mediaRecorder;
+      const chunks = recordChunks;
+      mediaRecorder = null;
+      if (!mr || mr.state === 'inactive') return resolve(null);
+
+      mr.onstop = function () {
+        resolve(chunks.length ? new Blob(chunks, { type: mr.mimeType || 'audio/webm' }) : null);
+      };
+      try { mr.stop(); } catch (e) { resolve(null); }
+    });
+  }
+
+  async function stopRecording() {
+    if (!recording) return;
+    recording = false;
+
+    const stopAt = recordEnd !== null
+      ? Math.min(recordEnd, duration)
+      : Math.min(video.currentTime || 0, duration);
+
+    video.pause();
+    const blob = await stopRecorder();
+    cleanupMic();
+    setButtons();
+    updateMute();
+    requestRender();
+
+    if (!blob || stopAt - recordStart < 0.05) {
+      setStatus('Recording too short.');
+      return;
+    }
+
+    let buf;
+    try {
+      buf = await audioCtx.decodeAudioData(await blob.arrayBuffer());
+    } catch (e) {
+      setStatus('Could not decode the recording.');
+      return;
+    }
+
+    let end = Math.min(recordStart + buf.duration, duration);
+    if (recordEnd !== null) end = Math.min(end, recordEnd);
+    if (end - recordStart < 0.05) {
+      setStatus('Recording too short.');
+      return;
+    }
+
+    addRegion({ start: recordStart, end: end, buffer: buf });
+    selection = null;
+    setStatus('Ready.');
+    setButtons();
+    requestRender();
+  }
+
+  /* ------------------------------------------------------------------ *
+   * Buttons
+   * ------------------------------------------------------------------ */
+  function setButtons() {
+    playBtn.disabled   = !loaded;
+    recordBtn.disabled = !loaded;
+    selectBtn.disabled = !loaded;
+
+    const hasSel = !!selection && (selection.end - selection.start) > 0.001;
+    deleteBtn.disabled = !(hasSel && regions.some(function (r) {
+      return r.end > selection.start && r.start < selection.end;
+    }));
+
+    playBtn.textContent   = playing   ? 'Pause'  : 'Play';
+    recordBtn.textContent = recording ? 'Stop'   : 'Record';
+    recordBtn.classList.toggle('on', recording);
+    selectBtn.classList.toggle('on', selectMode);
+  }
+
+  playBtn.addEventListener('click', function () { playing ? pausePlay() : startPlay(); });
+
+  recordBtn.addEventListener('click', function () {
+    if (recording) stopRecording();
+    else startRecording();
+  });
+
+  selectBtn.addEventListener('click', function () {
+    selectMode = !selectMode;
+    timelineEl.classList.toggle('select', selectMode);
+    setButtons();
+    requestRender();
+  });
+
+  deleteBtn.addEventListener('click', function () {
+    if (!selection) return;
+    deleteRange(selection.start, selection.end);
+    selection = null;
+    setButtons();
+    if (playing) { stopSources(); scheduleRegions(video.currentTime); }
+    requestRender();
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Timeline pointer interaction
+   * ------------------------------------------------------------------ */
+  function timeAt(ev) {
+    const r = timelineEl.getBoundingClientRect();
+    const x = Math.min(Math.max(ev.clientX - r.left, 0), r.width);
+    return r.width > 0 ? duration * (x / r.width) : 0;
+  }
+
+  timelineEl.addEventListener('pointerdown', function (ev) {
+    if (!loaded) return;
+    ev.preventDefault();
+    try { timelineEl.setPointerCapture(ev.pointerId); } catch (e) {}
+
+    const t = timeAt(ev);
+
+    if (selectMode) {
+      drag = { mode: 'select', anchor: t };
+      selection = { start: t, end: t };
+      requestRender();
+    } else {
+      drag = { mode: 'scrub', wasPlaying: playing };
+      if (playing) pausePlay();
+      seek(t);
+    }
+  });
+
+  timelineEl.addEventListener('pointermove', function (ev) {
+    if (!drag) return;
+    const t = timeAt(ev);
+
+    if (drag.mode === 'select') {
+      selection = { start: Math.min(drag.anchor, t), end: Math.max(drag.anchor, t) };
+      requestRender();
+    } else {
+      seek(t);
+    }
+  });
+
+  function endDrag() {
+    if (!drag) return;
+    const d = drag;
+    drag = null;
+
+    if (d.mode === 'select') {
+      if (selection && selection.end - selection.start < 0.02) selection = null;
+      setButtons();
+    } else if (d.wasPlaying) {
+      startPlay();
+    }
+    requestRender();
+  }
+
+  timelineEl.addEventListener('pointerup', endDrag);
+  timelineEl.addEventListener('pointercancel', endDrag);
+
+  /* ------------------------------------------------------------------ *
+   * Slider scrubber
+   * ------------------------------------------------------------------ */
+  scrub.addEventListener('pointerdown', function () {
+    scrubDragging = true;
+    scrubWasPlaying = playing;
+    if (playing) pausePlay();
+  });
+
+  scrub.addEventListener('input', function () {
+    seek(parseFloat(scrub.value) || 0);
+  });
+
+  window.addEventListener('pointerup', function () {
+    if (!scrubDragging) return;
+    scrubDragging = false;
+    if (scrubWasPlaying) startPlay();
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Video element events
+   * ------------------------------------------------------------------ */
+  video.addEventListener('seeked', function () {
+    if (playing) { stopSources(); scheduleRegions(video.currentTime); }
+    updateMute();
+    requestRender();
+  });
+
+  video.addEventListener('ended', function () {
+    if (recording) { stopRecording(); return; }
+    playing = false;
+    stopSources();
+    setButtons();
+    requestRender();
+  });
+
+  video.addEventListener('play',  function () { requestRender(); });
+  video.addEventListener('pause', function () { if (!playing) { requestRender(); } });
+
+  /* ------------------------------------------------------------------ *
+   * Loading a file
+   * ------------------------------------------------------------------ */
+  function resetState() {
+    stopSources();
+    playing = false;
+    recording = false;
+    regions = [];
+    selection = null;
+    originalMuted = false;
+    peaks = null;
+    originalDuration = 0;
+    duration = 0;
+    loaded = false;
+
+    scrub.disabled = true;
+    scrub.max = '0';
+    scrub.value = '0';
+    curEl.textContent = '0:00.00';
+    durEl.textContent = '0:00.00';
+    playBtn.textContent = 'Play';
+    recordBtn.textContent = 'Record';
+
+    if (originalGain) {
+      originalGain.gain.cancelScheduledValues(0);
+      originalGain.gain.value = 1;
+    }
+    setButtons();
+    drawWave();
+    requestRender();
+  }
+
+  async function loadFile(file) {
+    // Abort any take in progress.
+    if (recording) {
+      recording = false;
+      try { mediaRecorder && mediaRecorder.stop(); } catch (e) {}
+      mediaRecorder = null;
+      cleanupMic();
+    }
+
+    pausePlay();
+    resetState();
+    setStatus('Loading…');
+
+    if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; }
+    objectUrl = URL.createObjectURL(file);
+    video.src = objectUrl;
+
+    try {
+      await new Promise(function (resolve, reject) {
+        let timer = setTimeout(function () { cleanup(); reject(new Error('timeout')); }, 20000);
+        function cleanup() {
+          clearTimeout(timer);
+          video.removeEventListener('loadedmetadata', onMeta);
+          video.removeEventListener('error', onErr);
+        }
+        function onMeta() { cleanup(); resolve(); }
+        function onErr()  { cleanup(); reject(new Error('error')); }
+        video.addEventListener('loadedmetadata', onMeta);
+        video.addEventListener('error', onErr);
+        video.load();
+      });
+    } catch (e) {
+      setStatus('Could not load that video file.');
+      return;
+    }
+
+    duration = isFinite(video.duration) ? video.duration : 0;
+    loaded = true;
+    scrub.max = String(duration);
+    scrub.value = '0';
+    scrub.disabled = false;
+    durEl.textContent = fmt(duration);
+
+    ensureCtx();
+    initGraph();
+
+    setStatus('Decoding audio…');
+    try {
+      const ab = await file.arrayBuffer();
+      const buffer = await audioCtx.decodeAudioData(ab);
+      const buckets = Math.min(8192, Math.max(512, Math.round(cssW * 2)));
+      peaks = computePeaks(buffer, buckets);
+      originalDuration = buffer.duration;
+      setStatus('Ready.');
+    } catch (e) {
+      peaks = null;
+      originalDuration = 0;
+      setStatus('Ready (waveform unavailable for this file).');
+    }
+
+    drawWave();
+    setButtons();
+    requestRender();
+  }
+
+  fileInput.addEventListener('change', function (ev) {
+    const file = ev.target.files && ev.target.files[0];
+    ev.target.value = '';
+    if (file) loadFile(file);
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Keyboard
+   * ------------------------------------------------------------------ */
+  document.addEventListener('keydown', function (ev) {
+    if (ev.target instanceof Element && ev.target.closest('input, button, textarea, select')) return;
+    if (ev.code === 'Space') {
+      ev.preventDefault();
+      playing ? pausePlay() : startPlay();
+    }
+  });
+
+  /* ------------------------------------------------------------------ *
+   * Boot
+   * ------------------------------------------------------------------ */
+  new ResizeObserver(layout).observe(timelineEl);
+  layout();
+  setButtons();
+})();
+</script>
+</body>
+</html>
+
+							<script>
+                            	
+							</script>
+                        </body>
+                        </html>
+                    
