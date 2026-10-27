@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>songs_editor — trtb01.github.io</title>
+    <link rel="stylesheet" href="/trtb.css">
+    <style>
+        /* songs_editor.html — page-specific styles only. Theme via /trtb.css */
+
+        /* collapsible how-it-works */
+        #howto summary {
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--accent);
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            padding: 4px 0;
+        }
+        #howto ol {
+            margin: 10px 0 4px 0;
+            padding-left: 22px;
+            line-height: 1.7;
+        }
+        #howto li { margin-bottom: 4px; }
+
+        /* prompt block */
+        .prompt-box {
+            background: var(--bg);
+            border: var(--border-width) solid var(--accent);
+            padding: 10px;
+            margin: 8px 0;
+        }
+        .prompt-box pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-family: var(--font-main);
+            line-height: 1.5;
+        }
+
+        /* input area */
+        textarea {
+            width: 100%;
+            box-sizing: border-box;
+            background: var(--bg);
+            color: var(--fg);
+            border: var(--border-width) solid var(--accent);
+            font-family: var(--font-main);
+            font-size: 1em;
+            padding: 8px;
+            margin: 8px 0;
+            resize: vertical;
+        }
+        #json_input { min-height: 140px; }
+        #base_fallback { min-height: 90px; display: none; }
+
+        /* buttons */
+        .btn {
+            background: var(--accent);
+            color: #000;
+            border: none;
+            font-family: var(--font-main);
+            font-weight: bold;
+            font-size: 1em;
+            padding: 8px 14px;
+            margin: 4px 6px 4px 0;
+            cursor: pointer;
+        }
+        .btn:hover { background: #cc0000; color: #fff; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn:disabled:hover { background: var(--accent); color: #000; }
+
+        /* status messages */
+        #status, #dup_list {
+            white-space: pre-wrap;
+            line-height: 1.6;
+            margin: 6px 0;
+        }
+        .st-err  { color: var(--accent); }
+        .st-ok   { opacity: 0.85; }
+
+        /* merged preview list */
+        #merged_list {
+            columns: 2;
+            column-gap: 24px;
+            margin: 8px 0;
+            padding-left: 24px;
+            line-height: 1.7;
+        }
+        #merged_list li { break-inside: avoid; }
+        #merged_list em { opacity: 0.9; }
+        .new-mark { color: var(--accent); font-weight: bold; }
+
+        @media (max-width: 600px) {
+            #merged_list { columns: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- A. Top strip -->
+    <div id="trtb_header">
+        <span>songs_editor</span>
+        <span>--</span>
+    </div>
+
+    <!-- B. Framed content area -->
+    <div id="app_container">
+
+        <!-- Title module -->
+        <div class="trtb_module">
+            <h1>songs_editor</h1>
+            <p>append new songs to <a href="songs.html">songs.json</a> with help from any ai chatbot. read the collapsible below first.</p>
+        </div>
+
+        <!-- How it works (collapsible) -->
+        <div class="trtb_module">
+            <details id="howto">
+                <summary>how this works (read me first)</summary>
+                <ol>
+                    <li>below is <b>the ai prompt</b> — hit <b>[copy prompt]</b>.</li>
+                    <li>open any ai chatbot (claude, chatgpt, whatever you like).</li>
+                    <li>paste the prompt, then paste <b>your raw list of new songs</b> after it.</li>
+                    <li>the chatbot will return <b>only a json array</b>, formatted exactly for this tool.</li>
+                    <li>paste that json into the <b>paste box</b> below and hit <b>[validate &amp; preview]</b>.</li>
+                    <li>the tool fetches the <b>current songs.json</b> from this site, appends your songs, checks for duplicates (duplicates <b>block</b> the download and are listed for you), and shows a numbered preview of the full merged list.</li>
+                    <li>hit <b>[download songs.json]</b>, then replace <code>songs.json</code> in your website repo with the downloaded file and publish. done.</li>
+                </ol>
+                <p>notes: songs appear on the site in array order — new songs go on the end, in the order you gave them. there is no "notes" field, ever. if validation fails, the error tells you what the chatbot got wrong — just re-ask it.</p>
+            </details>
+        </div>
+
+        <!-- Step 1: the prompt -->
+        <div class="trtb_module">
+            <h3>1 · the ai prompt</h3>
+            <div class="prompt-box">
+                <pre id="ai_prompt"></pre>
+            </div>
+            <button class="btn" id="copy_prompt">[copy prompt]</button>
+            <span id="copy_status"></span>
+        </div>
+
+        <!-- Step 2: paste the chatbot's output -->
+        <div class="trtb_module">
+            <h3>2 · paste the chatbot's json here</h3>
+            <textarea id="json_input" spellcheck="false" placeholder='[ { "artist": "...", "title": "..." }, ... ]'></textarea>
+            <textarea id="base_fallback" spellcheck="false" placeholder="fetch of songs.json failed — paste the current songs.json contents here so duplicates can still be checked"></textarea>
+            <div id="status"></div>
+            <button class="btn" id="validate">[validate &amp; preview]</button>
+            <span id="base_status" class="st-ok"></span>
+        </div>
+
+        <!-- Step 3: merged preview + download -->
+        <div class="trtb_module" id="preview_module">
+            <h3>3 · merged preview &amp; download</h3>
+            <div id="dup_list" class="st-err"></div>
+            <ol id="merged_list"></ol>
+            <button class="btn" id="download" disabled>[download songs.json]</button>
+            <button class="btn" id="copy_merged">[copy merged json]</button>
+            <span id="dl_status" class="st-ok"></span>
+        </div>
+
+    </div>
+
+    <!-- C. Bottom strip -->
+    <div id="trtb_footer">
+        <span>&copy; 2025, 2026 thor smith</span>
+        <span>:: trtb software ::</span>
+        <a href="/">[ home ]</a>
+        <button id="theme_toggle">[b/w]</button>
+    </div>
+
+    <!-- Theme toggle -->
+    <script>
+        (function(){
+            const btn = document.getElementById('theme_toggle');
+            const root = document.documentElement;
+            btn.addEventListener('click', () => {
+                const current = root.getAttribute('data-theme');
+                root.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+            });
+        })();
+    </script>
+
+    <!-- Prompt + merge engine -->
+    <script>
+    (function() {
+
+        /* ---------- the ai prompt (shown on page, copy/paste ready) ---------- */
+        const PROMPT =
+`You are helping maintain a JSON song list for a website (songs.json).
+
+I will give you a list of new songs. Respond with ONLY a JSON array — no
+explanation, no commentary, no markdown code fences, no text before or after.
+
+Each element must be an object with exactly these two keys:
+
+    { "artist": "Artist Name", "title": "Song Title" }
+
+Rules:
+- "artist" = the performer, "title" = the song name. Both are required strings.
+- NEVER include a "notes" key or any other key. Only "artist" and "title".
+- Keep my order exactly: no sorting, no re-ordering, no deduplication.
+- Keep spelling, capitalization, and punctuation exactly as I wrote it.
+- If an entry is ambiguous (artist vs. title unclear), make your best guess
+  and continue — do not ask me questions.
+- Output must be valid JSON: double quotes, no trailing commas.
+
+Example output:
+
+[
+    { "artist": "First Artist", "title": "First Song" },
+    { "artist": "Second Artist", "title": "Second Song" }
+]
+
+My list of new songs follows:`;
+
+        document.getElementById('ai_prompt').textContent = PROMPT;
+
+        /* ---------- elements ---------- */
+        const $ = (id) => document.getElementById(id);
+        const input      = $('json_input');
+        const baseFb     = $('base_fallback');
+        const statusEl   = $('status');
+        const dupEl      = $('dup_list');
+        const mergedEl   = $('merged_list');
+        const dlBtn      = $('download');
+        const dlStatus   = $('dl_status');
+        const baseStatus = $('base_status');
+
+        /* ---------- state ---------- */
+        let baseSongs = null;    // current songs.json (array) or null if fetch failed
+
+        const key = (s) => (s.artist.trim() + '\u0000' + s.title.trim()).toLowerCase().replace(/\s+/g, ' ');
+
+        /* ---------- load current songs.json ---------- */
+        (async function loadBase() {
+            try {
+                const res = await fetch('songs.json', { cache: 'no-cache' });
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                if (!Array.isArray(data)) throw new Error('not an array');
+                baseSongs = data;
+                baseStatus.textContent = '[current songs.json loaded: ' + data.length + ' songs]';
+            } catch (e) {
+                baseSongs = null;
+                baseFb.style.display = 'block';
+                baseStatus.textContent = '[could not fetch songs.json (' + e.message + ') — paste its current contents in the extra box above]';
+                baseStatus.className = 'st-err';
+            }
+        })();
+
+        baseFb.addEventListener('input', () => {
+            try {
+                const d = JSON.parse(baseFb.value);
+                if (Array.isArray(d)) {
+                    baseSongs = d;
+                    baseStatus.textContent = '[fallback base loaded: ' + d.length + ' songs]';
+                    baseStatus.className = 'st-ok';
+                    return;
+                }
+            } catch (e) {}
+            baseSongs = null;
+            baseStatus.textContent = '[fallback base: not valid json array yet]';
+            baseStatus.className = 'st-err';
+        });
+
+        /* ---------- copy prompt ---------- */
+        $('copy_prompt').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(PROMPT);
+                $('copy_status').textContent = '[copied]';
+            } catch (e) {
+                $('copy_status').textContent = '[copy failed — select the text manually]';
+            }
+            setTimeout(() => { $('copy_status').textContent = ''; }, 2500);
+        });
+
+        /* ---------- validation helpers ---------- */
+        function stripFences(text) {
+            let t = text.trim();
+            t = t.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+            return t.trim();
+        }
+
+        // returns { songs: [...] } or { error: "msg" }
+        function parseAndValidate(raw) {
+            const text = stripFences(raw);
+            if (!text) return { error: 'nothing pasted yet.' };
+
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                // courtesy salvage: extract the array if the chatbot
+                // wrapped it in prose or left stray fences/text around it
+                const a = text.indexOf('[');
+                const b = text.lastIndexOf(']');
+                if (a !== -1 && b > a) {
+                    try { data = JSON.parse(text.slice(a, b + 1)); } catch (e2) { /* keep original error */ }
+                }
+                if (data === undefined)
+                    return { error: 'invalid json: ' + e.message + '\n(wrapped prose/code fences were stripped — if it still fails, re-ask the chatbot)' };
+            }
+
+            if (!Array.isArray(data))           return { error: 'expected a top-level JSON array [ ... ], got ' + (data === null ? 'null' : typeof data) + '.' };
+            if (data.length === 0)              return { error: 'the array is empty — nothing to add.' };
+
+            const clean = [];
+            for (let i = 0; i < data.length; i++) {
+                const el = data[i];
+                const n  = i + 1;
+                if (el === null || typeof el !== 'object' || Array.isArray(el))
+                    return { error: 'entry ' + n + ' is not an object: ' + JSON.stringify(el) };
+                const extra = Object.keys(el).filter(k => k !== 'artist' && k !== 'title');
+                if (extra.length)
+                    return { error: 'entry ' + n + ' has forbidden key(s): ' + extra.join(', ') + ' — only "artist" and "title" are allowed (house rule: no notes).' };
+                if (typeof el.artist !== 'string' || !el.artist.trim())
+                    return { error: 'entry ' + n + ' is missing a valid "artist" string.' };
+                if (typeof el.title !== 'string' || !el.title.trim())
+                    return { error: 'entry ' + n + ' is missing a valid "title" string.' };
+                clean.push({ artist: el.artist.trim(), title: el.title.trim() });
+            }
+            return { songs: clean };
+        }
+
+        /* ---------- validate & preview ---------- */
+        $('validate').addEventListener('click', () => {
+            dupEl.textContent   = '';
+            mergedEl.innerHTML  = '';
+            dlBtn.disabled      = true;
+            dlStatus.textContent = '';
+
+            const res = parseAndValidate(input.value);
+            if (res.error) {
+                statusEl.textContent = '✗ ' + res.error;
+                statusEl.className   = 'st-err';
+                return;
+            }
+            statusEl.textContent = '[pasted json ok: ' + res.songs.length + ' new song(s)]';
+            statusEl.className   = 'st-ok';
+
+            if (!baseSongs) {
+                dupEl.textContent = '✗ no current songs.json loaded — fill in the fallback box first, or refresh.';
+                return;
+            }
+
+            /* duplicate check: against existing + within the pasted batch */
+            const existing = new Set(baseSongs.filter(s => s && typeof s.artist === 'string' && typeof s.title === 'string').map(key));
+            const seen     = new Set();
+            const dups     = [];
+            const fresh    = [];
+
+            for (const s of res.songs) {
+                const k = key(s);
+                if (existing.has(k) || seen.has(k)) {
+                    dups.push(s);
+                } else {
+                    seen.add(k);
+                    fresh.push(s);
+                }
+            }
+
+            if (dups.length) {
+                dupEl.textContent = '✗ blocked — these ' + dups.length + ' already exist (or are repeated in your paste):\n' +
+                    dups.map(s => '   · ' + s.artist + ' — ' + s.title).join('\n') +
+                    '\nremove them from the pasted json and validate again.';
+                return;
+            }
+
+            /* merged preview */
+            const merged = baseSongs.concat(fresh);
+            mergedEl.innerHTML = '';
+            const freshKeys = new Set(fresh.map(key));
+            merged.forEach((s, i) => {
+                const li = document.createElement('li');
+                const em = document.createElement('em');
+                em.textContent = s.title;
+                li.appendChild(em);
+                li.appendChild(document.createTextNode(' — ' + s.artist));
+                if (freshKeys.has(key(s))) {
+                    const mark = document.createElement('span');
+                    mark.className = 'new-mark';
+                    mark.textContent = ' [new]';
+                    li.appendChild(mark);
+                }
+                mergedEl.appendChild(li);
+            });
+
+            dlBtn.disabled = false;
+            dlStatus.textContent = '[ready: ' + merged.length + ' total, ' + fresh.length + ' added]';
+        });
+
+        /* ---------- output helpers ---------- */
+        function serialize() {
+            const merged = baseSongs.concat(
+                parseAndValidate(input.value).songs || []
+            );
+            return JSON.stringify(merged, null, 4) + '\n';
+        }
+
+        $('download').addEventListener('click', () => {
+            const blob = new Blob([serialize()], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'songs.json';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            dlStatus.textContent = '[downloaded songs.json — replace it in your website repo and publish]';
+        });
+
+        $('copy_merged').addEventListener('click', async () => {
+            if (dlBtn.disabled) {
+                dlStatus.textContent = '[validate first]';
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(serialize());
+                dlStatus.textContent = '[merged json copied to clipboard]';
+            } catch (e) {
+                dlStatus.textContent = '[copy failed — use the download button instead]';
+            }
+        });
+
+    })();
+    </script>
+
+</body>
+</html>
