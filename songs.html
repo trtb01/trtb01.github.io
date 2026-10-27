@@ -61,7 +61,7 @@
         <!-- Title module -->
         <div class="trtb_module">
             <h1>songs</h1>
-            <p>recommendations, in no particular order. click [notes] where available for extra commentary.</p>
+            <p>recommendations, in no particular order.</p>
         </div>
 
         <!-- Song table module -->
@@ -110,77 +110,35 @@
         })();
     </script>
 
-    <!-- Song data & notes engine -->
+    <!-- Song data engine -->
     <script>
-    /* =============================================================
-       EDIT THE SONG LIST HERE.  It's a plain array of objects.
-
-       Keys:
-         artist  — the performer (string, required)
-         title   — the song name   (string, required)
-         notes   — extra text that appears in the bottom panel when
-                   the [notes] link is clicked.  Omit (or set to
-                   null / "") if the song doesn't need notes.
-                   Plain text; line breaks are preserved.
-
-       The table builds in the order the array appears.
-    ============================================================= */
-
-    const songs = [
-        {
-            artist: "Kate Bollinger",
-            title:  "Lady in the Darkest Hour",
-            notes:  "put this on when you're driving alone at dusk with the windows down. the whole ep (*songs from a thousand frames of mind*) has this gauzy, lived-in warmth — like remembering a year through soft-focus polaroids. the bass line in this one sits so deep in the pocket it barely moves, and her voice just floats above it. perfect 3am track.",
-        },
-        {
-            artist: "Glimlip",
-            title:  "Green Heart",
-            notes:  null,                     // no notes — link won't show
-        },
-        {
-            artist: "Biig Piig",
-            title:  "24K",
-            notes:  "effortless late-night lofi. glimlip does these short instrumental sketches that feel like they were played into a mic in someone's bedroom at 2am — because they probably were. this one in particular has a little piano riff that loops so gently you don't even notice it until the third listen. great background music for reading or coding.",
-        },
-        {
-            artist: "Sam Fender",
-            title:  "Mantra",
-            notes:  "finally learned this one on guitar and it still gives me chills every time. the production builds so patiently — just voice and a sparse guitar line, then the drums creep in, then suddenly you're in this massive stadium-sized chorus. fender writes about working-class anxiety with more honesty than almost anyone right now.",
-        },
-        {
-            artist: "A Tribe Called Quest",
-            title:  "Electric Relaxation",
-        },
-        {
-            artist: "Mk.gee",
-            title:  "Are You Looking Up",
-            notes:  "mk.gee's guitar tone is genuinely unclassifiable — it sounds like a vhs tape melting in a broken deck. the whole album (*two star & the dream police*) is one of those rare records where every production choice is slightly wrong in exactly the right way. check the live version too; the way he wrestles sound out of a jazzmaster is wild.",
-        },
-        {
-            artist: "Adrianne Lenker",
-            title:  "anything",
-            notes:  "there's a line in this — \"i don't wanna talk about anything / i wanna kiss, kiss your eyes again\" — that just completely disarms me. lenker records like someone pressed the red button and forgot about it, and the result is these impossibly intimate sketches where you can hear her fingers sliding on the fretboard. don't put this on unless you're ready to feel something.",
-        },
-        {
-            artist: "Yves Tumor",
-            title:  "Gospel for a New Century",
-        },
-        {
-            artist: "Nilüfer Yanya",
-            title:  "midnight sun",
-            notes:  "that guitar hook in the chorus — this choppy, syncopated thing that keeps catching you off guard — is some of the most inventive playing i've heard in indie rock lately. the whole song is about restlessness and not belonging, and the music actually *feels* restless. it never settles into a groove for more than a few bars before it pivots.",
-        },
-        {
-            artist: "Dijon",
-            title:  "The Dress",
-            notes:  "dijon and his collaborators (mk.gee, ryan lee) are making the most interesting guitar music right now and they barely play chords in a conventional way. this song is basically a soul vocal run over what sounds like a band falling apart in slow motion — in the best possible way. the *absolutely* live performance video is essential viewing.",
-        },
-    ];
-
-    /* ---- build the table ---- */
-    (function buildTable() {
+    /* Songs data lives in songs.json (single source of truth).
+       Add songs via songs_editor.html → downloads a fresh songs.json.
+       House rule: no "notes" key, ever. Do not hard-code data here. */
+    (async function buildTable() {
         const tbody = document.getElementById('song_rows');
+        let songs;
+
+        try {
+            const res = await fetch('songs.json', { cache: 'no-cache' });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            songs = await res.json();
+            if (!Array.isArray(songs)) throw new Error('expected a JSON array');
+        } catch (e) {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 4;
+            td.textContent = 'song list unavailable right now — refresh to try again.';
+            td.style.opacity = '0.7';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+            return;
+        }
+
         songs.forEach((s, i) => {
+            // skip malformed entries rather than break the whole table
+            if (!s || typeof s.artist !== 'string' || typeof s.title !== 'string') return;
+
             const tr = document.createElement('tr');
 
             // # column
@@ -200,7 +158,7 @@
             tdTitle.appendChild(em);
             tr.appendChild(tdTitle);
 
-            // notes link
+            // notes link (dormant — songs.json has no notes by house rule)
             const tdNotes = document.createElement('td');
             if (s.notes) {
                 const link = document.createElement('span');
