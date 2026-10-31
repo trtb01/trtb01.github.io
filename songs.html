@@ -135,7 +135,7 @@
             return;
         }
 
-        songs.forEach((s, i) => {
+        songs.slice().reverse().forEach((s, i) => {
             // skip malformed entries rather than break the whole table
             if (!s || typeof s.artist !== 'string' || typeof s.title !== 'string') return;
 
