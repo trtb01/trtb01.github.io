@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sony APS-C Alpha — Timeline &amp; Capabilities</title>
+<style>
+  :root {
+    --ink: #111111;
+    --body: #333333;
+    --muted: #767676;
+    --rule: #d6d6d6;
+    --wash: #f6f6f6;
+    --wash-hover: #ededed;
+    --accent: #000000;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: serif;
+    color: var(--body);
+    background: #ffffff;
+    max-width: 62rem;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 6rem;
+    line-height: 1.6;
+    transition: color 600ms ease;
+  }
+  h1 {
+    font-size: 1.9rem;
+    line-height: 1.25;
+    color: var(--ink);
+    margin: 0 0 .4rem;
+    font-weight: normal;
+    letter-spacing: -0.01em;
+    transition: color 600ms ease;
+  }
+  .sub {
+    color: var(--muted);
+    font-style: italic;
+    margin: 0 0 2.5rem;
+    transition: color 600ms ease;
+  }
+  h2 {
+    font-size: 1.15rem;
+    color: var(--ink);
+    font-weight: normal;
+    margin: 2.75rem 0 .9rem;
+    padding-bottom: .35rem;
+    border-bottom: 1px solid var(--rule);
+    transition: color 600ms ease, border-color 600ms ease;
+  }
+  p { margin: 0 0 1rem; }
+  .tablewrap { overflow-x: auto; margin: 0 0 1rem; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .93rem;
+    min-width: 40rem;
+  }
+  th {
+    text-align: left;
+    font-weight: normal;
+    font-style: italic;
+    color: var(--muted);
+    padding: .55rem .7rem;
+    border-bottom: 1px solid var(--ink);
+    white-space: nowrap;
+    transition: color 600ms ease, border-color 600ms ease;
+  }
+  td {
+    padding: .6rem .7rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    transition: background-color 450ms ease, color 450ms ease, border-color 600ms ease;
+  }
+  tbody tr:hover td { background: var(--wash-hover); }
+  tr.mine td { background: var(--wash); color: var(--ink); }
+  tr.mine:hover td { background: #e4e4e4; }
+  .mine-tag {
+    font-size: .72rem;
+    font-style: italic;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: var(--ink);
+    border: 1px solid var(--ink);
+    border-radius: 2px;
+    padding: .05rem .35rem;
+    margin-left: .45rem;
+    white-space: nowrap;
+    display: inline-block;
+    transition: color 600ms ease, border-color 600ms ease;
+  }
+  .cards { display: grid; gap: 1rem; margin-top: 1rem; }
+  @media (min-width: 46rem) { .cards { grid-template-columns: 1fr 1fr; } }
+  .card {
+    border: 1px solid var(--rule);
+    background: #ffffff;
+    padding: 1rem 1.1rem;
+    transition: background-color 450ms ease, border-color 450ms ease;
+  }
+  .card:hover { background: var(--wash); border-color: #b9b9b9; }
+  .card.mine { border-color: var(--ink); border-width: 2px; }
+  .card h3 {
+    font-size: 1rem;
+    font-weight: normal;
+    color: var(--ink);
+    margin: 0 0 .35rem;
+    transition: color 600ms ease;
+  }
+  .card .meta {
+    font-size: .8rem;
+    color: var(--muted);
+    font-style: italic;
+    margin: 0 0 .6rem;
+    transition: color 600ms ease;
+  }
+  .card p { font-size: .92rem; margin: 0; }
+  .note {
+    border-left: 3px solid var(--ink);
+    background: var(--wash);
+    padding: .85rem 1.1rem;
+    margin: 1rem 0;
+    font-size: .93rem;
+    transition: background-color 600ms ease, border-color 600ms ease;
+  }
+  ol.takeaways { padding-left: 1.3rem; margin: 1rem 0 0; }
+  ol.takeaways li { margin-bottom: .6rem; }
+  footer {
+    margin-top: 4rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+    font-size: .8rem;
+    color: var(--muted);
+    font-style: italic;
+    transition: color 600ms ease, border-color 600ms ease;
+  }
+  .reveal {
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 700ms ease, transform 700ms ease;
+  }
+  .reveal.in { opacity: 1; transform: none; }
+</style>
+</head>
+<body>
+
+<h1>Sony APS-C Alpha — Timeline &amp; Capabilities</h1>
+<p class="sub">Every APS-C E-mount body from the a6000 to the a6700, with generational context.</p>
+
+<h2>The timeline</h2>
+<div class="tablewrap">
+<table>
+  <thead>
+    <tr>
+      <th>Gen</th><th>Body</th><th>Year</th><th>MP</th><th>Key capability</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="mine">
+      <td>1</td>
+      <td><strong>a6000</strong><span class="mine-tag">mine</span></td>
+      <td>2014</td><td>24</td>
+      <td>179-point PDAF, 11fps, EVF. No IBIS, no mic jack.</td>
+    </tr>
+    <tr>
+      <td>1</td><td>a5100</td><td>2014</td><td>24</td>
+      <td>Same sensor, no EVF, selfie screen.</td>
+    </tr>
+    <tr>
+      <td>1</td><td>a6300</td><td>2016</td><td>24</td>
+      <td>425-point PDAF, 4K, mic jack, magnesium body, much better tracking.</td>
+    </tr>
+    <tr>
+      <td>1</td><td>a6500</td><td>2016</td><td>24</td>
+      <td>a6300 + <strong>IBIS</strong> (first on APS-C), touchscreen, bigger buffer.</td>
+    </tr>
+    <tr>
+      <td>2</td><td>a6400</td><td>2019</td><td>24</td>
+      <td>Real-time Eye AF + Real-time Tracking — the AF generational jump. No IBIS.</td>
+    </tr>
+    <tr>
+      <td>2</td><td>a6100</td><td>2019</td><td>24</td>
+      <td>a6400's AF, cheaper build, no S-Log, lower-res EVF.</td>
+    </tr>
+    <tr>
+      <td>2</td><td>a6600</td><td>2019</td><td>24</td>
+      <td>a6400 + <strong>IBIS</strong> + Z-battery (huge life) + headphone jack.</td>
+    </tr>
+    <tr>
+      <td>3</td><td><strong>a6700</strong></td><td>2023</td><td>26</td>
+      <td><strong>AI subject recognition</strong> (birds, animals, vehicles, people), 759-pt AF, IBIS, 4K120.</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+  Full-frame bodies cross-shopped for reference: <strong>a7S II</strong> (2015, 12MP — legendary low light, but contrast-detect AF only, poor for moving subjects) and <strong>a7 III</strong> (2018, 24MP — the value full-frame benchmark, 693-pt PDAF, IBIS).
+</div>
+
+<h2>Capability summaries</h2>
+<div class="cards">
+
+  <div class="card mine reveal">
+    <h3>a6000 — 2014</h3>
+    <p class="meta">24MP · 179-pt PDAF · 11fps · no IBIS</p>
+    <p>24MP APS-C, phase-detect AF, tilting screen, built-in EVF, hot shoe. No IBIS, no mic jack, no subject recognition. AF is fine for static subjects and loses moving subjects quickly; struggles badly in low light. Still a genuinely good camera and outstanding value.</p>
+  </div>
+
+  <div class="card reveal">
+    <h3>a6300 — 2016</h3>
+    <p class="meta">24MP · 425-pt PDAF · 4K · no IBIS</p>
+    <p>Large AF upgrade: 425 phase-detect points across most of the frame, faster and stickier than the a6000. Adds 4K video, mic jack, magnesium alloy body, better sealing. Cheapest meaningful AF upgrade in the line.</p>
+  </div>
+
+  <div class="card reveal">
+    <h3>a6500 — 2016</h3>
+    <p class="meta">24MP · 425-pt PDAF · IBIS · touchscreen</p>
+    <p>a6300 plus 5-axis IBIS, touchscreen, larger buffer, better heat handling. IBIS makes handheld low-light and long-lens work far more viable. Still the pre-AI AF generation.</p>
+  </div>
+
+  <div class="card reveal">
+    <h3>a6400 — 2019</h3>
+    <p class="meta">24MP · Real-time Tracking · no IBIS</p>
+    <p>The AF leap: Real-time Eye AF and Real-time Tracking hold a subject once acquired. Flip-up selfie screen, better processor. Best autofocus per dollar on the used market.</p>
+  </div>
+
+  <div class="card reveal">
+    <h3>a6600 — 2019</h3>
+    <p class="meta">24MP · Real-time Tracking · IBIS · Z-battery</p>
+    <p>a6400's AF plus IBIS, the big Z battery (roughly double the life), headphone jack, deeper grip. The best all-around APS-C Sony before the a6700.</p>
+  </div>
+
+  <div class="card reveal">
+    <h3>a6700 — 2023</h3>
+    <p class="meta">26MP · AI subject recognition · IBIS · 4K120</p>
+    <p>Current flagship. AI subject detection separately recognizes birds, animals, vehicles, insects, and people. 759-point AF, IBIS, front command dial, Z battery. The only Sony APS-C that reliably recognizes and holds focus on a bird.</p>
+  </div>
+
+  <div class="card reveal">
+    <h3>a7S II — 2015 (full frame)</h3>
+    <p class="meta">12.2MP · contrast-detect AF only</p>
+    <p>Extraordinary low light and video. But its autofocus is contrast-detect for stills tracking, so it is superb on static scenes and poor on birds, sport, and moving cars. The megapixel count is not the issue — 12MP prints fine past 8×10. The autofocus is.</p>
+  </div>
+
+</div>
+
+<h2>Key takeaways</h2>
+<ol class="takeaways">
+  <li><strong>Megapixels are not the constraint.</strong> 12MP is plenty for 4×6 and social media.</li>
+  <li><strong>AF generation is the real dividing line.</strong> a6000 → a6300/a6400 is a far bigger practical upgrade than any megapixel change.</li>
+  <li><strong>IBIS matters for dark venues</strong> and handheld telephoto. a6500, a6600, a6700 have it; a6000, a6300, a6400 do not.</li>
+  <li><strong>Subject recognition is what fixes birds</strong> — and only the a6700 has it.</li>
+  <li><strong>Glass is the bigger bottleneck</strong> for birds and sport than the body is.</li>
+</ol>
+
+<footer>Compiled as a reference resource. Prices and availability vary; verify current used-market conditions before buying.</footer>
+
+<script>
+  (function () {
+    var items = document.querySelectorAll('.reveal');
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(function (el) { el.classList.add('in'); });
+      return;
+    }
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          io.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    items.forEach(function (el) { io.observe(el); });
+  })();
+</script>
+</body>
+</html>
